@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mines — Obsidian Casino</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<script src="casino-core.js"></script>
+<script>Casino.renderSidebar('mines');</script>
+
+<main class="casino-main">
+<div class="game-page" style="max-width:600px">
+
+  <div class="stats-row">
+    <div class="stat-box"><div class="sv" id="st-balance">$5,000</div><div class="sl">Balance</div></div>
+    <div class="stat-box"><div class="sv" id="st-played">0</div><div class="sl">Games</div></div>
+    <div class="stat-box"><div class="sv" id="st-won">0</div><div class="sl">Wins</div></div>
+    <div class="stat-box"><div class="sv" id="st-bestmult">—</div><div class="sl">Best Mult</div></div>
+  </div>
+
+  <!-- GAME STATE INFO -->
+  <div class="mines-info-bar" id="infoBar">
+    <div>
+      <div class="mines-mult" id="multDisplay">1.00×<span>multiplier</span></div>
+    </div>
+    <div>
+      <div class="mines-profit" id="profitDisplay">Profit: $0.00</div>
+    </div>
+    <div style="font-size:0.8rem;color:var(--text3)" id="gemsCount">0 gems found</div>
+  </div>
+
+  <!-- GRID -->
+  <div class="mines-grid" id="minesGrid"></div>
+
+  <!-- BET PANEL + MINES COUNT -->
+  <div class="bet-panel">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+      <div>
+        <div class="bet-label">BET AMOUNT</div>
+        <div class="bet-input-wrap">
+          <div class="bet-currency">$</div>
+          <input type="number" id="betAmt" value="10" min="1" step="1">
+        </div>
+      </div>
+      <div>
+        <div class="bet-label">MINES COUNT</div>
+        <div class="bet-input-wrap">
+          <div class="bet-currency" style="min-width:0;padding:0 8px">
+            <svg viewBox="0 0 16 16" fill="none" style="width:14px;height:14px"><circle cx="8" cy="8" r="4" fill="var(--red)"/><line x1="8" y1="1" x2="8" y2="4" stroke="var(--red)" stroke-width="1.5"/><line x1="8" y1="12" x2="8" y2="15" stroke="var(--red)" stroke-width="1.5"/><line x1="1" y1="8" x2="4" y2="8" stroke="var(--red)" stroke-width="1.5"/><line x1="12" y1="8" x2="15" y2="8" stroke="var(--red)" stroke-width="1.5"/></svg>
+          </div>
+          <input type="number" id="minesCount" value="5" min="1" max="24" step="1" style="text-align:center">
+        </div>
+      </div>
+    </div>
+    <div class="bet-quick" style="margin-bottom:12px">
+      <button onclick="qBet(5)">$5</button>
+      <button onclick="qBet(10)">$10</button>
+      <button onclick="qBet(25)">$25</button>
+      <button onclick="qBet(50)">$50</button>
+      <button onclick="qBet(100)">$100</button>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn-primary" id="startBtn" onclick="startGame()">START GAME</button>
+      <button class="btn-danger" id="cashoutBtn" onclick="cashout()" style="display:none">CASHOUT</button>
+    </div>
+  </div>
+
+</div>
+</main>
+
+<script>
+// GEM SVG
+const GEM_SVG = `<svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs><linearGradient id="gemg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#34d399"/><stop offset="1" stop-color="#059669"/></linearGradient></defs>
+  <polygon points="30,6 50,20 43,52 17,52 10,20" fill="url(#gemg)"/>
+  <polygon points="30,6 50,20 30,18" fill="rgba(255,255,255,0.4)"/>
+  <line x1="10" y1="20" x2="50" y2="20" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+  <line x1="17" y1="52" x2="30" y2="18" stroke="rgba(255,255,255,0.15)" stroke-width="0.5"/>
+</svg>`;
+
+// MINE SVG
+const MINE_SVG = `<svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="30" cy="30" r="14" fill="#ef4444" opacity="0.9"/>
+  <circle cx="30" cy="30" r="8" fill="#991b1b"/>
+  <line x1="30" y1="8" x2="30" y2="16" stroke="#ef4444" stroke-width="3" stroke-linecap="round"/>
+  <line x1="30" y1="44" x2="30" y2="52" stroke="#ef4444" stroke-width="3" stroke-linecap="round"/>
+  <line x1="8" y1="30" x2="16" y2="30" stroke="#ef4444" stroke-width="3" stroke-linecap="round"/>
+  <line x1="44" y1="30" x2="52" y2="30" stroke="#ef4444" stroke-width="3" stroke-linecap="round"/>
+  <line x1="15.5" y1="15.5" x2="21.2" y2="21.2" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="38.8" y1="38.8" x2="44.5" y2="44.5" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="44.5" y1="15.5" x2="38.8" y2="21.2" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="21.2" y1="38.8" x2="15.5" y2="44.5" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round"/>
+  <circle cx="30" cy="30" r="3" fill="#fca5a5"/>
+</svg>`;
+
+// HIDDEN TILE SVG (question mark indicator)
+const HIDDEN_SVG = `<svg viewBox="0 0 60 60" fill="none"><text x="30" y="40" font-size="28" text-anchor="middle" fill="rgba(255,255,255,0.08)" font-family="Inter,sans-serif" font-weight="900">?</text></svg>`;
+
+let gameActive = false;
+let minePositions = new Set();
+let revealedTiles = new Set();
+let currentBet = 0;
+let currentMult = 1.0;
+let bestMult = 0;
+let gamesPlayed = 0, gamesWon = 0;
+
+function getMult(gemsFound, totalMines) {
+  const totalTiles = 25;
+  const totalGems = totalTiles - totalMines;
+  let mult = 1.0;
+  for (let i = 0; i < gemsFound; i++) {
+    const remaining = totalTiles - i;
+    const minesLeft = totalMines;
+    mult *= remaining / (remaining - minesLeft);
+  }
+  return Math.round(mult * 100) / 100;
+}
+
+function buildGrid() {
+  const grid = document.getElementById('minesGrid');
+  grid.innerHTML = '';
+  for (let i = 0; i < 25; i++) {
+    const tile = document.createElement('div');
+    tile.className = 'mine-tile';
+    tile.id = 'tile-' + i;
+    tile.innerHTML = `<div class="tile-svg" style="opacity:0.06">${HIDDEN_SVG}</div>`;
+    tile.onclick = () => clickTile(i);
+    grid.appendChild(tile);
+  }
+}
+
+function startGame() {
+  const bet = Math.max(1, parseInt(document.getElementById('betAmt').value) || 10);
+  const mines = Math.max(1, Math.min(24, parseInt(document.getElementById('minesCount').value) || 5));
+  const bal = Casino.getBalance();
+  if (bet > bal) { return; }
+
+  currentBet = bet;
+  gameActive = true;
+  revealedTiles.clear();
+  minePositions.clear();
+
+  // Place mines
+  while (minePositions.size < mines) minePositions.add(Math.floor(Math.random() * 25));
+
+  buildGrid();
+  currentMult = 1.0;
+  updateInfoBar(0);
+
+  document.getElementById('startBtn').style.display = 'none';
+  document.getElementById('cashoutBtn').style.display = 'block';
+  document.getElementById('betAmt').disabled = true;
+  document.getElementById('minesCount').disabled = true;
+}
+
+function clickTile(idx) {
+  if (!gameActive) return;
+  if (revealedTiles.has(idx)) return;
+
+  revealedTiles.add(idx);
+  const tile = document.getElementById('tile-' + idx);
+
+  if (minePositions.has(idx)) {
+    tile.classList.add('revealed-mine');
+    tile.innerHTML = `<div class="tile-svg" style="opacity:1">${MINE_SVG}</div>`;
+    revealAllMines();
+    endGame(false);
+  } else {
+    tile.classList.add('revealed-gem');
+    tile.innerHTML = `<div class="tile-svg" style="opacity:1">${GEM_SVG}</div>`;
+    const gemsFound = revealedTiles.size;
+    const mines = minePositions.size;
+    currentMult = getMult(gemsFound, mines);
+    if (currentMult > bestMult) bestMult = currentMult;
+    updateInfoBar(gemsFound);
+  }
+}
+
+function revealAllMines() {
+  minePositions.forEach(idx => {
+    if (!revealedTiles.has(idx)) {
+      const tile = document.getElementById('tile-' + idx);
+      tile.classList.add('revealed-mine', 'disabled');
+      tile.innerHTML = `<div class="tile-svg" style="opacity:0.6">${MINE_SVG}</div>`;
+    }
+  });
+}
+
+function cashout() {
+  if (!gameActive || revealedTiles.size === 0) { endGame(false, true); return; }
+  const won = Math.round(currentBet * currentMult * 100) / 100;
+  Casino.recordBet('mines', currentBet, won);
+  gamesPlayed++; gamesWon++;
+  updateStatsUI(Casino.getBalance());
+  flashResult(`+${Casino.fmt(won)} (${currentMult}×)`, true);
+  endGame(true);
+}
+
+function endGame(won, cancelled = false) {
+  gameActive = false;
+  document.getElementById('cashoutBtn').style.display = 'none';
+  document.getElementById('startBtn').style.display = 'block';
+  document.getElementById('betAmt').disabled = false;
+  document.getElementById('minesCount').disabled = false;
+
+  if (!won && !cancelled) {
+    Casino.recordBet('mines', currentBet, 0);
+    gamesPlayed++;
+    updateStatsUI(Casino.getBalance());
+    flashResult(`Lost ${Casino.fmt(currentBet)}`, false);
+  }
+
+  // Disable all tiles
+  for (let i = 0; i < 25; i++) {
+    const tile = document.getElementById('tile-' + i);
+    if (tile) tile.classList.add('disabled');
+  }
+
+  Casino.updateBalance();
+}
+
+function updateInfoBar(gemsFound) {
+  const profit = Math.round((currentBet * currentMult - currentBet) * 100) / 100;
+  document.getElementById('multDisplay').innerHTML = `${currentMult.toFixed(2)}×<span>multiplier</span>`;
+  document.getElementById('profitDisplay').textContent = `Profit: ${Casino.fmt(profit >= 0 ? profit : 0)}`;
+  document.getElementById('gemsCount').textContent = `${gemsFound} gem${gemsFound !== 1 ? 's' : ''} found`;
+}
+
+function flashResult(msg, won) {
+  const el = document.getElementById('profitDisplay');
+  el.textContent = msg;
+  el.style.color = won ? 'var(--green)' : 'var(--red)';
+  setTimeout(() => { el.style.color = ''; }, 2000);
+}
+
+function updateStatsUI(bal) {
+  document.getElementById('st-balance').textContent = Casino.fmt(bal);
+  document.getElementById('st-played').textContent = gamesPlayed;
+  document.getElementById('st-won').textContent = gamesWon;
+  document.getElementById('st-bestmult').textContent = bestMult > 0 ? bestMult.toFixed(2) + '×' : '—';
+}
+
+function qBet(v) {
+  if (!gameActive) document.getElementById('betAmt').value = Math.min(v, Casino.getBalance());
+}
+
+// Init
+const p = Casino.getProfile();
+const ms = p.stats.mines;
+gamesPlayed = ms.played; gamesWon = ms.won;
+document.getElementById('st-balance').textContent = Casino.fmt(p.balance);
+document.getElementById('st-played').textContent = gamesPlayed;
+document.getElementById('st-won').textContent = gamesWon;
+buildGrid();
+</script>
+</body>
+</html>

@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dice — Obsidian Casino</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<script src="casino-core.js"></script>
+<script>Casino.renderSidebar('dice');</script>
+
+<main class="casino-main">
+<div class="game-page" style="max-width:700px">
+
+  <div class="stats-row">
+    <div class="stat-box"><div class="sv" id="st-balance">$5,000</div><div class="sl">Balance</div></div>
+    <div class="stat-box"><div class="sv" id="st-played">0</div><div class="sl">Rolls</div></div>
+    <div class="stat-box"><div class="sv" id="st-won">0</div><div class="sl">Wins</div></div>
+    <div class="stat-box"><div class="sv" id="st-net" style="color:var(--text2)">$0</div><div class="sl">Session P/L</div></div>
+  </div>
+
+  <div class="dice-game">
+    <!-- VISUAL -->
+    <div class="dice-visual">
+      <div class="dice-svg-wrap">
+        <svg id="diceSvg" viewBox="0 0 120 120" fill="none" width="120" height="120">
+          <rect x="10" y="10" width="100" height="100" rx="20" fill="var(--bg3)" stroke="var(--border2)" stroke-width="2"/>
+          <g id="diceDots"></g>
+        </svg>
+      </div>
+      <div class="dice-result-num" id="diceResultNum">?</div>
+      <div style="font-size:0.75rem;color:var(--text3);text-align:center" id="diceResultLabel">Roll the dice!</div>
+
+      <!-- range bar -->
+      <div style="width:100%">
+        <div style="display:flex;justify-content:space-between;font-size:0.7rem;color:var(--text3);margin-bottom:4px">
+          <span>0</span><span id="targetLabel">50</span><span>100</span>
+        </div>
+        <div class="dice-range-bar">
+          <div class="dice-range-fill" id="rangeFill" style="width:50%"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:0.65rem;color:var(--text3);margin-top:3px">
+          <span id="loseZone">LOSE</span>
+          <span id="winZone">WIN</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTROLS -->
+    <div class="dice-controls">
+      <div class="dice-mode-toggle">
+        <button class="dice-mode-btn active" id="modeOver" onclick="setMode('over',this)">Roll Over</button>
+        <button class="dice-mode-btn" id="modeUnder" onclick="setMode('under',this)">Roll Under</button>
+      </div>
+
+      <div class="bet-label">TARGET NUMBER (0–100)</div>
+      <div class="dice-target-row">
+        <button style="background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:0 14px;border-radius:8px;font-weight:700;font-size:1.2rem;height:46px" onclick="adjTarget(-1)">−</button>
+        <input type="number" class="dice-target-input" id="targetInput" value="50" min="1" max="98" oninput="updateOdds()">
+        <button style="background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:0 14px;border-radius:8px;font-weight:700;font-size:1.2rem;height:46px" onclick="adjTarget(1)">+</button>
+      </div>
+
+      <div class="odds-display">
+        <div class="odds-box"><div class="ov" id="winChance">50.0%</div><div class="ol">Win Chance</div></div>
+        <div class="odds-box"><div class="ov" id="payoutMult">1.98×</div><div class="ol">Payout</div></div>
+      </div>
+
+      <div class="bet-label">BET AMOUNT</div>
+      <div style="display:flex;gap:8px;margin-bottom:10px;align-items:center">
+        <div class="bet-input-wrap">
+          <div class="bet-currency">$</div>
+          <input type="number" id="betAmt" value="10" min="1" step="1">
+        </div>
+        <button class="bet-half" onclick="adjBet(0.5)">½</button>
+        <button class="bet-double" onclick="adjBet(2)">×2</button>
+      </div>
+      <div class="bet-quick" style="margin-bottom:12px">
+        <button onclick="qBet(5)">$5</button>
+        <button onclick="qBet(10)">$10</button>
+        <button onclick="qBet(25)">$25</button>
+        <button onclick="qBet(100)">$100</button>
+      </div>
+      <button class="btn-primary" id="rollBtn" onclick="rollDice()">ROLL DICE</button>
+    </div>
+  </div>
+
+  <!-- HISTORY -->
+  <div style="margin-top:16px">
+    <div class="section-title">ROLL HISTORY</div>
+    <div id="rollHistory" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+  </div>
+
+</div>
+</main>
+
+<script>
+let mode = 'over'; // over or under
+let rolling = false;
+let rollsPlayed = 0, rollsWon = 0;
+let sessionNet = 0;
+const rollHistory = [];
+
+const DOT_POS = {
+  1: [[60,60]],
+  2: [[35,35],[85,85]],
+  3: [[35,35],[60,60],[85,85]],
+  4: [[35,35],[85,35],[35,85],[85,85]],
+  5: [[35,35],[85,35],[60,60],[35,85],[85,85]],
+  6: [[35,32],[85,32],[35,60],[85,60],[35,88],[85,88]],
+};
+
+function renderDiceFace(value) {
+  const dots = DOT_POS[value] || [];
+  const g = document.getElementById('diceDots');
+  if (g) g.innerHTML = dots.map(([x,y]) => `<circle cx="${x}" cy="${y}" r="7" fill="var(--text)"/>`).join('');
+}
+
+function setMode(m, btn) {
+  mode = m;
+  document.querySelectorAll('.dice-mode-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  updateOdds();
+}
+
+function adjTarget(delta) {
+  const el = document.getElementById('targetInput');
+  const v = Math.max(1, Math.min(98, (parseInt(el.value) || 50) + delta));
+  el.value = v;
+  updateOdds();
+}
+
+function updateOdds() {
+  const target = parseInt(document.getElementById('targetInput').value) || 50;
+  document.getElementById('targetLabel').textContent = target;
+  let chance;
+  if (mode === 'over') {
+    chance = (100 - target) / 100;
+    document.getElementById('winZone').textContent = 'WIN >' + target;
+    document.getElementById('loseZone').textContent = 'LOSE';
+    document.getElementById('rangeFill').style.left = (target) + '%';
+    document.getElementById('rangeFill').style.width = (100 - target) + '%';
+  } else {
+    chance = target / 100;
+    document.getElementById('winZone').textContent = 'WIN <' + target;
+    document.getElementById('loseZone').textContent = 'LOSE';
+    document.getElementById('rangeFill').style.left = '0';
+    document.getElementById('rangeFill').style.width = target + '%';
+  }
+  const payout = chance > 0 ? (0.99 / chance) : 0;
+  document.getElementById('winChance').textContent = (chance * 100).toFixed(1) + '%';
+  document.getElementById('payoutMult').textContent = payout.toFixed(2) + '×';
+}
+
+function rollDice() {
+  if (rolling) return;
+  const bet = Math.max(1, parseInt(document.getElementById('betAmt').value) || 10);
+  const target = parseInt(document.getElementById('targetInput').value) || 50;
+  const bal = Casino.getBalance();
+  if (bet > bal) return;
+
+  rolling = true;
+  document.getElementById('rollBtn').disabled = true;
+
+  const result = Math.floor(Math.random() * 100) + 1;
+  const isWin = mode === 'over' ? result > target : result < target;
+  const payout = parseFloat(document.getElementById('payoutMult').textContent);
+  const returned = isWin ? Math.round(bet * payout * 100) / 100 : 0;
+
+  // Animate dice
+  let frames = 0;
+  const interval = setInterval(() => {
+    renderDiceFace(Math.floor(Math.random() * 6) + 1);
+    frames++;
+    if (frames >= 12) {
+      clearInterval(interval);
+      const displayFace = Math.max(1, Math.min(6, Math.round(result / 100 * 6)));
+      renderDiceFace(displayFace);
+      onRollComplete(result, bet, returned, isWin);
+      rolling = false;
+      document.getElementById('rollBtn').disabled = false;
+    }
+  }, 60);
+}
+
+function onRollComplete(result, bet, returned, isWin) {
+  const newBal = Casino.recordBet('dice', bet, returned);
+  rollsPlayed++;
+  if (isWin) rollsWon++;
+  sessionNet += returned - bet;
+
+  document.getElementById('diceResultNum').textContent = result;
+  document.getElementById('diceResultNum').style.color = isWin ? 'var(--green)' : 'var(--red)';
+  document.getElementById('diceResultLabel').textContent = isWin ? `WIN +${Casino.fmt(returned - bet)}` : `LOST ${Casino.fmt(bet)}`;
+  document.getElementById('diceResultLabel').style.color = isWin ? 'var(--green)' : 'var(--red)';
+
+  document.getElementById('st-balance').textContent = Casino.fmt(newBal);
+  document.getElementById('st-played').textContent = rollsPlayed;
+  document.getElementById('st-won').textContent = rollsWon;
+  document.getElementById('st-net').textContent = Casino.fmt(sessionNet);
+  document.getElementById('st-net').style.color = sessionNet >= 0 ? 'var(--green)' : 'var(--red)';
+
+  rollHistory.unshift({ result, isWin });
+  if (rollHistory.length > 20) rollHistory.pop();
+  renderHistory();
+  Casino.updateBalance();
+}
+
+function renderHistory() {
+  document.getElementById('rollHistory').innerHTML = rollHistory.map(r =>
+    `<div style="width:34px;height:34px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;background:${r.isWin ? 'rgba(0,199,77,0.15)' : 'rgba(241,50,63,0.15)'};color:${r.isWin ? 'var(--green)' : 'var(--red)'};border:1px solid ${r.isWin ? 'rgba(0,199,77,0.3)' : 'rgba(241,50,63,0.3)'}">${r.result}</div>`
+  ).join('');
+}
+
+function adjBet(mult) {
+  const el = document.getElementById('betAmt');
+  el.value = Math.max(1, Math.min(Math.round(parseFloat(el.value) * mult), Casino.getBalance()));
+}
+
+function qBet(v) { document.getElementById('betAmt').value = Math.min(v, Casino.getBalance()); }
+
+// Init
+const p = Casino.getProfile();
+const ds = p.stats.dice;
+rollsPlayed = ds.played; rollsWon = ds.won;
+document.getElementById('st-balance').textContent = Casino.fmt(p.balance);
+document.getElementById('st-played').textContent = rollsPlayed;
+document.getElementById('st-won').textContent = rollsWon;
+renderDiceFace(1);
+updateOdds();
+</script>
+</body>
+</html>

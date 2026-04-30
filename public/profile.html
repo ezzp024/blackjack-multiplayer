@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profile — Obsidian Casino</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<script src="casino-core.js"></script>
+<script>Casino.renderSidebar('profile');</script>
+
+<main class="casino-main">
+<div class="game-page" style="max-width:900px">
+
+  <div class="profile-grid">
+    <!-- LEFT: PROFILE CARD -->
+    <div>
+      <div class="profile-card" style="margin-bottom:16px">
+        <div class="profile-avatar-big" id="avatarBig">P</div>
+        <div class="profile-name" id="profileName">Player</div>
+        <div class="profile-balance" id="profileBalance">$5,000</div>
+
+        <div class="profile-name-edit">
+          <input id="nameInput" placeholder="New name" maxlength="20">
+          <button onclick="saveName()">Save</button>
+        </div>
+
+        <button class="refill-btn" onclick="doRefill()" style="width:100%;padding:10px">+ Get $1,000 Free</button>
+      </div>
+
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:20px">
+        <div class="bet-label" style="margin-bottom:12px">ACCOUNT</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;justify-content:space-between;font-size:0.85rem">
+            <span style="color:var(--text2)">Member since</span>
+            <span id="memberSince" style="font-weight:600">—</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:0.85rem">
+            <span style="color:var(--text2)">Total wagered</span>
+            <span id="totalWagered" style="font-weight:600">$0</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:0.85rem">
+            <span style="color:var(--text2)">Total returned</span>
+            <span id="totalReturned" style="font-weight:600">$0</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:0.85rem">
+            <span style="color:var(--text2)">All-time P/L</span>
+            <span id="allTimePL" style="font-weight:700">$0</span>
+          </div>
+        </div>
+        <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border)">
+          <button onclick="if(confirm('Reset all data?'))resetAll()" style="background:none;border:1px solid rgba(241,50,63,0.3);color:var(--red);padding:8px 16px;border-radius:8px;font-size:0.78rem;font-weight:700;width:100%;cursor:pointer;transition:background 0.2s" onmouseover="this.style.background='rgba(241,50,63,0.1)'" onmouseout="this.style.background='none'">Reset All Data</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: STATS -->
+    <div>
+      <div class="game-stats-table" style="margin-bottom:16px">
+        <div class="gst-header">GAME STATS</div>
+        <div class="gst-row header">
+          <span>Game</span><span style="text-align:right">Played</span><span style="text-align:right">Win Rate</span><span style="text-align:right">Wagered</span><span style="text-align:right">P/L</span>
+        </div>
+        <div id="gameStatsBody"></div>
+      </div>
+
+      <div class="activity-feed">
+        <div class="activity-feed-header">RECENT HISTORY (last 20)</div>
+        <div id="historyList"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</main>
+
+<script>
+const gameNames = { blackjack: 'Blackjack', slots: 'Slots', roulette: 'Roulette', mines: 'Mines', dice: 'Dice' };
+
+function loadProfile() {
+  const p = Casino.getProfile();
+  document.getElementById('avatarBig').textContent = p.name[0].toUpperCase();
+  document.getElementById('profileName').textContent = p.name;
+  document.getElementById('profileBalance').textContent = Casino.fmt(p.balance);
+  document.getElementById('nameInput').value = p.name;
+
+  const ms = new Date(p.createdAt);
+  document.getElementById('memberSince').textContent = ms.toLocaleDateString();
+
+  let totalW = 0, totalR = 0;
+  Object.values(p.stats).forEach(s => { totalW += s.wagered; totalR += s.returned; });
+  document.getElementById('totalWagered').textContent = Casino.fmt(totalW);
+  document.getElementById('totalReturned').textContent = Casino.fmt(totalR);
+  const pl = totalR - totalW;
+  document.getElementById('allTimePL').textContent = Casino.fmt(pl);
+  document.getElementById('allTimePL').style.color = pl >= 0 ? 'var(--green)' : 'var(--red)';
+
+  // Game stats
+  const body = document.getElementById('gameStatsBody');
+  body.innerHTML = Object.entries(p.stats).map(([key, s]) => {
+    const wr = s.played > 0 ? ((s.won / s.played) * 100).toFixed(1) + '%' : '—';
+    const pl2 = s.returned - s.wagered;
+    return `<div class="gst-row">
+      <span class="gst-game">${gameNames[key] || key}</span>
+      <span style="text-align:right;color:var(--text2)">${s.played}</span>
+      <span style="text-align:right;color:var(--text2)">${wr}</span>
+      <span style="text-align:right;color:var(--text2)">${Casino.fmt(s.wagered)}</span>
+      <span style="text-align:right" class="${pl2 >= 0 ? 'gst-pos' : 'gst-neg'}">${pl2 >= 0 ? '+' : ''}${Casino.fmt(pl2)}</span>
+    </div>`;
+  }).join('');
+
+  // History
+  const hist = document.getElementById('historyList');
+  if (!p.history.length) {
+    hist.innerHTML = '<div class="no-activity">No history yet.</div>';
+    return;
+  }
+  hist.innerHTML = p.history.slice(0, 20).map(h => {
+    const pos = h.net >= 0;
+    return `<div class="activity-item">
+      <span class="activity-game">${gameNames[h.game] || h.game}</span>
+      <span class="activity-time">${Casino.timeAgo(h.ts)}</span>
+      <span class="activity-net ${pos ? 'pos' : 'neg'}">${pos ? '+' : ''}${Casino.fmt(h.net)}</span>
+    </div>`;
+  }).join('');
+}
+
+function saveName() {
+  const name = document.getElementById('nameInput').value.trim();
+  if (!name) return;
+  Casino.setName(name);
+  loadProfile();
+  Casino.renderSidebar('profile');
+  // Re-add the sidebar (since renderSidebar inserts it)
+  location.reload();
+}
+
+function doRefill() {
+  Casino.refill();
+  loadProfile();
+  Casino.updateBalance();
+}
+
+function resetAll() {
+  localStorage.removeItem('obsidianCasino_v2');
+  location.reload();
+}
+
+loadProfile();
+</script>
+</body>
+</html>

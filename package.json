@@ -1,0 +1,18 @@
+{
+  "name": "blackjack-multiplayer",
+  "version": "1.0.0",
+  "description": "Multiplayer Blackjack game for friends",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": ["blackjack", "card-game", "multiplayer"],
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}

@@ -1,14 +1,14 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Blackjack — Obsidian Casino</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="/styles.css">
   <script src="/socket.io/socket.io.js"></script>
 </head>
 <body>
-<script src="casino-core.js"></script>
+<script src="/casino-core.js"></script>
 <script>Casino.renderSidebar('blackjack');Casino.requireAuth();</script>
 
 <main class="casino-main">
@@ -21,13 +21,13 @@
           <svg width="48" height="48" viewBox="0 0 48 48" fill="none" style="margin-bottom:12px">
             <rect x="4" y="3" width="22" height="32" rx="3" fill="white" opacity="0.95"/>
             <text x="8" y="16" font-size="10" font-weight="900" fill="#111" font-family="Georgia,serif">A</text>
-            <text x="15" y="26" font-size="14" text-anchor="middle" fill="#111" font-family="Georgia,serif">♠</text>
+            <text x="15" y="26" font-size="14" text-anchor="middle" fill="#111" font-family="Georgia,serif">â™ </text>
             <rect x="22" y="11" width="22" height="32" rx="3" fill="white" opacity="0.9"/>
             <text x="26" y="24" font-size="10" font-weight="900" fill="#c62828" font-family="Georgia,serif">K</text>
-            <text x="33" y="34" font-size="14" text-anchor="middle" fill="#c62828" font-family="Georgia,serif">♥</text>
+            <text x="33" y="34" font-size="14" text-anchor="middle" fill="#c62828" font-family="Georgia,serif">â™¥</text>
           </svg>
           <div style="font-size:1.4rem;font-weight:900;letter-spacing:2px">BLACKJACK</div>
-          <div style="font-size:0.8rem;color:var(--text3);margin-top:4px">Multiplayer · Up to 6 players</div>
+          <div style="font-size:0.8rem;color:var(--text3);margin-top:4px">Multiplayer Â· Up to 6 players</div>
         </div>
 
         <div class="tab-row">
@@ -57,7 +57,7 @@
           <div style="font-size:0.7rem;color:var(--text3);letter-spacing:3px;margin-bottom:8px">ROOM CODE</div>
           <div class="room-code-box" onclick="copyCode()">
             <div class="room-code-val" id="roomCodeDisplay">------</div>
-            <div class="room-code-hint">Tap to copy · Share with friends</div>
+            <div class="room-code-hint">Tap to copy Â· Share with friends</div>
           </div>
         </div>
 
@@ -121,8 +121,8 @@
               <div class="bet-currency">$</div>
               <input type="number" id="betInput" value="100" min="10" step="10" style="width:80px">
             </div>
-            <button class="bet-half" onclick="halveBet()">½</button>
-            <button class="bet-double" onclick="doubleBet()">×2</button>
+            <button class="bet-half" onclick="halveBet()">Â½</button>
+            <button class="bet-double" onclick="doubleBet()">Ã—2</button>
           </div>
           <div class="bj-chips-row" id="chipsRow">
             <button class="bj-chip bj-c10" onclick="setBet(10)">10</button>
@@ -240,7 +240,7 @@ function showLobby(state) {
   const listEl = document.getElementById('lobbyPlayerList');
   listEl.innerHTML = state.players.map(p =>
     `<div class="lobby-player-row">
-      <span class="lpr-name">${p.isHost ? '👑 ' : ''}${p.name}</span>
+      <span class="lpr-name">${p.isHost ? 'ðŸ‘‘ ' : ''}${p.name}</span>
       <span class="lpr-chips" style="color:var(--text3);font-size:0.78rem">$${p.chips}</span>
       ${p.ready ? '<span class="lpr-ready">READY</span>' : '<span style="font-size:0.75rem;color:var(--text3)">waiting</span>'}
     </div>`
@@ -410,7 +410,7 @@ function cval(c) {
 
 function renderCard(card, hidden = false, small = false) {
   if (hidden) return `<div class="playing-card${small?' small':''}"><div class="pcard-face hidden-card"></div></div>`;
-  const red = card.suit === '♥' || card.suit === '♦';
+  const red = card.suit === 'â™¥' || card.suit === 'â™¦';
   return `<div class="playing-card ${red ? 'red' : 'black'}${small?' small':''}">
     <div class="pcard-face">
       <div class="pcard-tl">${card.rank}<br>${card.suit}</div>
@@ -422,3 +422,4 @@ function renderCard(card, hidden = false, small = false) {
 </script>
 </body>
 </html>
+

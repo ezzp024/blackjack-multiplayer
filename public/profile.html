@@ -1,13 +1,13 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Profile — Obsidian Casino</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-<script src="casino-core.js"></script>
+<script src="/casino-core.js"></script>
 <script>Casino.renderSidebar('profile');Casino.requireAuth();</script>
 
 <main class="casino-main">
@@ -76,7 +76,7 @@
 </main>
 
 <script>
-const gameNames = { blackjack: 'Blackjack', slots: 'Slots', roulette: 'Roulette', mines: 'Mines', dice: 'Dice' };
+const gameNames = { blackjack: 'Blackjack', slots: 'Slots', roulette: 'Roulette', mines: 'Mines', dice: 'Dice', crash: 'Crash', plinko: 'Plinko' };
 
 function loadProfile() {
   const p = Casino.getProfile();
@@ -136,10 +136,9 @@ function saveName() {
   location.reload();
 }
 
-function doRefill() {
-  Casino.refill();
+async function doRefill() {
+  await Casino.refill();
   loadProfile();
-  Casino.updateBalance();
 }
 
 function resetAll() {
@@ -151,3 +150,4 @@ loadProfile();
 </script>
 </body>
 </html>
+

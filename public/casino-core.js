@@ -150,11 +150,18 @@ const Casino = (() => {
     }).catch(() => { window.location.href = '/login'; });
   }
 
-  function refill() {
-    const p = load();
-    p.balance += 1000;
-    save(p);
-    return p.balance;
+  async function refill() {
+    try {
+      const r = await fetch('/api/refill', { method: 'POST' });
+      if (r.ok) {
+        const d = await r.json();
+        syncBalance(d.balance);
+        return d.balance;
+      }
+      const err = await r.json().catch(() => ({}));
+      alert(err.error || 'Cannot refill right now');
+    } catch { alert('Cannot refill right now'); }
+    return load().balance;
   }
 
   function fmt(n) {

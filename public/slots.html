@@ -1,239 +1,460 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Slots — Obsidian Casino</title>
-  <link rel="stylesheet" href="styles.css">
+  <title>Blue Samurai — Obsidian Casino</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+  <style>
+    .samurai-bg{position:fixed;inset:0;z-index:-1;background:#04060e;overflow:hidden}
+    .samurai-bg-moon{position:absolute;top:8%;right:12%;width:140px;height:140px;border-radius:50%;background:radial-gradient(circle,rgba(240,220,180,0.12) 0%,rgba(240,220,180,0.04) 50%,transparent 70%)}
+    .samurai-bg-mountains{position:absolute;bottom:0;left:0;right:0;height:35%;background:linear-gradient(180deg,transparent 0%,rgba(10,5,20,0.8) 40%,#04060e 100%)}
+    .sakura{position:absolute;pointer-events:none;animation:sakuraFall linear infinite;opacity:0.6}
+    @keyframes sakuraFall{0%{transform:translateY(-20px) rotate(0deg) translateX(0);opacity:0}10%{opacity:0.6}90%{opacity:0.3}100%{transform:translateY(100vh) rotate(720deg) translateX(var(--sx));opacity:0}}
+    .samurai-wrap{max-width:680px;margin:0 auto;padding:24px 16px}
+    /* Header */
+    .bs-header{text-align:center;margin-bottom:24px;position:relative}
+    .bs-logo-row{display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:4px}
+    .bs-logo-icon{width:48px;height:48px;background:rgba(180,10,40,0.15);border:1px solid rgba(220,50,60,0.3);border-radius:12px;display:flex;align-items:center;justify-content:center}
+    .bs-title{font-size:1.6rem;font-weight:900;letter-spacing:4px;background:linear-gradient(135deg,#ffd700,#ff8c00,#dc143c);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .bs-subtitle{font-size:0.7rem;color:#4a3020;letter-spacing:4px;text-transform:uppercase;font-weight:700}
+    /* Machine frame */
+    .slot-machine-frame{background:linear-gradient(180deg,#0a0510,#060310);border:2px solid rgba(180,130,50,0.2);border-radius:20px;padding:20px;margin-bottom:16px;position:relative;overflow:hidden}
+    .slot-machine-frame::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(220,160,50,0.04) 0%,transparent 40%)}
+    /* Decorative border corners */
+    .corner{position:absolute;width:30px;height:30px}
+    .corner-tl{top:8px;left:8px;border-top:2px solid rgba(220,160,50,0.4);border-left:2px solid rgba(220,160,50,0.4)}
+    .corner-tr{top:8px;right:8px;border-top:2px solid rgba(220,160,50,0.4);border-right:2px solid rgba(220,160,50,0.4)}
+    .corner-bl{bottom:8px;left:8px;border-bottom:2px solid rgba(220,160,50,0.4);border-left:2px solid rgba(220,160,50,0.4)}
+    .corner-br{bottom:8px;right:8px;border-bottom:2px solid rgba(220,160,50,0.4);border-right:2px solid rgba(220,160,50,0.4)}
+    /* Reels */
+    .reels-outer{background:#020208;border:1px solid rgba(180,130,50,0.3);border-radius:12px;padding:10px;margin-bottom:14px;position:relative}
+    .payline{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);height:2px;background:linear-gradient(90deg,transparent,rgba(220,180,50,0.6),rgba(255,220,80,0.8),rgba(220,180,50,0.6),transparent);pointer-events:none;z-index:5}
+    .payline-end{position:absolute;top:50%;transform:translateY(-50%);width:14px;height:14px;border:2px solid rgba(255,220,80,0.6);border-radius:50%;background:rgba(255,220,80,0.1)}
+    .payline-end-left{left:4px}
+    .payline-end-right{right:4px}
+    .reels-row{display:flex;gap:6px;justify-content:center}
+    .reel-col{flex:1;max-width:160px;height:200px;overflow:hidden;border-radius:8px;background:#030508;border:1px solid rgba(255,255,255,0.04)}
+    .reel-strip{display:flex;flex-direction:column;gap:0;transition:transform 0.6s cubic-bezier(0.25,0.46,0.45,0.94)}
+    .symbol-cell{height:200px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .symbol-cell svg{width:80%;height:80%;max-width:120px;max-height:120px}
+    /* Win flash */
+    .reel-col.winner{box-shadow:0 0 20px rgba(255,220,80,0.6),inset 0 0 15px rgba(255,220,80,0.1);border-color:rgba(255,220,80,0.5);animation:reelGlow 0.4s ease 3}
+    @keyframes reelGlow{0%,100%{box-shadow:0 0 10px rgba(255,220,80,0.3)}50%{box-shadow:0 0 30px rgba(255,220,80,0.8),inset 0 0 20px rgba(255,220,80,0.2)}}
+    /* Result message */
+    .slot-msg{text-align:center;font-size:1rem;font-weight:900;letter-spacing:2px;min-height:32px;padding:6px 0}
+    /* Paytable */
+    .paytable-row{display:flex;justify-content:space-between;padding:6px 12px;border-bottom:1px solid rgba(255,255,255,0.04);font-size:0.75rem}
+    .paytable-row:last-child{border-bottom:none}
+    .paytable-row .sym-name{color:#8ea3b1;font-weight:600}
+    .paytable-row .sym-payout{color:#f0c040;font-weight:800}
+    /* Controls */
+    .controls-card{background:#0a0510;border:1px solid rgba(180,130,50,0.2);border-radius:16px;padding:18px}
+    .ctrl-label{font-size:0.62rem;font-weight:800;color:#3d2a10;text-transform:uppercase;letter-spacing:2px;margin-bottom:7px}
+    .bet-input-row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+    .bet-inp{flex:1;background:#060310;border:1px solid rgba(180,130,50,0.2);border-radius:8px;color:#fff;font-size:1rem;font-weight:700;padding:10px 12px;outline:none;font-family:inherit}
+    .bet-inp:focus{border-color:rgba(220,180,50,0.5)}
+    .bet-adj{background:#160a08;border:1px solid rgba(180,100,30,0.2);color:#8ea3b1;border-radius:6px;padding:8px 12px;font-size:0.78rem;font-weight:700;cursor:pointer;transition:all 0.15s}
+    .bet-adj:hover{background:#200d0a;color:#f0c040}
+    .bet-presets{display:flex;gap:6px;margin-bottom:14px}
+    .bet-presets button{flex:1;background:#060310;border:1px solid rgba(180,100,30,0.15);color:#4a3020;border-radius:6px;padding:6px 0;font-size:0.72rem;font-weight:700;cursor:pointer;transition:all 0.15s}
+    .bet-presets button:hover{background:#120807;color:#f0c040;border-color:rgba(220,160,50,0.3)}
+    .spin-btn{width:100%;padding:15px;background:linear-gradient(135deg,#b8000a,#dc143c,#ff2040);border:none;border-radius:12px;color:#fff;font-size:1rem;font-weight:900;cursor:pointer;letter-spacing:2px;transition:all 0.15s;text-transform:uppercase;position:relative;overflow:hidden;border-top:1px solid rgba(255,120,120,0.3)}
+    .spin-btn::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,0.08) 0%,transparent 50%);pointer-events:none}
+    .spin-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 6px 24px rgba(220,20,60,0.5)}
+    .spin-btn:disabled{opacity:0.4;cursor:not-allowed;transform:none}
+    /* Stats */
+    .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px}
+    .stat-card-mini{background:#0a0510;border:1px solid rgba(180,130,50,0.12);border-radius:10px;padding:10px;text-align:center}
+    .stat-card-mini .sv{font-size:1rem;font-weight:800;color:#fff}
+    .stat-card-mini .sl{font-size:0.6rem;color:#3d2a10;text-transform:uppercase;letter-spacing:1.5px;margin-top:2px}
+    /* Win kanji flash */
+    .kanji-win{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);font-size:8rem;font-weight:900;color:rgba(255,220,80,0.9);z-index:9999;pointer-events:none;animation:kanjiPop 0.8s ease forwards;text-shadow:0 0 60px rgba(255,180,0,0.8)}
+    @keyframes kanjiPop{0%{transform:translate(-50%,-50%) scale(0.3);opacity:0}40%{transform:translate(-50%,-50%) scale(1.2);opacity:1}70%{transform:translate(-50%,-50%) scale(0.95)}100%{transform:translate(-50%,-50%) scale(1);opacity:0}}
+  </style>
 </head>
 <body>
-<script src="casino-core.js"></script>
+<div class="samurai-bg">
+  <div class="samurai-bg-moon"></div>
+  <div class="samurai-bg-mountains"></div>
+</div>
+<script src="/casino-core.js"></script>
 <script>Casino.renderSidebar('slots');Casino.requireAuth();</script>
 
 <main class="casino-main">
-<div class="game-page">
+<div class="samurai-wrap">
 
-  <div class="stats-row" id="slotsStats">
-    <div class="stat-box"><div class="sv" id="st-balance">$5,000</div><div class="sl">Balance</div></div>
-    <div class="stat-box"><div class="sv" id="st-played">0</div><div class="sl">Spins</div></div>
-    <div class="stat-box"><div class="sv" id="st-won">0</div><div class="sl">Wins</div></div>
-    <div class="stat-box"><div class="sv" id="st-bigwin">—</div><div class="sl">Best Win</div></div>
+  <div class="bs-header">
+    <div class="bs-logo-row">
+      <div class="bs-logo-icon">
+        <svg viewBox="0 0 28 28" fill="none" width="28" height="28">
+          <path d="M14 3L18 8H24L20 13L22 20L14 16L6 20L8 13L4 8H10L14 3Z" fill="rgba(220,50,60,0.3)" stroke="#dc3c3c" stroke-width="1.2"/>
+          <line x1="14" y1="16" x2="14" y2="28" stroke="#dc143c" stroke-width="2" stroke-linecap="round"/>
+          <line x1="10" y1="22" x2="18" y2="22" stroke="rgba(220,50,60,0.4)" stroke-width="1.5"/>
+        </svg>
+      </div>
+      <div class="bs-title">BLUE SAMURAI</div>
+    </div>
+    <div class="bs-subtitle">Way of the Warrior Â· 96% RTP</div>
   </div>
 
-  <div class="slot-machine">
-    <div class="slot-title">OBSIDIAN SLOTS</div>
-    <div class="reels-frame">
-      <div class="payline-marker"></div>
-      <div class="reels-container">
-        <div class="reel" id="reel0"><div class="reel-strip" id="strip0"></div></div>
-        <div class="reel" id="reel1"><div class="reel-strip" id="strip1"></div></div>
-        <div class="reel" id="reel2"><div class="reel-strip" id="strip2"></div></div>
+  <div class="stats-row">
+    <div class="stat-card-mini"><div class="sv" id="st-balance">$0</div><div class="sl">Balance</div></div>
+    <div class="stat-card-mini"><div class="sv" id="st-spins">0</div><div class="sl">Spins</div></div>
+    <div class="stat-card-mini"><div class="sv" id="st-wins">0</div><div class="sl">Wins</div></div>
+    <div class="stat-card-mini"><div class="sv" id="st-best">—</div><div class="sl">Best Win</div></div>
+  </div>
+
+  <div class="slot-machine-frame">
+    <div class="corner corner-tl"></div>
+    <div class="corner corner-tr"></div>
+    <div class="corner corner-bl"></div>
+    <div class="corner corner-br"></div>
+
+    <div class="reels-outer">
+      <div class="payline"></div>
+      <div class="payline-end payline-end-left"></div>
+      <div class="payline-end payline-end-right"></div>
+      <div class="reels-row" id="reelsRow">
+        <div class="reel-col" id="reel0"><div class="reel-strip" id="strip0"></div></div>
+        <div class="reel-col" id="reel1"><div class="reel-strip" id="strip1"></div></div>
+        <div class="reel-col" id="reel2"><div class="reel-strip" id="strip2"></div></div>
       </div>
     </div>
-    <div class="slot-result-msg" id="slotMsg">—</div>
+
+    <div class="slot-msg" id="slotMsg" style="color:#8ea3b1">— Spin to begin your path —</div>
   </div>
 
-  <div class="bet-panel">
-    <div class="bet-label">BET AMOUNT</div>
-    <div class="bet-panel-row">
-      <div class="bet-input-wrap">
-        <div class="bet-currency">$</div>
-        <input type="number" id="betAmt" value="10" min="1" step="1">
-      </div>
-      <button class="bet-half" onclick="adjustBet(0.5)">½</button>
-      <button class="bet-double" onclick="adjustBet(2)">×2</button>
+  <div class="controls-card">
+    <div class="ctrl-label">Wager</div>
+    <div class="bet-input-row">
+      <input type="number" class="bet-inp" id="betAmt" value="10" min="1">
+      <button class="bet-adj" onclick="adjBet(0.5)">Â½</button>
+      <button class="bet-adj" onclick="adjBet(2)">2Ã—</button>
     </div>
-    <div class="bet-quick">
-      <button onclick="setBetAmt(5)">$5</button>
-      <button onclick="setBetAmt(10)">$10</button>
-      <button onclick="setBetAmt(25)">$25</button>
-      <button onclick="setBetAmt(50)">$50</button>
-      <button onclick="setBetAmt(100)">$100</button>
+    <div class="bet-presets">
+      <button onclick="sb(5)">$5</button>
+      <button onclick="sb(10)">$10</button>
+      <button onclick="sb(25)">$25</button>
+      <button onclick="sb(50)">$50</button>
+      <button onclick="sb(100)">$100</button>
     </div>
-    <div style="margin-top:14px">
-      <button class="btn-primary" id="spinBtn" onclick="spin()">SPIN</button>
-    </div>
+    <button class="spin-btn" id="spinBtn" onclick="spin()">
+      <svg viewBox="0 0 20 20" fill="none" width="18" height="18" style="display:inline-block;vertical-align:middle;margin-right:8px"><path d="M10 3a7 7 0 0 1 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M17 3l0 7-7 0" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      SPIN
+    </button>
   </div>
 
-  <div style="margin-top:16px">
-    <div class="section-title">PAYTABLE</div>
-    <div class="paytable-grid" id="paytableGrid"></div>
+  <!-- Paytable -->
+  <div style="background:#0a0510;border:1px solid rgba(180,130,50,0.15);border-radius:12px;margin-top:14px;overflow:hidden">
+    <div style="padding:10px 14px;border-bottom:1px solid rgba(180,100,30,0.15);font-size:0.65rem;font-weight:800;color:#3d2a10;text-transform:uppercase;letter-spacing:2px">Paytable Â· 3 of a Kind</div>
+    <div id="paytable"></div>
   </div>
-
 </div>
 </main>
 
 <script>
-const SYMS = Casino.SLOT_SYMBOLS;
-const CELL_H = 80;
-let spinning = false;
-let bestWin = 0;
-let spinsPlayed = 0, winsCount = 0;
+// Blue Samurai symbols with Japanese-themed SVGs
+const SYMBOLS = [
+  {
+    id: 'dragon', label: 'Dragon', color: '#dc143c', weight: 1, p3: 200,
+    svg: `<svg viewBox="0 0 80 80" fill="none">
+      <defs><radialGradient id="dr" cx="40%" cy="30%" r="60%"><stop stop-color="#ff4060"/><stop offset="1" stop-color="#8b0000"/></radialGradient></defs>
+      <ellipse cx="40" cy="42" rx="22" ry="16" fill="url(#dr)"/>
+      <path d="M28 38 Q20 28 24 18 Q28 10 36 14" fill="none" stroke="#ff6080" stroke-width="2.5" stroke-linecap="round"/>
+      <path d="M52 38 Q60 28 56 18 Q52 10 44 14" fill="none" stroke="#ff6080" stroke-width="2.5" stroke-linecap="round"/>
+      <ellipse cx="33" cy="36" rx="5" ry="7" fill="#ff2040" stroke="rgba(255,200,200,0.3)" stroke-width="0.5"/>
+      <ellipse cx="47" cy="36" rx="5" ry="7" fill="#ff2040" stroke="rgba(255,200,200,0.3)" stroke-width="0.5"/>
+      <circle cx="33" cy="35" r="3" fill="#1a0008"/>
+      <circle cx="47" cy="35" r="3" fill="#1a0008"/>
+      <circle cx="34" cy="34" r="1" fill="rgba(255,100,100,0.8)"/>
+      <circle cx="48" cy="34" r="1" fill="rgba(255,100,100,0.8)"/>
+      <path d="M32 50 Q40 57 48 50" fill="none" stroke="#ff6080" stroke-width="2" stroke-linecap="round"/>
+      <path d="M36 53 L38 60 L40 53 L42 60 L44 53" fill="none" stroke="#ff4060" stroke-width="1.5" stroke-linecap="round"/>
+      <path d="M24 18 Q18 12 22 6" fill="none" stroke="#ff4060" stroke-width="2" stroke-linecap="round"/>
+      <path d="M56 18 Q62 12 58 6" fill="none" stroke="#ff4060" stroke-width="2" stroke-linecap="round"/>
+    </svg>`
+  },
+  {
+    id: 'katana', label: 'Katana', color: '#c0c8e0', weight: 2, p3: 100,
+    svg: `<svg viewBox="0 0 80 80" fill="none">
+      <defs><linearGradient id="kg" x1="0" y1="0.5" x2="1" y2="0.5"><stop stop-color="#e8edf8"/><stop offset="0.6" stop-color="#a0b0c8"/><stop offset="1" stop-color="#606880"/></linearGradient></defs>
+      <rect x="12" y="37" width="54" height="6" rx="3" fill="url(#kg)"/>
+      <rect x="12" y="38" width="50" height="2" rx="1" fill="rgba(255,255,255,0.6)"/>
+      <rect x="58" y="35" width="12" height="10" rx="2" fill="#8b7355" stroke="rgba(255,200,100,0.4)" stroke-width="0.5"/>
+      <path d="M64 35 L70 40 L64 45 Z" fill="rgba(255,200,100,0.15)"/>
+      <rect x="62" y="37" width="4" height="6" rx="1" fill="rgba(255,200,100,0.2)"/>
+      <rect x="14" y="36" width="42" height="2" rx="1" fill="rgba(255,255,255,0.3)"/>
+      <path d="M12 40 L14 37 L14 43 Z" fill="#d0d8e8"/>
+    </svg>`
+  },
+  {
+    id: 'torii', label: 'Torii Gate', color: '#e83838', weight: 3, p3: 50,
+    svg: `<svg viewBox="0 0 80 80" fill="none">
+      <defs><linearGradient id="tg" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#ff4040"/><stop offset="1" stop-color="#b81010"/></linearGradient></defs>
+      <rect x="8" y="18" width="64" height="8" rx="4" fill="url(#tg)"/>
+      <rect x="14" y="10" width="52" height="6" rx="3" fill="url(#tg)"/>
+      <path d="M8 18 Q0 16 4 12" fill="none" stroke="#ff4040" stroke-width="3" stroke-linecap="round"/>
+      <path d="M72 18 Q80 16 76 12" fill="none" stroke="#ff4040" stroke-width="3" stroke-linecap="round"/>
+      <rect x="18" y="24" width="8" height="48" rx="4" fill="url(#tg)"/>
+      <rect x="54" y="24" width="8" height="48" rx="4" fill="url(#tg)"/>
+      <rect x="22" y="30" width="36" height="2" rx="1" fill="rgba(255,180,180,0.2)"/>
+    </svg>`
+  },
+  {
+    id: 'koi', label: 'Koi Fish', color: '#ff8c40', weight: 4, p3: 30,
+    svg: `<svg viewBox="0 0 80 80" fill="none">
+      <defs><linearGradient id="kg2" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ff8c00"/><stop offset="1" stop-color="#dc143c"/></linearGradient></defs>
+      <ellipse cx="38" cy="40" rx="22" ry="12" fill="url(#kg2)" transform="rotate(-20 38 40)"/>
+      <path d="M58 34 Q68 38 62 48 Q56 42 58 34Z" fill="#ff6020"/>
+      <ellipse cx="22" cy="44" rx="10" ry="6" fill="#e06010" transform="rotate(-20 22 44)"/>
+      <circle cx="28" cy="36" r="2.5" fill="#1a0a00"/>
+      <circle cx="29" cy="35.5" r="1" fill="rgba(255,200,100,0.8)"/>
+      <path d="M34 36 Q38 33 42 36" fill="none" stroke="rgba(255,200,100,0.4)" stroke-width="1"/>
+      <path d="M34 42 Q38 45 42 42" fill="none" stroke="rgba(255,160,80,0.3)" stroke-width="1"/>
+      <circle cx="36" cy="34" r="1.5" fill="rgba(255,200,100,0.5)"/>
+      <circle cx="44" cy="38" r="1.5" fill="rgba(255,200,100,0.4)"/>
+    </svg>`
+  },
+  {
+    id: 'sakura', label: 'Cherry Blossom', color: '#ff9ab0', weight: 5, p3: 20,
+    svg: `<svg viewBox="0 0 80 80" fill="none">
+      <defs><radialGradient id="sg" cx="50%" cy="50%" r="50%"><stop stop-color="#ffb8c8"/><stop offset="1" stop-color="#e87090"/></radialGradient></defs>
+      <ellipse cx="40" cy="22" rx="10" ry="14" fill="url(#sg)" transform="rotate(0 40 22)"/>
+      <ellipse cx="58" cy="32" rx="10" ry="14" fill="url(#sg)" transform="rotate(72 58 32)"/>
+      <ellipse cx="52" cy="54" rx="10" ry="14" fill="url(#sg)" transform="rotate(144 52 54)"/>
+      <ellipse cx="28" cy="54" rx="10" ry="14" fill="url(#sg)" transform="rotate(216 28 54)"/>
+      <ellipse cx="22" cy="32" rx="10" ry="14" fill="url(#sg)" transform="rotate(288 22 32)"/>
+      <circle cx="40" cy="40" r="7" fill="#fff0a0" stroke="#f0c040" stroke-width="1.5"/>
+      <circle cx="40" cy="40" r="3" fill="#f0c040"/>
+    </svg>`
+  },
+  {
+    id: 'shuriken', label: 'Shuriken', color: '#a0b8d0', weight: 6, p3: 15,
+    svg: `<svg viewBox="0 0 80 80" fill="none">
+      <defs><linearGradient id="sg2" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#d0dde8"/><stop offset="1" stop-color="#6880a0"/></linearGradient></defs>
+      <path d="M40 8 L46 34 L72 40 L46 46 L40 72 L34 46 L8 40 L34 34 Z" fill="url(#sg2)" stroke="rgba(200,220,240,0.3)" stroke-width="0.5"/>
+      <path d="M40 8 L46 34 L40 30 L34 34 Z" fill="rgba(255,255,255,0.2)"/>
+      <path d="M72 40 L46 46 L50 40 L46 34 Z" fill="rgba(255,255,255,0.15)"/>
+      <circle cx="40" cy="40" r="5" fill="#8090a8" stroke="rgba(200,220,240,0.4)" stroke-width="1"/>
+      <circle cx="40" cy="40" r="2" fill="#c0d0e0"/>
+    </svg>`
+  },
+  {
+    id: 'sake', label: 'Sake Bottle', color: '#d4b080', weight: 7, p3: 10,
+    svg: `<svg viewBox="0 0 80 80" fill="none">
+      <defs><linearGradient id="sakeg" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#f0e8d8"/><stop offset="1" stop-color="#c8b090"/></linearGradient></defs>
+      <rect x="32" y="12" width="16" height="12" rx="4" fill="#a09080"/>
+      <rect x="34" y="10" width="12" height="6" rx="3" fill="#808070"/>
+      <ellipse cx="40" cy="32" rx="16" ry="8" fill="url(#sakeg)"/>
+      <rect x="24" y="30" width="32" height="34" rx="4" fill="url(#sakeg)"/>
+      <ellipse cx="40" cy="64" rx="16" ry="6" fill="#c0a878"/>
+      <rect x="28" y="38" width="24" height="16" rx="2" fill="rgba(220,50,50,0.15)" stroke="rgba(220,50,50,0.3)" stroke-width="0.5"/>
+      <line x1="32" y1="42" x2="48" y2="42" stroke="rgba(220,50,50,0.4)" stroke-width="1"/>
+      <line x1="30" y1="46" x2="50" y2="46" stroke="rgba(220,50,50,0.3)" stroke-width="0.5"/>
+      <text x="40" y="52" font-size="8" text-anchor="middle" fill="rgba(180,40,40,0.7)" font-family="serif">é…’</text>
+    </svg>`
+  },
+  {
+    id: 'oni', label: 'Oni Mask', color: '#6080e0', weight: 8, p3: 7,
+    svg: `<svg viewBox="0 0 80 80" fill="none">
+      <defs><radialGradient id="og" cx="50%" cy="40%" r="55%"><stop stop-color="#6080ff"/><stop offset="1" stop-color="#2030a0"/></radialGradient></defs>
+      <ellipse cx="40" cy="42" rx="24" ry="28" fill="url(#og)"/>
+      <ellipse cx="40" cy="22" rx="14" ry="8" fill="#5070e0"/>
+      <!-- Horns -->
+      <path d="M26 20 Q20 6 28 8" fill="none" stroke="#f0c040" stroke-width="4" stroke-linecap="round"/>
+      <path d="M54 20 Q60 6 52 8" fill="none" stroke="#f0c040" stroke-width="4" stroke-linecap="round"/>
+      <!-- Eyes -->
+      <ellipse cx="32" cy="38" rx="7" ry="5" fill="#fff0f0"/>
+      <ellipse cx="48" cy="38" rx="7" ry="5" fill="#fff0f0"/>
+      <circle cx="32" cy="38" r="3.5" fill="#ff1010"/>
+      <circle cx="48" cy="38" r="3.5" fill="#ff1010"/>
+      <circle cx="31" cy="37" r="1.5" fill="#1a0000"/>
+      <circle cx="47" cy="37" r="1.5" fill="#1a0000"/>
+      <!-- Nose -->
+      <ellipse cx="40" cy="48" rx="5" ry="3.5" fill="#4060c0"/>
+      <circle cx="38" cy="49" r="1.5" fill="#2040a0"/>
+      <circle cx="42" cy="49" r="1.5" fill="#2040a0"/>
+      <!-- Mouth -->
+      <path d="M28 57 Q40 66 52 57" fill="none" stroke="#e0e0ff" stroke-width="2"/>
+      <!-- Teeth -->
+      <path d="M34 57 L32 63 L36 60 L38 65 L40 57" fill="rgba(255,255,255,0.8)"/>
+      <path d="M46 57 L48 63 L44 60 L42 65 L40 57" fill="rgba(255,255,255,0.8)"/>
+    </svg>`
+  },
+  {
+    id: 'mon', label: 'Family Crest', color: '#f0c040', weight: 10, p3: 5,
+    svg: `<svg viewBox="0 0 80 80" fill="none">
+      <defs><linearGradient id="mong" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#f0d060"/><stop offset="1" stop-color="#c08020"/></linearGradient></defs>
+      <circle cx="40" cy="40" r="32" fill="#1a0e00" stroke="url(#mong)" stroke-width="2"/>
+      <circle cx="40" cy="40" r="27" fill="none" stroke="rgba(240,192,64,0.3)" stroke-width="0.5"/>
+      <!-- Three leaves (mitsu tomoe style) -->
+      <path d="M40 20 Q50 28 44 38 Q52 34 56 28 Q56 18 44 20Z" fill="url(#mong)"/>
+      <path d="M40 20 Q30 28 36 38 Q28 34 24 28 Q24 18 36 20Z" fill="url(#mong)"/>
+      <path d="M44 38 Q36 38 36 46 Q36 56 40 56 Q50 52 48 42Z" fill="url(#mong)"/>
+      <circle cx="40" cy="40" r="7" fill="#1a0e00" stroke="url(#mong)" stroke-width="1"/>
+      <circle cx="40" cy="40" r="3" fill="url(#mong)"/>
+    </svg>`
+  },
+];
+
+let spinning = false, balance = 0, spins = 0, wins = 0, bestWin = 0;
 
 function weightedRandom() {
-  const total = SYMS.reduce((s, x) => s + x.weight, 0);
+  const total = SYMBOLS.reduce((s, sym) => s + sym.weight, 0);
   let r = Math.random() * total;
-  for (const s of SYMS) { r -= s.weight; if (r <= 0) return s; }
-  return SYMS[SYMS.length - 1];
+  for (const sym of SYMBOLS) { r -= sym.weight; if (r <= 0) return sym; }
+  return SYMBOLS[SYMBOLS.length - 1];
 }
 
-function buildStrips() {
-  for (let r = 0; r < 3; r++) {
-    const strip = document.getElementById('strip' + r);
-    const items = [];
-    for (let i = 0; i < 40; i++) items.push(SYMS[Math.floor(Math.random() * SYMS.length)]);
-    strip.innerHTML = items.map(s =>
-      `<div class="reel-cell"><div style="width:56px;height:56px">${s.svg}</div></div>`
-    ).join('');
+function buildStrip(stripEl, targetSym) {
+  stripEl.innerHTML = '';
+  const extras = 24;
+  for (let i = 0; i < extras; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'symbol-cell';
+    cell.innerHTML = weightedRandom().svg;
+    stripEl.appendChild(cell);
+  }
+  // Final (visible) cell
+  const finalCell = document.createElement('div');
+  finalCell.className = 'symbol-cell';
+  finalCell.innerHTML = targetSym.svg;
+  stripEl.appendChild(finalCell);
+}
+
+function initStrips() {
+  for (let i = 0; i < 3; i++) {
+    const strip = document.getElementById('strip' + i);
+    strip.style.transition = 'none';
     strip.style.transform = 'translateY(0)';
+    const target = weightedRandom();
+    buildStrip(strip, target);
+    // Position so last cell is visible
+    const cellH = 200;
+    const total = strip.children.length;
+    strip.style.transform = `translateY(-${(total - 1) * cellH}px)`;
   }
 }
 
-function buildPaytable() {
-  const grid = document.getElementById('paytableGrid');
-  grid.innerHTML = [...SYMS].reverse().map(s =>
-    `<div class="paytable-row">
-      <div>${s.svg}</div>
-      <span class="pt-label">${s.label} ×3</span>
-      <span class="pt-mult">${s.p3}×</span>
-    </div>`
-  ).join('');
-}
-
-function getResult() {
-  return [weightedRandom(), weightedRandom(), weightedRandom()];
-}
-
-function calcWin(result, bet) {
-  const [a, b, c] = result;
-  if (a.id === b.id && b.id === c.id) return bet * a.p3;
-  if (a.id === 'wild' || b.id === 'wild' || c.id === 'wild') {
-    const nonWild = [a,b,c].filter(x => x.id !== 'wild');
-    if (nonWild.every(x => x.id === nonWild[0]?.id) && nonWild.length >= 1) {
-      return bet * Math.floor((nonWild[0].p3 + SYMS.find(s => s.id==='wild').p3) / 2);
-    }
-  }
-  return 0;
-}
-
-function spin() {
+async function spin() {
   if (spinning) return;
-  const bet = Math.max(1, parseInt(document.getElementById('betAmt').value) || 10);
-  const bal = Casino.getBalance();
-  if (bet > bal) { showMsg('Insufficient balance', false); return; }
+  const bet = Math.max(1, parseFloat(document.getElementById('betAmt').value) || 10);
+  if (bet > balance) return;
+
   spinning = true;
   document.getElementById('spinBtn').disabled = true;
-  document.getElementById('slotMsg').style.color = 'var(--text3)';
-  document.getElementById('slotMsg').textContent = 'Spinning...';
+  document.getElementById('slotMsg').textContent = '';
+  document.getElementById('slotMsg').style.color = '#8ea3b1';
 
-  const result = getResult();
-  const win = calcWin(result, bet);
-  const durations = [1200, 1600, 2000];
+  // Remove winner classes
+  [0,1,2].forEach(i => document.getElementById('reel' + i).classList.remove('winner'));
 
-  for (let r = 0; r < 3; r++) {
-    animateReel(r, result[r], durations[r]);
+  const targets = [weightedRandom(), weightedRandom(), weightedRandom()];
+
+  // Check win
+  const allSame = targets[0].id === targets[1].id && targets[1].id === targets[2].id;
+  const allWild = targets.some(t => t.id === 'wild');
+  const effectiveIds = targets.map(t => t.id === 'wild' ? targets.find(s => s.id !== 'wild')?.id || t.id : t.id);
+  const isWin = allSame || (targets.filter(t => t.id === 'wild').length >= 1 && effectiveIds[0] === effectiveIds[1] && effectiveIds[1] === effectiveIds[2]);
+  const winSymbol = isWin ? SYMBOLS.find(s => s.id === targets.find(t => t.id !== 'wild')?.id || targets[0].id) || targets[0] : null;
+  const multiplier = isWin ? winSymbol.p3 : 0;
+  const returned = isWin ? Math.round(bet * multiplier * 100) / 100 : 0;
+
+  // Animate reels
+  const cellH = 200;
+  const promises = targets.map((target, i) => new Promise(resolve => {
+    const strip = document.getElementById('strip' + i);
+    buildStrip(strip, target);
+    strip.style.transition = 'none';
+    strip.style.transform = 'translateY(0)';
+    void strip.offsetHeight;
+    const total = strip.children.length;
+    const delay = i * 120;
+    setTimeout(() => {
+      strip.style.transition = `transform ${0.8 + i * 0.15}s cubic-bezier(0.25,0.46,0.45,0.94)`;
+      strip.style.transform = `translateY(-${(total - 1) * cellH}px)`;
+      setTimeout(resolve, (0.8 + i * 0.15) * 1000 + 100);
+    }, delay);
+  }));
+
+  await Promise.all(promises);
+
+  // Results
+  spins++;
+  if (isWin) {
+    wins++;
+    if (returned > bestWin) bestWin = returned;
+    [0,1,2].forEach(i => document.getElementById('reel' + i).classList.add('winner'));
+    document.getElementById('slotMsg').style.color = '#f0c040';
+    document.getElementById('slotMsg').textContent = `${winSymbol.label} Ã— ${multiplier} â†’ +$${returned.toFixed(2)}`;
+    // Flash kanji
+    const k = document.createElement('div');
+    k.className = 'kanji-win';
+    k.textContent = multiplier >= 50 ? 'å¤§å‹' : 'å‹';
+    document.body.appendChild(k);
+    setTimeout(() => k.remove(), 900);
+    document.getElementById('st-best').textContent = '$' + bestWin.toFixed(2);
+  } else {
+    document.getElementById('slotMsg').style.color = '#4a6375';
+    document.getElementById('slotMsg').textContent = '— No match, try again —';
   }
 
-  setTimeout(() => {
-    const newBal = Casino.recordBet('slots', bet, win);
-    spinsPlayed++;
-    if (win > 0) {
-      winsCount++;
-      if (win > bestWin) bestWin = win;
-      showMsg(`WIN! +${Casino.fmt(win)} (${result[0].label} ${result[1].label} ${result[2].label})`, true);
-      highlightMiddle();
-    } else {
-      showMsg(`${result[0].label} · ${result[1].label} · ${result[2].label}`, false);
-    }
-    spinning = false;
-    document.getElementById('spinBtn').disabled = false;
-    updateStats(newBal);
-    Casino.updateBalance();
-  }, 2200);
+  // Update balance
+  try {
+    const r = await fetch('/api/bet', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ game:'slots', wagered:bet, returned }) });
+    if (r.ok) { const d = await r.json(); balance = d.balance; Casino.syncBalance(balance); }
+  } catch {}
+
+  document.getElementById('st-balance').textContent = '$' + balance.toFixed(2);
+  document.getElementById('st-spins').textContent = spins;
+  document.getElementById('st-wins').textContent = wins;
+
+  spinning = false;
+  document.getElementById('spinBtn').disabled = false;
+  initStrips();
 }
 
-function animateReel(reelIdx, targetSymbol, duration) {
-  const strip = document.getElementById('strip' + reelIdx);
-  const cells = Array.from(strip.querySelectorAll('.reel-cell'));
-  const totalCells = cells.length;
+function adjBet(f) {
+  const el = document.getElementById('betAmt');
+  el.value = Math.max(1, Math.min(Math.round(parseFloat(el.value || 1) * f), balance));
+}
+function sb(v) { document.getElementById('betAmt').value = Math.min(v, balance); }
 
-  // Build a new strip ending with 3 symbols centered on target
-  const preSpinItems = [];
-  for (let i = 0; i < 30; i++) preSpinItems.push(SYMS[Math.floor(Math.random() * SYMS.length)]);
-  preSpinItems.push(weightedRandom()); // above target
-  preSpinItems.push(targetSymbol);     // middle (payline)
-  preSpinItems.push(weightedRandom()); // below target
-
-  strip.innerHTML = preSpinItems.map(s =>
-    `<div class="reel-cell"><div style="width:56px;height:56px">${s.svg}</div></div>`
-  ).join('');
-
-  const endY = -(preSpinItems.length - 3) * CELL_H + CELL_H; // show last 3
-  strip.style.transition = 'none';
-  strip.style.transform = 'translateY(0)';
-
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      strip.style.transition = `transform ${duration}ms cubic-bezier(0.12, 0.9, 0.25, 1)`;
-      strip.style.transform = `translateY(${endY}px)`;
-    });
+// Paytable
+function buildPaytable() {
+  const pt = document.getElementById('paytable');
+  SYMBOLS.forEach(s => {
+    const row = document.createElement('div');
+    row.className = 'paytable-row';
+    row.innerHTML = `<div style="display:flex;align-items:center;gap:8px"><div style="width:24px;height:24px">${s.svg}</div><span class="sym-name">${s.label}</span></div><span class="sym-payout">${s.p3}Ã—</span>`;
+    pt.appendChild(row);
   });
 }
 
-function highlightMiddle() {
-  for (let r = 0; r < 3; r++) {
-    const strip = document.getElementById('strip' + r);
-    const cells = strip.querySelectorAll('.reel-cell');
-    if (cells.length >= 2) cells[cells.length - 2].classList.add('highlighted');
+// Sakura particles
+function spawnSakura() {
+  const bg = document.querySelector('.samurai-bg');
+  if (!bg) return;
+  for (let i = 0; i < 12; i++) {
+    const s = document.createElement('div');
+    s.className = 'sakura';
+    const left = Math.random() * 100;
+    const delay = Math.random() * 10;
+    const dur = 8 + Math.random() * 8;
+    const sx = (Math.random() - 0.5) * 200;
+    s.style.cssText = `left:${left}%;top:-20px;width:8px;height:8px;background:rgba(255,180,190,0.7);border-radius:50% 0;animation-delay:${delay}s;animation-duration:${dur}s;--sx:${sx}px`;
+    bg.appendChild(s);
   }
-  setTimeout(() => {
-    document.querySelectorAll('.reel-cell.highlighted').forEach(c => c.classList.remove('highlighted'));
-  }, 1500);
-}
-
-function showMsg(txt, won) {
-  const el = document.getElementById('slotMsg');
-  el.textContent = txt;
-  el.style.color = won ? 'var(--green)' : 'var(--text2)';
-  if (won) el.classList.add('win-pop');
-  setTimeout(() => el.classList.remove('win-pop'), 500);
-}
-
-function setBetAmt(v) {
-  const bal = Casino.getBalance();
-  document.getElementById('betAmt').value = Math.min(v, bal);
-}
-
-function adjustBet(mult) {
-  const el = document.getElementById('betAmt');
-  const bal = Casino.getBalance();
-  el.value = Math.max(1, Math.min(Math.round(parseFloat(el.value) * mult), bal));
-}
-
-function updateStats(bal) {
-  document.getElementById('st-balance').textContent = Casino.fmt(bal);
-  document.getElementById('st-played').textContent = spinsPlayed;
-  document.getElementById('st-won').textContent = winsCount;
-  document.getElementById('st-bigwin').textContent = bestWin > 0 ? Casino.fmt(bestWin) : '—';
 }
 
 // Init
-const prof = Casino.getProfile();
-const sStats = prof.stats.slots;
-spinsPlayed = sStats.played; winsCount = sStats.won;
-document.getElementById('st-balance').textContent = Casino.fmt(prof.balance);
-document.getElementById('st-played').textContent = spinsPlayed;
-document.getElementById('st-won').textContent = winsCount;
-
-buildStrips();
+fetch('/api/me').then(r=>r.json()).then(d=>{ balance=d.balance; Casino.syncBalance(balance); document.getElementById('st-balance').textContent='$'+balance.toFixed(2); }).catch(()=>{});
 buildPaytable();
-// Show initial reels in center position
-for (let r = 0; r < 3; r++) {
-  const s = document.getElementById('strip' + r);
-  const cells = s.querySelectorAll('.reel-cell');
-  const total = cells.length;
-  s.style.transform = `translateY(${-(total - 3) * CELL_H + CELL_H}px)`;
-}
+initStrips();
+spawnSakura();
 </script>
 </body>
 </html>
+

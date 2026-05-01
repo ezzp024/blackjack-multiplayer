@@ -1,13 +1,13 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Roulette — Obsidian Casino</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-<script src="casino-core.js"></script>
+<script src="/casino-core.js"></script>
 <script>Casino.renderSidebar('roulette');Casino.requireAuth();</script>
 
 <main class="casino-main">
@@ -72,7 +72,7 @@ let lastNumbers = [];
 let sessionNet = 0;
 let roundsPlayed = 0;
 
-// ── DRAW WHEEL ──
+// â”€â”€ DRAW WHEEL â”€â”€
 function drawWheel(rot) {
   const W = canvas.width, H = canvas.height;
   const cx = W / 2, cy = H / 2, R = 124;
@@ -155,7 +155,7 @@ function drawWheel(rot) {
 
 drawWheel(0);
 
-// ── BUILD TABLE ──
+// â”€â”€ BUILD TABLE â”€â”€
 function buildTable() {
   const table = document.getElementById('rouletteTable');
   // Zero row
@@ -191,12 +191,12 @@ function buildTable() {
 
   // Outside row
   html += `<div class="r-outside-row cols6">
-    <div class="r-outside-cell" onclick="addBet('range','low')">1–18</div>
+    <div class="r-outside-cell" onclick="addBet('range','low')">1—18</div>
     <div class="r-outside-cell" onclick="addBet('parity','even')">EVEN</div>
     <div class="r-outside-cell r-red" onclick="addBet('color','red')">RED</div>
     <div class="r-outside-cell r-black" onclick="addBet('color','black')">BLACK</div>
     <div class="r-outside-cell" onclick="addBet('parity','odd')">ODD</div>
-    <div class="r-outside-cell" onclick="addBet('range','high')">19–36</div>
+    <div class="r-outside-cell" onclick="addBet('range','high')">19—36</div>
   </div>`;
 
   table.innerHTML = html;
@@ -234,7 +234,7 @@ function renderPendingBets() {
   const labels = {
     straight: n => `Straight #${n}`,
     dozen: n => ['1st 12','2nd 12','3rd 12'][n],
-    range: v => v === 'low' ? '1–18' : '19–36',
+    range: v => v === 'low' ? '1—18' : '19—36',
     parity: v => v === 'even' ? 'Even' : 'Odd',
     color: v => v.charAt(0).toUpperCase() + v.slice(1),
     colbet: n => `Column ${n+1}`,
@@ -354,3 +354,4 @@ document.getElementById('st-played').textContent = p.stats.roulette.played;
 </script>
 </body>
 </html>
+

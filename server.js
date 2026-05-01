@@ -154,6 +154,16 @@ app.post('/api/balance/sync', requireAuth, (req, res) => {
   res.json({ balance: user?.balance || 0 });
 });
 
+app.post('/api/refill', requireAuth, (req, res) => {
+  const user = DB.users[req.user.id];
+  if (!user) return res.status(401).json({ error: 'No user' });
+  if (user.balance >= 500) return res.status(400).json({ error: 'Balance too high for refill' });
+  user.balance = Math.round((user.balance + 1000) * 100) / 100;
+  user.last_seen = Date.now();
+  saveDB();
+  res.json({ balance: user.balance });
+});
+
 // ─────────────────────────── ADMIN API ───────────────────────────
 app.get('/admin/api/stats', requireAdmin, (req, res) => {
   const users = Object.values(DB.users).filter(u => u.role !== 'admin');

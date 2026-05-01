@@ -3,184 +3,192 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Plinko — Obsidian Casino</title>
+  <title>Crystal Plinko — Obsidian Casino</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/styles.css">
+  <style>
+    .plinko-bg{position:fixed;inset:0;background:radial-gradient(ellipse at 50% 0%,#0a0520 0%,#040210 50%,#020108 100%);z-index:-1}
+    .plinko-bg::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 100%,rgba(0,180,255,0.04) 0%,transparent 60%)}
+    .plinko-wrap{max-width:900px;margin:0 auto;padding:24px 16px}
+    /* Header */
+    .game-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+    .title-row{display:flex;align-items:center;gap:10px}
+    .title-icon{width:44px;height:44px;background:rgba(0,180,255,0.08);border:1px solid rgba(0,180,255,0.2);border-radius:12px;display:flex;align-items:center;justify-content:center}
+    .title-row h1{font-size:1.3rem;font-weight:900;letter-spacing:3px}
+    .he-pill{background:rgba(0,180,255,0.08);border:1px solid rgba(0,180,255,0.2);color:#00b4ff;font-size:0.7rem;font-weight:700;padding:4px 12px;border-radius:20px;letter-spacing:1px}
+    /* Layout */
+    .plinko-layout{display:grid;grid-template-columns:1fr 190px;gap:14px;align-items:start}
+    /* Canvas wrap */
+    .canvas-wrap{background:#060310;border:1px solid rgba(0,180,255,0.08);border-radius:20px;overflow:hidden;position:relative}
+    #plinkoCanvas{display:block;width:100%}
+    /* Controls */
+    .ctrl-panel{background:#0a0f1e;border:1px solid rgba(0,180,255,0.08);border-radius:20px;padding:18px;display:flex;flex-direction:column;gap:14px}
+    .field-label{font-size:0.6rem;font-weight:800;color:#2a3f52;text-transform:uppercase;letter-spacing:2px;margin-bottom:6px}
+    .bet-row{display:flex;gap:6px;align-items:center}
+    .bet-inp{flex:1;background:#040a18;border:1px solid rgba(0,180,255,0.12);border-radius:8px;color:#fff;font-size:0.95rem;font-weight:700;padding:10px 10px;outline:none;font-family:inherit;min-width:0}
+    .bet-inp:focus{border-color:#00b4ff}
+    .fadj{background:#0d1a30;border:1px solid rgba(255,255,255,0.07);color:#8ea3b1;border-radius:6px;padding:8px 9px;font-size:0.75rem;font-weight:700;cursor:pointer;transition:all 0.15s}
+    .fadj:hover{background:#152540;color:#fff}
+    .presets{display:flex;gap:5px;flex-wrap:wrap}
+    .presets button{background:#040a18;border:1px solid rgba(0,180,255,0.08);color:#4a6375;border-radius:6px;padding:5px 0;font-size:0.7rem;font-weight:700;cursor:pointer;flex:1;transition:all 0.15s}
+    .presets button:hover{background:#0a1a30;color:#00b4ff}
+    /* Selector */
+    .selector{display:flex;gap:4px}
+    .sel-btn{flex:1;background:#040a18;border:1px solid rgba(0,180,255,0.08);color:#4a6375;border-radius:6px;padding:7px 0;font-size:0.72rem;font-weight:800;cursor:pointer;transition:all 0.15s}
+    .sel-btn.active{background:#00b4ff;color:#000;border-color:#00b4ff}
+    .sel-btn:hover:not(.active){background:#0a1a30;color:#8ea3b1}
+    /* Balance */
+    .bal-display{background:#040a18;border:1px solid rgba(0,180,255,0.08);border-radius:10px;padding:10px 12px;text-align:center;font-size:0.8rem;color:#4a6375}
+    .bal-display strong{color:#fff;font-size:1rem}
+    /* Drop button */
+    .drop-btn{width:100%;padding:14px;background:linear-gradient(135deg,#0060cc,#7928ca);border:none;border-radius:12px;color:#fff;font-size:0.9rem;font-weight:900;cursor:pointer;letter-spacing:1px;transition:all 0.15s;text-transform:uppercase;position:relative;overflow:hidden}
+    .drop-btn::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,0.1) 0%,transparent 50%);pointer-events:none}
+    .drop-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 6px 24px rgba(0,120,255,0.4)}
+    .drop-btn:disabled{opacity:0.4;cursor:not-allowed;transform:none}
+    /* Result */
+    .result-box{background:#040a18;border:1px solid rgba(0,180,255,0.1);border-radius:10px;padding:12px;text-align:center;min-height:58px}
+    .result-mult{font-size:1.4rem;font-weight:900;line-height:1.1;transition:color 0.2s}
+    .result-amt{font-size:0.78rem;color:#4a6375;margin-top:4px}
+    /* History */
+    .history-list{display:flex;flex-direction:column;gap:3px;max-height:160px;overflow-y:auto}
+    .hist-row{display:flex;justify-content:space-between;font-size:0.72rem;padding:4px 8px;background:#040a18;border-radius:6px}
+    /* Buckets row */
+    .buckets-row{display:flex;gap:2px;margin-top:6px;padding:0 2px}
+    .bucket{flex:1;text-align:center;padding:5px 1px;border-radius:6px;font-size:0.6rem;font-weight:800;letter-spacing:0.2px;transition:all 0.15s;min-width:0;overflow:hidden}
+    .bucket.lit{animation:bucketFlash 0.35s ease}
+    @keyframes bucketFlash{0%{transform:scaleY(1.4)}50%{transform:scaleY(0.7)}100%{transform:scaleY(1)}}
+    @media(max-width:640px){.plinko-layout{grid-template-columns:1fr}.ctrl-panel{flex-direction:row;flex-wrap:wrap;gap:10px}.ctrl-panel>*{min-width:140px;flex:1}}
+  </style>
 </head>
 <body>
+<div class="plinko-bg"></div>
 <script src="/casino-core.js"></script>
-<script>Casino.requireAuth()</script>
+<script>Casino.renderSidebar('plinko');Casino.requireAuth();</script>
 
-<div class="casino-layout">
-  <div class="main-content">
-    <div class="game-page-wrap" style="max-width:820px;margin:0 auto;padding:24px 16px">
-      <div class="game-header">
-        <div class="game-title-row">
-          <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-            <circle cx="14" cy="5" r="3" fill="#1475e1"/>
-            <circle cx="8" cy="12" r="2.5" fill="#4a6375"/>
-            <circle cx="20" cy="12" r="2.5" fill="#4a6375"/>
-            <circle cx="5" cy="19" r="2" fill="#4a6375"/>
-            <circle cx="14" cy="19" r="2" fill="#4a6375"/>
-            <circle cx="23" cy="19" r="2" fill="#4a6375"/>
-          </svg>
-          <h1>PLINKO</h1>
-        </div>
-        <div class="house-edge-badge">House Edge <span id="heBadge">4.0%</span></div>
+<main class="casino-main">
+<div class="plinko-wrap">
+
+  <div class="game-hdr">
+    <div class="title-row">
+      <div class="title-icon">
+        <svg viewBox="0 0 22 22" fill="none" width="22" height="22">
+          <circle cx="11" cy="3" r="2.5" fill="#00b4ff" opacity="0.9"/>
+          <circle cx="6" cy="9" r="2" fill="#4a6375"/>
+          <circle cx="16" cy="9" r="2" fill="#4a6375"/>
+          <circle cx="3" cy="15" r="1.8" fill="#2a3f52"/>
+          <circle cx="11" cy="15" r="1.8" fill="#2a3f52"/>
+          <circle cx="19" cy="15" r="1.8" fill="#2a3f52"/>
+        </svg>
       </div>
+      <h1>CRYSTAL PLINKO</h1>
+    </div>
+    <div class="he-pill">House Edge <span id="heBadge">4%</span></div>
+  </div>
 
-      <div class="plinko-wrap">
-        <!-- Canvas -->
-        <div class="plinko-canvas-wrap">
-          <canvas id="plinkoCanvas"></canvas>
+  <div class="plinko-layout">
+    <!-- Board -->
+    <div>
+      <div class="canvas-wrap">
+        <canvas id="plinkoCanvas"></canvas>
+      </div>
+      <div class="buckets-row" id="bucketsRow"></div>
+    </div>
+
+    <!-- Controls -->
+    <div class="ctrl-panel">
+      <div>
+        <div class="field-label">Bet</div>
+        <div class="bet-row">
+          <button class="fadj" onclick="adj(0.5)">½</button>
+          <input type="number" class="bet-inp" id="betInput" value="10" min="1">
+          <button class="fadj" onclick="adj(2)">2×</button>
         </div>
-
-        <!-- Controls -->
-        <div class="plinko-controls">
-          <div class="ctrl-section">
-            <label class="bet-label">BET AMOUNT</label>
-            <div class="bet-input-row">
-              <button class="half-btn" onclick="adj(0.5)">½</button>
-              <input type="number" id="betInput" class="bet-input-large" value="10" min="1">
-              <button class="double-btn" onclick="adj(2)">2×</button>
-            </div>
-            <div class="bet-presets">
-              <button onclick="sb(5)">$5</button>
-              <button onclick="sb(25)">$25</button>
-              <button onclick="sb(100)">$100</button>
-            </div>
-          </div>
-
-          <div class="ctrl-section">
-            <label class="bet-label">ROWS</label>
-            <div class="row-selector">
-              <button class="row-btn" onclick="setRows(8)">8</button>
-              <button class="row-btn active" onclick="setRows(12)">12</button>
-              <button class="row-btn" onclick="setRows(16)">16</button>
-            </div>
-          </div>
-
-          <div class="ctrl-section">
-            <label class="bet-label">RISK</label>
-            <div class="row-selector">
-              <button class="row-btn active" onclick="setRisk('low')">Low</button>
-              <button class="row-btn" onclick="setRisk('medium')">Med</button>
-              <button class="row-btn" onclick="setRisk('high')">High</button>
-            </div>
-          </div>
-
-          <div class="ctrl-section">
-            <div class="balance-display">Balance: <strong id="balDisp">$0</strong></div>
-          </div>
-
-          <button class="action-btn btn-green" id="dropBtn" onclick="dropBall()">DROP BALL</button>
-
-          <div class="plinko-result" id="result" style="display:none">
-            <div id="resultMult"></div>
-            <div id="resultAmt"></div>
-          </div>
-
-          <div class="plinko-history" id="historyList"></div>
+        <div class="presets" style="margin-top:6px">
+          <button onclick="sb(5)">$5</button>
+          <button onclick="sb(25)">$25</button>
+          <button onclick="sb(100)">$100</button>
         </div>
       </div>
 
-      <!-- Bucket multipliers -->
-      <div id="bucketsDisplay" class="buckets-row"></div>
+      <div>
+        <div class="field-label">Rows</div>
+        <div class="selector" id="rowSel">
+          <button class="sel-btn" onclick="setRows(8,this)">8</button>
+          <button class="sel-btn active" onclick="setRows(12,this)">12</button>
+          <button class="sel-btn" onclick="setRows(16,this)">16</button>
+        </div>
+      </div>
+
+      <div>
+        <div class="field-label">Risk</div>
+        <div class="selector" id="riskSel">
+          <button class="sel-btn active" onclick="setRisk('low',this)">Low</button>
+          <button class="sel-btn" onclick="setRisk('mid',this)">Mid</button>
+          <button class="sel-btn" onclick="setRisk('high',this)">High</button>
+        </div>
+      </div>
+
+      <div class="bal-display">Balance<br><strong id="balDisp">$0</strong></div>
+      <button class="drop-btn" id="dropBtn" onclick="dropBall()">DROP BALL</button>
+
+      <div class="result-box">
+        <div class="result-mult" id="resMult" style="color:#4a6375">—</div>
+        <div class="result-amt" id="resAmt"></div>
+      </div>
+
+      <div>
+        <div class="field-label">History</div>
+        <div class="history-list" id="histList"></div>
+      </div>
     </div>
   </div>
 </div>
-
-<style>
-.game-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
-.game-title-row{display:flex;align-items:center;gap:10px}
-.game-title-row h1{font-size:1.3rem;font-weight:900;letter-spacing:2px}
-.house-edge-badge{background:rgba(20,117,225,0.1);border:1px solid rgba(20,117,225,0.2);color:#1475e1;font-size:0.72rem;font-weight:700;padding:4px 10px;border-radius:6px}
-.plinko-wrap{display:flex;gap:16px;align-items:flex-start}
-.plinko-canvas-wrap{flex:1;background:#0a1520;border:1px solid rgba(255,255,255,0.07);border-radius:16px;overflow:hidden;min-width:0}
-#plinkoCanvas{display:block;width:100%}
-.plinko-controls{width:180px;flex-shrink:0;display:flex;flex-direction:column;gap:14px}
-.ctrl-section{display:flex;flex-direction:column;gap:8px}
-.bet-label{font-size:0.62rem;font-weight:800;color:#4a6375;text-transform:uppercase;letter-spacing:2px}
-.bet-input-row{display:flex;align-items:center;gap:6px}
-.bet-input-large{flex:1;background:#162232;border:1px solid rgba(255,255,255,0.08);border-radius:8px;color:#fff;font-size:0.9rem;font-weight:700;padding:9px 10px;outline:none;font-family:inherit;min-width:0}
-.bet-input-large:focus{border-color:#00c74d}
-.half-btn,.double-btn{background:#162232;border:1px solid rgba(255,255,255,0.08);color:#8ea3b1;border-radius:6px;padding:7px 8px;font-size:0.75rem;font-weight:700;cursor:pointer}
-.bet-presets{display:flex;gap:6px}
-.bet-presets button{flex:1;background:#162232;border:1px solid rgba(255,255,255,0.07);color:#8ea3b1;border-radius:6px;padding:5px 0;font-size:0.7rem;font-weight:700;cursor:pointer}
-.bet-presets button:hover{background:#1e3048;color:#fff}
-.row-selector{display:flex;gap:4px}
-.row-btn{flex:1;background:#162232;border:1px solid rgba(255,255,255,0.07);color:#4a6375;border-radius:6px;padding:6px 0;font-size:0.75rem;font-weight:700;cursor:pointer}
-.row-btn.active{background:#00c74d;color:#000;border-color:#00c74d}
-.row-btn:hover:not(.active){background:#1e3048;color:#8ea3b1}
-.balance-display{background:#0a1520;border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:8px 12px;font-size:0.78rem;color:#4a6375;text-align:center}
-.balance-display strong{color:#fff}
-.action-btn{border:none;border-radius:10px;padding:12px;font-size:0.85rem;font-weight:800;cursor:pointer;letter-spacing:0.5px;transition:all 0.15s;width:100%}
-.btn-green{background:#00c74d;color:#000}
-.btn-green:hover:not(:disabled){background:#00e858}
-.btn-green:disabled{background:#1e3048;color:#4a6375;cursor:not-allowed}
-.plinko-result{text-align:center;background:#0a1520;border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:12px}
-#resultMult{font-size:1.4rem;font-weight:900}
-#resultAmt{font-size:0.8rem;color:#4a6375;margin-top:4px}
-.plinko-history{display:flex;flex-direction:column;gap:4px;max-height:200px;overflow-y:auto}
-.hist-row{display:flex;justify-content:space-between;font-size:0.72rem;padding:4px 8px;background:#0a1520;border-radius:6px}
-.buckets-row{display:flex;gap:3px;margin-top:8px;padding:0 4px}
-.bucket{flex:1;text-align:center;padding:6px 2px;border-radius:6px;font-size:0.65rem;font-weight:800;letter-spacing:0.3px;transition:transform 0.1s}
-.bucket.hit{animation:bucketHit 0.3s ease}
-@keyframes bucketHit{0%{transform:scaleY(1.3)}50%{transform:scaleY(0.8)}100%{transform:scaleY(1)}}
-@media(max-width:600px){.plinko-wrap{flex-direction:column}.plinko-controls{width:100%;flex-direction:row;flex-wrap:wrap}.ctrl-section{min-width:140px}}
-</style>
+</main>
 
 <script>
 const canvas = document.getElementById('plinkoCanvas');
 const ctx = canvas.getContext('2d');
 
-let rows = 12;
-let risk = 'low';
-let balance = 0;
-let dropping = false;
+let rows = 12, risk = 'low', balance = 0, dropping = false;
 
-// Multiplier tables [low, medium, high] for 8/12/16 rows
 const MULTS = {
   8: {
-    low:    [5.6, 2.1, 1.1, 1.0, 0.5, 1.0, 1.1, 2.1, 5.6],
-    medium: [13,  3,   1.3, 0.7, 0.4, 0.7, 1.3, 3,   13],
-    high:   [29,  4,   1.5, 0.3, 0.2, 0.3, 1.5, 4,   29],
+    low:  [5.6,2.1,1.1,1.0,0.5,1.0,1.1,2.1,5.6],
+    mid:  [13,3,1.3,0.7,0.4,0.7,1.3,3,13],
+    high: [29,4,1.5,0.3,0.2,0.3,1.5,4,29],
   },
   12: {
-    low:    [8.9, 3,   1.4, 1.1, 1.0, 0.5, 0.5, 1.0, 1.1, 1.4, 3,   8.9],
-    medium: [33,  11,  4,   2,   1.1, 0.6, 0.6, 1.1, 2,   4,   11,  33],
-    high:   [88,  18,  4,   2,   1.2, 0.3, 0.3, 1.2, 2,   4,   18,  88],
+    low:  [8.9,3,1.4,1.1,1.0,0.5,0.5,1.0,1.1,1.4,3,8.9],
+    mid:  [33,11,4,2,1.1,0.6,0.6,1.1,2,4,11,33],
+    high: [88,18,4,2,1.2,0.3,0.3,1.2,2,4,18,88],
   },
   16: {
-    low:    [16,  9,   2,   1.4, 1.4, 1.2, 1.1, 1.0, 0.5, 1.0, 1.1, 1.2, 1.4, 1.4, 2, 9, 16],
-    medium: [110, 41,  10,  5,   3,   1.5, 1.0, 0.5, 0.3, 0.5, 1.0, 1.5, 3,   5,   10,41,110],
-    high:   [1000,130, 26,  9,   4,   2,   0.9, 0.3, 0.2, 0.3, 0.9, 2,   4,   9,   26,130,1000],
+    low:  [16,9,2,1.4,1.4,1.2,1.1,1.0,0.5,1.0,1.1,1.2,1.4,1.4,2,9,16],
+    mid:  [110,41,10,5,3,1.5,1.0,0.5,0.3,0.5,1.0,1.5,3,5,10,41,110],
+    high: [1000,130,26,9,4,2,0.9,0.3,0.2,0.3,0.9,2,4,9,26,130,1000],
   },
 };
 
 function getMults() { return MULTS[rows][risk]; }
 
-function bucketColor(mult) {
-  if (mult >= 10) return '#f1323f';
-  if (mult >= 3) return '#f59e0b';
-  if (mult >= 1.5) return '#f0c040';
-  if (mult >= 1) return '#00c74d';
-  return '#4a6375';
+function bucketColor(m) {
+  if (m >= 100) return {bg:'rgba(167,139,250,0.2)',border:'rgba(167,139,250,0.5)',text:'#a78bfa'};
+  if (m >= 10)  return {bg:'rgba(241,50,63,0.2)',border:'rgba(241,50,63,0.4)',text:'#f1323f'};
+  if (m >= 3)   return {bg:'rgba(240,192,64,0.15)',border:'rgba(240,192,64,0.4)',text:'#f0c040'};
+  if (m >= 1.5) return {bg:'rgba(0,255,136,0.12)',border:'rgba(0,255,136,0.35)',text:'#00ff88'};
+  if (m >= 1)   return {bg:'rgba(0,180,255,0.1)',border:'rgba(0,180,255,0.3)',text:'#00b4ff'};
+  return {bg:'rgba(74,99,117,0.15)',border:'rgba(74,99,117,0.3)',text:'#4a6375'};
 }
 
-// Canvas sizing
-const PAD = 20;
-let PEG_R = 4;
-let BALL_R = 7;
+const PAD = 16, PEG_R = 4, BALL_R = 7;
 
 function canvasSize() {
-  const w = canvas.parentElement.clientWidth || 600;
+  const w = canvas.parentElement.clientWidth || 500;
   canvas.width = w;
   const cols = rows + 1;
   const spacing = (w - PAD * 2) / (cols - 1);
-  const H = PAD * 2 + (rows - 1) * spacing + 60;
-  canvas.height = H;
-  return { w, spacing, cols };
+  canvas.height = PAD * 2 + (rows - 1) * spacing + 60;
+  return { w, spacing };
 }
 
 function getPegPos(row, col) {
@@ -188,160 +196,156 @@ function getPegPos(row, col) {
   const cols = row + 2;
   const totalW = (cols - 1) * spacing;
   const startX = (w - totalW) / 2;
-  const y = PAD + row * spacing;
-  const x = startX + col * spacing;
-  return { x, y };
+  return { x: startX + col * spacing, y: PAD + row * spacing };
 }
 
-function drawBoard(balls = []) {
+function drawBoard(balls = [], litBucket = -1) {
   const { w, spacing } = canvasSize();
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const H = canvas.height;
+  ctx.clearRect(0, 0, w, H);
+
+  // Background grid dots
+  ctx.fillStyle = 'rgba(0,180,255,0.03)';
+  for (let i = 0; i < 20; i++) for (let j = 0; j < 15; j++) {
+    ctx.beginPath(); ctx.arc(i * 30, j * 30, 1, 0, Math.PI * 2); ctx.fill();
+  }
 
   // Pegs
   for (let r = 0; r < rows; r++) {
-    const cols = r + 2;
-    for (let c = 0; c < cols; c++) {
+    for (let c = 0; c <= r + 1; c++) {
       const { x, y } = getPegPos(r, c);
-      ctx.beginPath();
-      ctx.arc(x, y, PEG_R, 0, Math.PI * 2);
-      ctx.fillStyle = '#1e3048';
-      ctx.fill();
-      ctx.strokeStyle = 'rgba(255,255,255,0.1)';
-      ctx.lineWidth = 1;
-      ctx.stroke();
+      // Glow
+      const grad = ctx.createRadialGradient(x, y, 0, x, y, PEG_R * 2.5);
+      grad.addColorStop(0, 'rgba(0,180,255,0.25)');
+      grad.addColorStop(1, 'transparent');
+      ctx.beginPath(); ctx.arc(x, y, PEG_R * 2.5, 0, Math.PI * 2);
+      ctx.fillStyle = grad; ctx.fill();
+      // Peg body
+      ctx.beginPath(); ctx.arc(x, y, PEG_R, 0, Math.PI * 2);
+      ctx.fillStyle = '#1e3048'; ctx.fill();
+      ctx.strokeStyle = 'rgba(0,180,255,0.5)'; ctx.lineWidth = 1; ctx.stroke();
+      // Highlight
+      ctx.beginPath(); ctx.arc(x - 1, y - 1, 1.5, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.fill();
     }
   }
 
   // Balls
   for (const ball of balls) {
+    // Trail
+    ctx.beginPath(); ctx.arc(ball.x, ball.y, BALL_R + 4, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(0,180,255,0.08)'; ctx.fill();
+    // Ball
+    const bg = ctx.createRadialGradient(ball.x - 2, ball.y - 2, 1, ball.x, ball.y, BALL_R);
+    bg.addColorStop(0, '#fff');
+    bg.addColorStop(0.4, '#80d4ff');
+    bg.addColorStop(1, '#0060cc');
+    ctx.beginPath(); ctx.arc(ball.x, ball.y, BALL_R, 0, Math.PI * 2);
+    ctx.fillStyle = bg; ctx.fill();
+    ctx.shadowColor = '#00b4ff'; ctx.shadowBlur = 12;
+    ctx.strokeStyle = 'rgba(0,200,255,0.8)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(ball.x, ball.y, BALL_R, 0, Math.PI * 2); ctx.stroke();
+    ctx.shadowBlur = 0;
+  }
+
+  // Bucket dividers
+  const mults = getMults();
+  const numB = mults.length;
+  const totalW2 = rows * spacing;
+  const startX2 = (w - totalW2) / 2;
+  const bW = totalW2 / (numB - 1);
+  const bucketY = H - 50;
+
+  for (let i = 0; i < numB; i++) {
+    const bx = startX2 + i * bW;
+    const isLit = i === litBucket;
+    const c = bucketColor(mults[i]);
+    ctx.fillStyle = isLit ? c.text + '33' : c.bg;
+    ctx.strokeStyle = isLit ? c.text : c.border;
+    ctx.lineWidth = isLit ? 1.5 : 1;
     ctx.beginPath();
-    ctx.arc(ball.x, ball.y, BALL_R, 0, Math.PI * 2);
-    const grad = ctx.createRadialGradient(ball.x - 2, ball.y - 2, 1, ball.x, ball.y, BALL_R);
-    grad.addColorStop(0, '#fff');
-    grad.addColorStop(1, '#1475e1');
-    ctx.fillStyle = grad;
-    ctx.fill();
+    ctx.roundRect(bx - bW / 2 + 2, bucketY, bW - 4, 36, 4);
+    ctx.fill(); ctx.stroke();
+    ctx.fillStyle = isLit ? c.text : c.text;
+    ctx.font = `${Math.min(10, Math.floor(bW * 0.55))}px Inter`;
+    ctx.fontWeight = '800';
+    ctx.textAlign = 'center';
+    ctx.fillText(mults[i] >= 100 ? mults[i] + 'x' : mults[i] + 'x', bx, bucketY + 22);
   }
 }
 
 function renderBuckets() {
   const mults = getMults();
-  const display = document.getElementById('bucketsDisplay');
-  display.innerHTML = mults.map((m, i) => {
-    const col = bucketColor(m);
-    return `<div class="bucket" id="bucket-${i}" style="background:${col}20;color:${col};border:1px solid ${col}40">${m >= 100 ? m + 'x' : m + 'x'}</div>`;
+  const row = document.getElementById('bucketsRow');
+  row.innerHTML = mults.map((m, i) => {
+    const c = bucketColor(m);
+    return `<div class="bucket" id="bkt-${i}" style="background:${c.bg};border:1px solid ${c.border};color:${c.text}">${m}×</div>`;
   }).join('');
 }
 
-// Simulate ball drop
 function simulatePath() {
   const mults = getMults();
-  let pos = 0; // position among pegs in bottom row (0 = leftmost)
+  let pos = 0;
   const steps = [];
   for (let r = 0; r < rows; r++) {
     const goRight = Math.random() < 0.5;
     if (goRight) pos++;
-    steps.push({ row: r, col: pos, goRight });
+    steps.push({ row: r, col: pos });
   }
-  // final bucket index
-  const bucketIdx = pos;
-  return { steps, bucketIdx, mult: mults[Math.min(bucketIdx, mults.length - 1)] };
+  return { steps, bucketIdx: pos, mult: mults[Math.min(pos, mults.length - 1)] };
 }
 
-// Animate ball
 async function animateBall(steps, bucketIdx) {
   return new Promise(resolve => {
     const { w, spacing } = canvasSize();
-    // Start position: above first row, centered
-    const cols0 = 2;
     const startX = w / 2;
-    const startY = PAD - spacing * 0.6;
-
+    const startY = PAD - spacing * 0.5;
     const ball = { x: startX, y: startY };
     const balls = [ball];
-    let stepIdx = 0;
+    let step = 0;
 
-    function getTargetForStep(s) {
+    function getTarget(s) {
       if (s >= steps.length) {
-        // Bucket position
         const mults = getMults();
-        const numBuckets = mults.length;
-        const totalPegs = rows + 1;
-        const totalW = (totalPegs - 1) * spacing;
-        const startX2 = (w - totalW) / 2;
-        const bW = totalW / (numBuckets - 1);
-        const bIdx = Math.min(bucketIdx, numBuckets - 1);
-        return { x: startX2 + bIdx * bW, y: canvas.height - 20 };
+        const bW = (rows * spacing) / (mults.length - 1);
+        const startX2 = (w - rows * spacing) / 2;
+        return { x: startX2 + bucketIdx * bW, y: canvas.height - 32 };
       }
-      const { row, col } = steps[s];
-      return getPegPos(row, col);
+      return getPegPos(steps[s].row, steps[s].col);
     }
 
     function tick() {
-      const target = getTargetForStep(stepIdx);
-      const dx = target.x - ball.x;
-      const dy = target.y - ball.y;
+      const { x: tx, y: ty } = getTarget(step);
+      const dx = tx - ball.x, dy = ty - ball.y;
       const dist = Math.sqrt(dx * dx + dy * dy);
-      const speed = Math.max(4, dist * 0.18);
+      const speed = Math.max(5, dist * 0.2);
 
       if (dist < speed + 1) {
-        ball.x = target.x;
-        ball.y = target.y;
-        stepIdx++;
-        if (stepIdx > steps.length) {
-          drawBoard(balls);
-          setTimeout(resolve, 80);
-          return;
-        }
+        ball.x = tx; ball.y = ty; step++;
+        if (step > steps.length) { drawBoard(balls, bucketIdx); setTimeout(resolve, 100); return; }
       } else {
         ball.x += (dx / dist) * speed;
         ball.y += (dy / dist) * speed;
       }
-
-      drawBoard(balls);
+      drawBoard(balls, step >= steps.length ? bucketIdx : -1);
       requestAnimationFrame(tick);
     }
     requestAnimationFrame(tick);
   });
 }
 
-function setRows(r) {
+function setRows(r, btn) {
   rows = r;
-  document.querySelectorAll('.row-btn').forEach(b => {
-    if (b.textContent === String(r)) b.classList.add('active');
-    else if (['8','12','16'].includes(b.textContent)) b.classList.remove('active');
-  });
-  canvasSize();
-  drawBoard();
-  renderBuckets();
+  document.querySelectorAll('#rowSel .sel-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  canvasSize(); drawBoard(); renderBuckets();
 }
 
-function setRisk(r) {
+function setRisk(r, btn) {
   risk = r;
-  const labels = { low: 'Low', medium: 'Med', high: 'High' };
-  document.querySelectorAll('.row-btn').forEach(b => {
-    if (b.textContent === labels[r]) b.classList.add('active');
-    else if (['Low','Med','High'].includes(b.textContent)) b.classList.remove('active');
-  });
-  drawBoard();
-  renderBuckets();
-}
-
-function sb(v) { document.getElementById('betInput').value = v; }
-function adj(f) {
-  const inp = document.getElementById('betInput');
-  inp.value = Math.max(1, Math.round(parseFloat(inp.value || 1) * f));
-}
-
-async function loadBalance() {
-  try {
-    const r = await fetch('/api/me');
-    if (r.ok) { const d = await r.json(); balance = d.balance; updateBal(); }
-  } catch {}
-}
-
-function updateBal() {
-  document.getElementById('balDisp').textContent = '$' + balance.toFixed(2);
+  document.querySelectorAll('#riskSel .sel-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  drawBoard(); renderBuckets();
 }
 
 async function dropBall() {
@@ -351,69 +355,57 @@ async function dropBall() {
 
   dropping = true;
   document.getElementById('dropBtn').disabled = true;
-  document.getElementById('result').style.display = 'none';
+  document.getElementById('resMult').textContent = '...';
+  document.getElementById('resMult').style.color = '#4a6375';
+  document.getElementById('resAmt').textContent = '';
 
   const { steps, bucketIdx, mult } = simulatePath();
   const returned = Math.round(bet * mult * 100) / 100;
 
   await animateBall(steps, bucketIdx);
 
-  // Highlight bucket
-  const bucketEl = document.getElementById('bucket-' + bucketIdx);
-  if (bucketEl) bucketEl.classList.add('hit');
-  setTimeout(() => bucketEl?.classList.remove('hit'), 400);
+  // Light bucket
+  const bktEl = document.getElementById('bkt-' + bucketIdx);
+  bktEl?.classList.add('lit');
+  setTimeout(() => bktEl?.classList.remove('lit'), 400);
 
-  // Update balance via API
   try {
-    const r = await fetch('/api/bet', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ game: 'plinko', wagered: bet, returned })
-    });
-    if (r.ok) {
-      const d = await r.json();
-      balance = d.balance;
-      updateBal();
-    }
+    const r = await fetch('/api/bet', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({game:'plinko',wagered:bet,returned}) });
+    if (r.ok) { const d = await r.json(); balance = d.balance; Casino.syncBalance(balance); document.getElementById('balDisp').textContent = '$' + balance.toFixed(2); }
   } catch {}
 
   const net = returned - bet;
-  const resEl = document.getElementById('result');
-  const multEl = document.getElementById('resultMult');
-  const amtEl = document.getElementById('resultAmt');
-  resEl.style.display = 'block';
-  multEl.textContent = mult + 'x';
-  multEl.style.color = net >= 0 ? '#00c74d' : '#f1323f';
-  amtEl.textContent = (net >= 0 ? '+' : '') + '$' + net.toFixed(2);
+  const c = bucketColor(mult);
+  document.getElementById('resMult').textContent = mult + '×';
+  document.getElementById('resMult').style.color = c.text;
+  document.getElementById('resAmt').textContent = (net >= 0 ? '+' : '') + '$' + net.toFixed(2);
+  document.getElementById('resAmt').style.color = net >= 0 ? '#00ff88' : '#f1323f';
 
-  // History
-  addHistory(bet, returned, mult);
-  Casino.syncBalance && Casino.syncBalance(balance);
-
+  addHist(mult, net);
   dropping = false;
   document.getElementById('dropBtn').disabled = false;
 }
 
-function addHistory(wagered, returned, mult) {
-  const net = returned - wagered;
-  const list = document.getElementById('historyList');
+function addHist(mult, net) {
+  const list = document.getElementById('histList');
+  const c = bucketColor(mult);
   const row = document.createElement('div');
   row.className = 'hist-row';
-  row.innerHTML = `<span style="color:${net>=0?'#00c74d':'#f1323f'};font-weight:700">${mult}x</span><span style="color:${net>=0?'#00c74d':'#f1323f'}">${net>=0?'+':''}$${net.toFixed(2)}</span>`;
+  row.innerHTML = `<span style="color:${c.text};font-weight:800">${mult}×</span><span style="color:${net>=0?'#00ff88':'#f1323f'}">${net>=0?'+':''}$${net.toFixed(2)}</span>`;
   list.insertBefore(row, list.firstChild);
   while (list.children.length > 20) list.removeChild(list.lastChild);
 }
 
-// Rates
-fetch('/api/rates').then(r=>r.json()).then(d=>{
-  if (d.plinko?.house_edge !== undefined) document.getElementById('heBadge').textContent = (d.plinko.house_edge*100).toFixed(1)+'%';
-}).catch(()=>{});
+function adj(f) {
+  const el = document.getElementById('betInput');
+  el.value = Math.max(1, Math.round(parseFloat(el.value || 1) * f));
+}
+function sb(v) { document.getElementById('betInput').value = Math.min(v, balance); }
 
-// Init
-canvasSize();
-drawBoard();
-renderBuckets();
-loadBalance();
+fetch('/api/me').then(r=>r.json()).then(d=>{ balance=d.balance; document.getElementById('balDisp').textContent='$'+balance.toFixed(2); Casino.syncBalance(balance); }).catch(()=>{});
+fetch('/api/rates').then(r=>r.json()).then(d=>{ if(d.plinko?.house_edge) document.getElementById('heBadge').textContent=(d.plinko.house_edge*100).toFixed(0)+'%'; }).catch(()=>{});
+
+canvasSize(); drawBoard(); renderBuckets();
 window.addEventListener('resize', () => { canvasSize(); drawBoard(); renderBuckets(); });
 </script>
 </body>

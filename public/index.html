@@ -4,10 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Obsidian Casino</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-<script src="casino-core.js"></script>
+<script src="/casino-core.js"></script>
 <script>Casino.renderSidebar('home');Casino.requireAuth();</script>
 
 <main class="casino-main">
@@ -138,6 +138,45 @@
         <span class="game-card-badge badge-blue">CUSTOM ODDS</span>
       </div>
     </a>
+
+    <a href="/crash" class="game-card">
+      <div class="game-card-art" style="background:linear-gradient(135deg,rgba(0,40,20,0.6),rgba(0,80,40,0.3))">
+        <svg viewBox="0 0 80 80" fill="none">
+          <path d="M40 8C30 8 22 14 20 24L14 58l12-9h28l12 9-6-34C58 14 50 8 40 8z" fill="rgba(0,255,136,0.15)" stroke="#00ff88" stroke-width="1.2"/>
+          <path d="M30 58l-6 14h32l-6-14" fill="rgba(255,100,100,0.2)" stroke="rgba(255,100,100,0.5)" stroke-width="1"/>
+          <circle cx="40" cy="28" r="5" fill="#00ff88" opacity="0.7"/>
+        </svg>
+      </div>
+      <div class="game-card-info">
+        <div class="game-card-name">Crash</div>
+        <div class="game-card-desc">Rocket goes up — cashout before it crashes.</div>
+        <span class="game-card-badge badge-green">LIVE MULTIPLIER</span>
+      </div>
+    </a>
+
+    <a href="/plinko" class="game-card">
+      <div class="game-card-art" style="background:linear-gradient(135deg,rgba(0,20,60,0.6),rgba(0,40,100,0.3))">
+        <svg viewBox="0 0 80 80" fill="none">
+          <circle cx="40" cy="12" r="6" fill="#00b4ff" opacity="0.9"/>
+          <circle cx="24" cy="30" r="5" fill="rgba(0,180,255,0.5)"/>
+          <circle cx="40" cy="30" r="5" fill="rgba(0,180,255,0.5)"/>
+          <circle cx="56" cy="30" r="5" fill="rgba(0,180,255,0.5)"/>
+          <circle cx="16" cy="48" r="4" fill="rgba(0,180,255,0.3)"/>
+          <circle cx="32" cy="48" r="4" fill="rgba(0,180,255,0.3)"/>
+          <circle cx="48" cy="48" r="4" fill="rgba(0,180,255,0.3)"/>
+          <circle cx="64" cy="48" r="4" fill="rgba(0,180,255,0.3)"/>
+          <rect x="10" y="62" width="14" height="12" rx="2" fill="rgba(0,255,136,0.3)" stroke="rgba(0,255,136,0.5)" stroke-width="1"/>
+          <rect x="27" y="62" width="12" height="12" rx="2" fill="rgba(240,192,64,0.3)" stroke="rgba(240,192,64,0.5)" stroke-width="1"/>
+          <rect x="42" y="62" width="12" height="12" rx="2" fill="rgba(0,255,136,0.3)" stroke="rgba(0,255,136,0.5)" stroke-width="1"/>
+          <rect x="57" y="62" width="14" height="12" rx="2" fill="rgba(241,50,63,0.3)" stroke="rgba(241,50,63,0.5)" stroke-width="1"/>
+        </svg>
+      </div>
+      <div class="game-card-info">
+        <div class="game-card-name">Plinko</div>
+        <div class="game-card-desc">Drop the ball. Watch it bounce to riches.</div>
+        <span class="game-card-badge badge-blue">UP TO 1000×</span>
+      </div>
+    </a>
   </div>
 
   <div class="section-title">RECENT ACTIVITY</div>
@@ -167,10 +206,9 @@ function updateLobby() {
   }).join('');
 }
 
-function doRefill() {
-  Casino.refill();
+async function doRefill() {
+  await Casino.refill();
   updateLobby();
-  Casino.updateBalance();
 }
 
 updateLobby();

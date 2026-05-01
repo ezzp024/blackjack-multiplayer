@@ -8,6 +8,8 @@ const Casino = (() => {
     roulette: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="8"/><line x1="12" y1="16" x2="12" y2="22"/><line x1="2" y1="12" x2="8" y2="12"/><line x1="16" y1="12" x2="22" y2="12"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>`,
     dice: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="8" r="1.2" fill="currentColor"/><circle cx="16" cy="8" r="1.2" fill="currentColor"/><circle cx="8" cy="16" r="1.2" fill="currentColor"/><circle cx="16" cy="16" r="1.2" fill="currentColor"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/></svg>`,
     mines: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="2" x2="12" y2="7"/><line x1="12" y1="17" x2="12" y2="22"/><line x1="2" y1="12" x2="7" y2="12"/><line x1="17" y1="12" x2="22" y2="12"/><line x1="4.9" y1="4.9" x2="8.3" y2="8.3"/><line x1="15.7" y1="15.7" x2="19.1" y2="19.1"/><line x1="19.1" y1="4.9" x2="15.7" y2="8.3"/><line x1="8.3" y1="15.7" x2="4.9" y2="19.1"/></svg>`,
+    crash: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 20L10 10l4 4 3-6 4 2"/><path d="M20 8l-3 2-1-3"/></svg>`,
+    plinko: `<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="3" r="2"/><circle cx="7" cy="9" r="1.8"/><circle cx="17" cy="9" r="1.8"/><circle cx="4" cy="15" r="1.5"/><circle cx="12" cy="15" r="1.5"/><circle cx="20" cy="15" r="1.5"/></svg>`,
     profile: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-3.3 3.6-6 8-6s8 2.7 8 6"/></svg>`,
     chevron: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>`,
     coin: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9 9.5c0-1.4 1.3-2.5 3-2.5s3 1.1 3 2.5c0 1.4-1.3 2.5-3 2.5s-3 1.1-3 2.5 1.3 2.5 3 2.5 3-1.1 3-2.5" stroke-linecap="round"/></svg>`,
@@ -57,13 +59,15 @@ const Casino = (() => {
   function defaults() {
     return {
       name: 'Player',
-      balance: 5000,
+      balance: 0,
       stats: {
         blackjack: { played: 0, won: 0, wagered: 0, returned: 0 },
         slots: { played: 0, won: 0, wagered: 0, returned: 0 },
         roulette: { played: 0, won: 0, wagered: 0, returned: 0 },
         mines: { played: 0, won: 0, wagered: 0, returned: 0 },
         dice: { played: 0, won: 0, wagered: 0, returned: 0 },
+        crash: { played: 0, won: 0, wagered: 0, returned: 0 },
+        plinko: { played: 0, won: 0, wagered: 0, returned: 0 },
       },
       history: [],
       createdAt: Date.now()
@@ -91,9 +95,10 @@ const Casino = (() => {
     save(p);
   }
 
-  function recordBet(game, wagered, returned) {
+  // Server-authoritative bet: calls /api/bet, updates localStorage stats/history
+  async function recordBet(game, wagered, returned) {
+    // Update local stats/history (not balance — server owns balance)
     const p = load();
-    p.balance = Math.max(0, p.balance - wagered + returned);
     if (p.stats[game]) {
       p.stats[game].played++;
       p.stats[game].wagered += wagered;
@@ -102,7 +107,47 @@ const Casino = (() => {
     }
     p.history = [{ game, wagered, returned, net: returned - wagered, ts: Date.now() }, ...p.history].slice(0, 100);
     save(p);
+
+    try {
+      const r = await fetch('/api/bet', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ game, wagered, returned })
+      });
+      if (r.ok) {
+        const d = await r.json();
+        syncBalance(d.balance);
+        return d.balance;
+      }
+    } catch {}
     return p.balance;
+  }
+
+  // Sync local balance display from server value
+  function syncBalance(bal) {
+    const p = load();
+    p.balance = bal;
+    save(p);
+    const el = document.getElementById('balanceDisplay');
+    if (el) el.textContent = fmt(bal);
+  }
+
+  // Auth check: redirects to /login if not authenticated
+  function requireAuth() {
+    fetch('/api/me').then(r => {
+      if (!r.ok) { window.location.href = '/login'; return; }
+      r.json().then(d => {
+        // Sync name + balance from server
+        const p = load();
+        p.name = d.name;
+        p.balance = d.balance;
+        save(p);
+        const el = document.getElementById('balanceDisplay');
+        if (el) el.textContent = fmt(d.balance);
+        const av = document.querySelector('.header-avatar span');
+        if (av) av.textContent = d.name[0].toUpperCase();
+      });
+    }).catch(() => { window.location.href = '/login'; });
   }
 
   function refill() {
@@ -127,6 +172,8 @@ const Casino = (() => {
       { id: 'roulette', label: 'Roulette', href: '/roulette', icon: ICONS.roulette },
       { id: 'mines', label: 'Mines', href: '/mines', icon: ICONS.mines },
       { id: 'dice', label: 'Dice', href: '/dice', icon: ICONS.dice },
+      { id: 'crash', label: 'Crash', href: '/crash', icon: ICONS.crash },
+      { id: 'plinko', label: 'Plinko', href: '/plinko', icon: ICONS.plinko },
     ];
 
     const html = `
@@ -152,6 +199,10 @@ const Casino = (() => {
           <a href="/profile" class="nav-item ${activePage === 'profile' ? 'active' : ''}">
             <span class="nav-icon">${ICONS.profile}</span>
             <span class="nav-label">Profile</span>
+          </a>
+          <a href="/auth/logout" class="nav-item" style="color:#f1323f">
+            <span class="nav-icon">${ICONS.logout}</span>
+            <span class="nav-label">Sign Out</span>
           </a>
         </div>
       </aside>
@@ -195,7 +246,7 @@ const Casino = (() => {
     return Math.floor(d / 86400000) + 'd ago';
   }
 
-  return { getProfile, getBalance, getName, setName, recordBet, refill, fmt, renderSidebar, updateBalance, toggleSidebar, timeAgo, ICONS, SLOT_SYMBOLS };
+  return { getProfile, getBalance, getName, setName, recordBet, refill, fmt, renderSidebar, updateBalance, syncBalance, toggleSidebar, timeAgo, requireAuth, ICONS, SLOT_SYMBOLS };
 })();
 
 window.Casino = Casino;

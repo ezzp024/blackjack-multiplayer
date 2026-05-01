@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel — Obsidian Casino</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    html,body{height:100%;font-family:'Inter',sans-serif;background:#080e14;color:#fff}
+    ::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:#0a1520}::-webkit-scrollbar-thumb{background:#1e3048;border-radius:2px}
+    /* Layout */
+    .admin-wrap{display:grid;grid-template-columns:220px 1fr;min-height:100vh}
+    .sidebar{background:#0a1520;border-right:1px solid rgba(255,255,255,0.06);padding:24px 0;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
+    .sidebar-logo{padding:0 20px 24px;border-bottom:1px solid rgba(255,255,255,0.06);margin-bottom:16px}
+    .sidebar-logo .mark{display:flex;align-items:center;gap:10px}
+    .sidebar-logo svg{width:32px;height:32px}
+    .sidebar-logo h1{font-size:1rem;font-weight:900;letter-spacing:2px;color:#fff}
+    .sidebar-logo p{font-size:0.7rem;color:#f59e0b;font-weight:700;letter-spacing:1px;margin-top:2px}
+    .nav-section{padding:0 12px;margin-bottom:8px}
+    .nav-label{font-size:0.62rem;font-weight:700;color:#2a3f52;letter-spacing:2px;text-transform:uppercase;padding:0 8px;margin-bottom:6px}
+    .nav-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;color:#4a6375;cursor:pointer;font-size:0.83rem;font-weight:600;transition:all 0.15s;border:none;background:none;width:100%;text-align:left}
+    .nav-item:hover{background:rgba(255,255,255,0.04);color:#8ea3b1}
+    .nav-item.active{background:#162232;color:#fff}
+    .nav-item svg{width:16px;height:16px;flex-shrink:0}
+    .nav-item .badge{margin-left:auto;background:#00c74d;color:#000;font-size:0.62rem;font-weight:800;border-radius:10px;padding:2px 6px}
+    .sidebar-footer{margin-top:auto;padding:16px 12px 0;border-top:1px solid rgba(255,255,255,0.06)}
+    .logout-btn{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;color:#4a6375;cursor:pointer;font-size:0.83rem;font-weight:600;transition:all 0.15s;text-decoration:none;width:100%}
+    .logout-btn:hover{color:#f1323f}
+    .logout-btn svg{width:16px;height:16px}
+    /* Main */
+    .main{overflow-y:auto}
+    .top-bar{background:#0a1520;border-bottom:1px solid rgba(255,255,255,0.06);padding:16px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+    .top-bar h2{font-size:1rem;font-weight:800;letter-spacing:1px}
+    .top-bar .live-badge{display:flex;align-items:center;gap:6px;font-size:0.75rem;color:#00c74d;font-weight:700}
+    .live-dot{width:6px;height:6px;background:#00c74d;border-radius:50%;animation:pulse 1.5s ease-in-out infinite}
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(1.4)}}
+    .page-content{padding:24px;display:none}
+    .page-content.active{display:block}
+    /* Stats grid */
+    .stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;margin-bottom:24px}
+    .stat-card{background:#0f1923;border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:20px}
+    .stat-card .s-label{font-size:0.68rem;font-weight:700;color:#4a6375;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px}
+    .stat-card .s-value{font-size:1.7rem;font-weight:900;line-height:1}
+    .stat-card .s-sub{font-size:0.72rem;color:#4a6375;margin-top:6px}
+    .stat-card.green .s-value{color:#00c74d}
+    .stat-card.red .s-value{color:#f1323f}
+    .stat-card.gold .s-value{color:#f0c040}
+    .stat-card.blue .s-value{color:#1475e1}
+    /* Section */
+    .section{background:#0f1923;border:1px solid rgba(255,255,255,0.07);border-radius:14px;margin-bottom:20px;overflow:hidden}
+    .section-head{padding:16px 20px;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:space-between}
+    .section-head h3{font-size:0.82rem;font-weight:800;letter-spacing:1px;text-transform:uppercase}
+    .section-head .count{font-size:0.72rem;color:#4a6375;font-weight:600}
+    /* Table */
+    .data-table{width:100%;border-collapse:collapse}
+    .data-table th{padding:10px 16px;font-size:0.65rem;font-weight:700;color:#2a3f52;text-transform:uppercase;letter-spacing:1.5px;text-align:left;border-bottom:1px solid rgba(255,255,255,0.05)}
+    .data-table td{padding:11px 16px;font-size:0.82rem;border-bottom:1px solid rgba(255,255,255,0.04)}
+    .data-table tr:last-child td{border-bottom:none}
+    .data-table tr:hover td{background:rgba(255,255,255,0.02)}
+    .game-tag{display:inline-flex;align-items:center;padding:3px 8px;border-radius:6px;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.5px}
+    .g-blackjack{background:rgba(20,117,225,0.15);color:#1475e1}
+    .g-slots{background:rgba(240,192,64,0.15);color:#f0c040}
+    .g-roulette{background:rgba(241,50,63,0.15);color:#f1323f}
+    .g-crash{background:rgba(0,199,77,0.15);color:#00c74d}
+    .g-dice{background:rgba(139,92,246,0.15);color:#8b5cf6}
+    .g-mines{background:rgba(236,72,153,0.15);color:#ec4899}
+    .g-plinko{background:rgba(251,146,60,0.15);color:#fb923c}
+    .net-pos{color:#00c74d;font-weight:700}
+    .net-neg{color:#f1323f;font-weight:700}
+    /* Bet feed */
+    .bet-feed{max-height:400px;overflow-y:auto}
+    .bet-row{display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid rgba(255,255,255,0.04);animation:fadeIn 0.3s ease}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+    .bet-row .player{font-size:0.82rem;font-weight:600;min-width:120px}
+    .bet-row .amount{font-size:0.82rem;font-weight:700;min-width:70px}
+    .bet-row .payout{font-size:0.82rem;font-weight:700;margin-left:auto}
+    /* Rates */
+    .rates-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;padding:20px}
+    .rate-card{background:#0a1520;border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:18px}
+    .rate-card .r-name{font-size:0.75rem;font-weight:800;color:#8ea3b1;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between}
+    .rate-card .r-val{font-size:1.4rem;font-weight:900;color:#fff;margin-bottom:12px}
+    .rate-slider{width:100%;accent-color:#00c74d;cursor:pointer;height:4px}
+    .rate-input-row{display:flex;align-items:center;gap:10px;margin-top:10px}
+    .rate-input{background:#162232;border:1px solid rgba(255,255,255,0.08);border-radius:6px;color:#fff;font-size:0.85rem;padding:7px 10px;width:80px;outline:none;font-family:inherit}
+    .rate-input:focus{border-color:#00c74d}
+    .toggle{width:40px;height:22px;background:#1e3048;border-radius:11px;position:relative;cursor:pointer;transition:background 0.2s;border:none;flex-shrink:0}
+    .toggle.on{background:#00c74d}
+    .toggle::after{content:'';position:absolute;width:16px;height:16px;border-radius:50%;background:#fff;top:3px;left:3px;transition:transform 0.2s}
+    .toggle.on::after{transform:translateX(18px)}
+    .save-rates-btn{background:#00c74d;color:#000;border:none;border-radius:8px;padding:10px 20px;font-size:0.85rem;font-weight:800;cursor:pointer;transition:background 0.2s;letter-spacing:0.5px}
+    .save-rates-btn:hover{background:#00e858}
+    /* Player controls */
+    .bal-input{background:#162232;border:1px solid rgba(255,255,255,0.08);border-radius:6px;color:#fff;font-size:0.8rem;padding:5px 8px;width:90px;outline:none;font-family:inherit}
+    .bal-input:focus{border-color:#00c74d}
+    .set-btn{background:#1475e1;color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:0.75rem;font-weight:700;cursor:pointer}
+    .del-btn{background:rgba(241,50,63,0.15);color:#f1323f;border:1px solid rgba(241,50,63,0.2);border-radius:6px;padding:5px 10px;font-size:0.75rem;font-weight:700;cursor:pointer}
+    /* Online indicator */
+    .provider-badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:5px;font-size:0.66rem;font-weight:700}
+    .p-google{background:rgba(66,133,244,0.15);color:#4285F4}
+    .p-guest{background:rgba(74,99,117,0.15);color:#4a6375}
+    .p-local{background:rgba(240,192,64,0.15);color:#f0c040}
+    /* By game table */
+    .game-stat-bar{height:4px;background:#162232;border-radius:2px;margin-top:4px}
+    .game-stat-fill{height:100%;border-radius:2px;background:#00c74d;transition:width 0.4s}
+    @media(max-width:768px){.admin-wrap{grid-template-columns:1fr}.sidebar{display:none}}
+  </style>
+</head>
+<body>
+<div class="admin-wrap">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <div class="mark">
+        <svg viewBox="0 0 32 32" fill="none">
+          <polygon points="16,2 30,9 30,23 16,30 2,23 2,9" fill="rgba(0,199,77,0.1)" stroke="#00c74d" stroke-width="1.5"/>
+          <path d="M10 16l5 5 8-8" stroke="#00c74d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <div>
+          <h1>OBSIDIAN</h1>
+          <p>ADMIN PANEL</p>
+        </div>
+      </div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Overview</div>
+      <button class="nav-item active" onclick="showPage('dashboard',this)">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 2h5v5H2V2zm7 0h5v5H9V2zM2 9h5v5H2V9zm7 0h5v5H9V9z" fill-opacity="0.7"/></svg>
+        Dashboard
+      </button>
+      <button class="nav-item" onclick="showPage('livefeed',this)">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 2"/></svg>
+        Live Feed
+        <span class="badge" id="feedBadge">0</span>
+      </button>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Management</div>
+      <button class="nav-item" onclick="showPage('players',this)">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 8a3 3 0 100-6 3 3 0 000 6zm-5 7a5 5 0 1110 0H3z" fill-opacity="0.7"/></svg>
+        Players
+        <span class="badge" id="playerCountBadge">0</span>
+      </button>
+      <button class="nav-item" onclick="showPage('bets',this)">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M5 8h6M5 5h4M5 11h3"/></svg>
+        Bet History
+      </button>
+      <button class="nav-item" onclick="showPage('games',this)">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8a6 6 0 1112 0A6 6 0 012 8zm6-2v4m-2-2h4"/></svg>
+        Games &amp; Rates
+      </button>
+    </div>
+    <div class="sidebar-footer">
+      <a href="/" class="logout-btn">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 11l3-3-3-3M13 8H6M7 13H3V3h4"/></svg>
+        Back to Casino
+      </a>
+      <a href="/auth/logout" class="logout-btn" style="color:#f1323f">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 11l-3-3 3-3M3 8h7M9 3h4v10H9"/></svg>
+        Sign Out
+      </a>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="top-bar">
+      <h2 id="pageTitle">DASHBOARD</h2>
+      <div class="live-badge">
+        <div class="live-dot"></div>
+        <span id="onlineCount">0</span> online
+      </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="page-dashboard" class="page-content active">
+      <div class="stats-grid" id="statsGrid">
+        <div class="stat-card green"><div class="s-label">Online Now</div><div class="s-value" id="s-online">—</div><div class="s-sub">Active sessions</div></div>
+        <div class="stat-card blue"><div class="s-label">Total Players</div><div class="s-value" id="s-players">—</div><div class="s-sub">All accounts</div></div>
+        <div class="stat-card gold"><div class="s-label">Profit Today</div><div class="s-value" id="s-profitToday">—</div><div class="s-sub" id="s-betsToday">— bets</div></div>
+        <div class="stat-card green"><div class="s-label">Total Revenue</div><div class="s-value" id="s-profitTotal">—</div><div class="s-sub" id="s-betsTotal">— bets all time</div></div>
+        <div class="stat-card blue"><div class="s-label">Wagered Today</div><div class="s-value" id="s-wageredToday">—</div><div class="s-sub">Volume</div></div>
+        <div class="stat-card"><div class="s-label">Player Holdings</div><div class="s-value" id="s-holdings">—</div><div class="s-sub">Sum of all balances</div></div>
+      </div>
+
+      <!-- By game -->
+      <div class="section">
+        <div class="section-head"><h3>Revenue by Game</h3></div>
+        <table class="data-table">
+          <thead><tr><th>Game</th><th>Bets</th><th>Wagered</th><th>Returned</th><th>House Profit</th><th>Edge</th></tr></thead>
+          <tbody id="gameStatsBody"></tbody>
+        </table>
+      </div>
+
+      <!-- Recent bets -->
+      <div class="section">
+        <div class="section-head"><h3>Recent Bets</h3><span class="count" id="recentLabel">Live</span></div>
+        <div class="bet-feed" id="dashFeed"></div>
+      </div>
+    </div>
+
+    <!-- LIVE FEED -->
+    <div id="page-livefeed" class="page-content">
+      <div class="section">
+        <div class="section-head"><h3>Live Bet Stream</h3><span class="count" id="feedCount">0 bets</span></div>
+        <div class="bet-feed" id="liveFeed" style="max-height:none"></div>
+      </div>
+    </div>
+
+    <!-- PLAYERS -->
+    <div id="page-players" class="page-content">
+      <div class="section">
+        <div class="section-head"><h3>All Players</h3><span class="count" id="playersCount">0</span></div>
+        <div style="overflow-x:auto">
+        <table class="data-table">
+          <thead><tr><th>Name</th><th>Provider</th><th>Balance</th><th>Bets</th><th>Wagered</th><th>P/L</th><th>Last Seen</th><th>Actions</th></tr></thead>
+          <tbody id="playersBody"></tbody>
+        </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- BET HISTORY -->
+    <div id="page-bets" class="page-content">
+      <div class="section">
+        <div class="section-head"><h3>Bet History</h3><span class="count">Last 200</span></div>
+        <div style="overflow-x:auto">
+        <table class="data-table">
+          <thead><tr><th>#</th><th>Player</th><th>Game</th><th>Wagered</th><th>Returned</th><th>Net</th><th>Time</th></tr></thead>
+          <tbody id="betsBody"></tbody>
+        </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- GAMES & RATES -->
+    <div id="page-games" class="page-content">
+      <div class="section">
+        <div class="section-head">
+          <h3>Game Rates &amp; Config</h3>
+          <button class="save-rates-btn" onclick="saveRates()">SAVE ALL CHANGES</button>
+        </div>
+        <div class="rates-grid" id="ratesGrid"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const socket = io();
+socket.emit('admin:join');
+
+let stats = {}, rates = {}, feedCount = 0;
+
+function fmt(n) {
+  if (n === undefined || n === null) return '—';
+  const abs = Math.abs(n);
+  if (abs >= 1000000) return '$' + (n/1000000).toFixed(2) + 'M';
+  if (abs >= 1000) return '$' + (n/1000).toFixed(1) + 'K';
+  return '$' + n.toFixed(2);
+}
+
+function timeAgo(ts) {
+  const d = Date.now() - ts;
+  if (d < 60000) return Math.floor(d/1000) + 's ago';
+  if (d < 3600000) return Math.floor(d/60000) + 'm ago';
+  if (d < 86400000) return Math.floor(d/3600000) + 'h ago';
+  return new Date(ts).toLocaleDateString();
+}
+
+function gameTag(g) {
+  return `<span class="game-tag g-${g}">${g}</span>`;
+}
+
+// ── Pages ──
+function showPage(id, btn) {
+  document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  btn.classList.add('active');
+  const titles = { dashboard: 'DASHBOARD', livefeed: 'LIVE FEED', players: 'PLAYERS', bets: 'BET HISTORY', games: 'GAMES & RATES' };
+  document.getElementById('pageTitle').textContent = titles[id] || id.toUpperCase();
+  if (id === 'players') loadPlayers();
+  if (id === 'bets') loadBets();
+  if (id === 'games') loadRates();
+}
+
+// ── Stats ──
+async function loadStats() {
+  const r = await fetch('/admin/api/stats');
+  if (!r.ok) return;
+  stats = await r.json();
+  document.getElementById('s-online').textContent = stats.online_now;
+  document.getElementById('s-players').textContent = stats.total_players;
+  document.getElementById('s-profitToday').textContent = fmt(stats.profit_today);
+  document.getElementById('s-betsToday').textContent = stats.bets_today + ' bets';
+  document.getElementById('s-profitTotal').textContent = fmt(stats.profit_total);
+  document.getElementById('s-betsTotal').textContent = stats.total_bets + ' bets all time';
+  document.getElementById('s-wageredToday').textContent = fmt(stats.wagered_today);
+  document.getElementById('s-holdings').textContent = fmt(stats.player_balances);
+  document.getElementById('onlineCount').textContent = stats.online_now;
+
+  // By game
+  const body = document.getElementById('gameStatsBody');
+  const maxW = Math.max(...Object.values(stats.by_game || {}).map(g => g.wagered), 1);
+  body.innerHTML = Object.entries(stats.by_game || {}).sort((a,b)=>b[1].wagered-a[1].wagered).map(([g, d]) => {
+    const profit = d.wagered - d.returned;
+    const pct = d.wagered > 0 ? ((profit / d.wagered) * 100).toFixed(1) : '0.0';
+    const barW = Math.round((d.wagered / maxW) * 100);
+    return `<tr>
+      <td>${gameTag(g)}</td>
+      <td>${d.count}</td>
+      <td>${fmt(d.wagered)}<div class="game-stat-bar"><div class="game-stat-fill" style="width:${barW}%"></div></div></td>
+      <td>${fmt(d.returned)}</td>
+      <td class="${profit >= 0 ? 'net-pos' : 'net-neg'}">${fmt(profit)}</td>
+      <td class="${profit >= 0 ? 'net-pos' : 'net-neg'}">${pct}%</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Players ──
+async function loadPlayers() {
+  const r = await fetch('/admin/api/players');
+  if (!r.ok) return;
+  const players = await r.json();
+  document.getElementById('playersCount').textContent = players.length;
+  document.getElementById('playerCountBadge').textContent = players.length;
+  document.getElementById('playersBody').innerHTML = players.map(p => {
+    const pl = p.pl || 0;
+    const provCls = p.provider === 'google' ? 'p-google' : p.provider === 'local' ? 'p-local' : 'p-guest';
+    return `<tr>
+      <td><strong>${p.name}</strong><br><span style="color:#2a3f52;font-size:0.7rem">${p.id}</span></td>
+      <td><span class="provider-badge ${provCls}">${p.provider}</span></td>
+      <td>${fmt(p.balance)}</td>
+      <td>${p.total_bets}</td>
+      <td>${fmt(p.total_wagered)}</td>
+      <td class="${pl >= 0 ? 'net-pos' : 'net-neg'}">${pl >= 0 ? '+' : ''}${fmt(pl)}</td>
+      <td>${timeAgo(p.last_seen)}</td>
+      <td style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+        <input class="bal-input" id="bal-${p.id}" value="${p.balance}" type="number" min="0">
+        <button class="set-btn" onclick="setBalance('${p.id}')">Set</button>
+        <button class="del-btn" onclick="deletePlayer('${p.id}')">Del</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+async function setBalance(id) {
+  const val = parseFloat(document.getElementById('bal-' + id)?.value);
+  if (isNaN(val)) return;
+  await fetch('/admin/api/player/' + id + '/balance', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ balance: val }) });
+  loadPlayers();
+}
+
+async function deletePlayer(id) {
+  if (!confirm('Delete player ' + id + '?')) return;
+  await fetch('/admin/api/player/' + id, { method: 'DELETE' });
+  loadPlayers();
+}
+
+// ── Bets ──
+async function loadBets() {
+  const r = await fetch('/admin/api/bets');
+  if (!r.ok) return;
+  const bets = await r.json();
+  document.getElementById('betsBody').innerHTML = bets.map(b => {
+    const net = b.net;
+    return `<tr>
+      <td style="color:#2a3f52">#${b.id}</td>
+      <td>${b.user_name}</td>
+      <td>${gameTag(b.game)}</td>
+      <td>${fmt(b.wagered)}</td>
+      <td>${fmt(b.returned)}</td>
+      <td class="${net >= 0 ? 'net-pos' : 'net-neg'}">${net >= 0 ? '+' : ''}${fmt(Math.abs(net))}</td>
+      <td style="color:#4a6375">${timeAgo(b.created_at)}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Rates ──
+async function loadRates() {
+  const r = await fetch('/admin/api/rates');
+  if (!r.ok) return;
+  rates = await r.json();
+  const grid = document.getElementById('ratesGrid');
+  grid.innerHTML = Object.entries(rates).map(([game, cfg]) => {
+    const key = cfg.rtp !== undefined ? 'rtp' : 'house_edge';
+    const val = cfg[key];
+    const isRTP = key === 'rtp';
+    const min = isRTP ? 0.5 : 0.001;
+    const max = isRTP ? 1.0 : 0.5;
+    const step = isRTP ? 0.01 : 0.001;
+    const pct = (val * 100).toFixed(1);
+    return `<div class="rate-card">
+      <div class="r-name">
+        <span>${game.toUpperCase()}</span>
+        <button class="toggle ${cfg.enabled ? 'on' : ''}" id="toggle-${game}" onclick="toggleGame('${game}')"></button>
+      </div>
+      <div class="r-val" id="rval-${game}">${pct}%</div>
+      <input type="range" class="rate-slider" id="slider-${game}" min="${min}" max="${max}" step="${step}" value="${val}"
+        oninput="document.getElementById('rinput-${game}').value=(this.value*100).toFixed(1);document.getElementById('rval-${game}').textContent=(this.value*100).toFixed(1)+'%'">
+      <div class="rate-input-row">
+        <input class="rate-input" id="rinput-${game}" type="number" value="${pct}" min="${min*100}" max="${max*100}" step="${step*100}"
+          onchange="document.getElementById('slider-${game}').value=this.value/100;document.getElementById('rval-${game}').textContent=parseFloat(this.value).toFixed(1)+'%'">
+        <span style="font-size:0.75rem;color:#4a6375">% ${isRTP ? 'RTP' : 'House Edge'}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleGame(game) {
+  const btn = document.getElementById('toggle-' + game);
+  btn.classList.toggle('on');
+}
+
+async function saveRates() {
+  const updates = {};
+  Object.entries(rates).forEach(([game, cfg]) => {
+    const key = cfg.rtp !== undefined ? 'rtp' : 'house_edge';
+    const sliderEl = document.getElementById('slider-' + game);
+    const toggleEl = document.getElementById('toggle-' + game);
+    if (sliderEl) {
+      updates[game] = { [key]: parseFloat(sliderEl.value), enabled: toggleEl?.classList.contains('on') ?? true };
+    }
+  });
+  const r = await fetch('/admin/api/rates', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ rates: updates }) });
+  if (r.ok) {
+    const btn = document.querySelector('.save-rates-btn');
+    btn.textContent = 'SAVED ✓';
+    btn.style.background = '#00c74d';
+    setTimeout(() => { btn.textContent = 'SAVE ALL CHANGES'; }, 1500);
+  }
+}
+
+// ── Feed helpers ──
+function addBetToFeed(feedEl, bet, prepend = true) {
+  const net = bet.net;
+  const row = document.createElement('div');
+  row.className = 'bet-row';
+  row.innerHTML = `
+    <div class="player">${bet.user_name}</div>
+    ${gameTag(bet.game)}
+    <div class="amount">${fmt(bet.wagered)}</div>
+    <div class="payout ${net >= 0 ? 'net-pos' : 'net-neg'}">${net >= 0 ? '+' : ''}${fmt(Math.abs(net))}</div>
+    <div style="font-size:0.72rem;color:#2a3f52;margin-left:8px">${timeAgo(bet.created_at)}</div>`;
+  if (prepend) feedEl.insertBefore(row, feedEl.firstChild);
+  else feedEl.appendChild(row);
+  while (feedEl.children.length > 100) feedEl.removeChild(feedEl.lastChild);
+}
+
+// ── Initial load ──
+async function loadInitial() {
+  await loadStats();
+  // Load last bets into dash feed
+  const r = await fetch('/admin/api/bets');
+  if (r.ok) {
+    const bets = await r.json();
+    const dashFeed = document.getElementById('dashFeed');
+    bets.slice(0, 20).forEach(b => addBetToFeed(dashFeed, b, false));
+  }
+}
+
+// ── Socket events ──
+socket.on('admin:bet', (bet) => {
+  feedCount++;
+  document.getElementById('feedBadge').textContent = feedCount;
+  document.getElementById('feedCount').textContent = feedCount + ' bets';
+  addBetToFeed(document.getElementById('dashFeed'), bet);
+  addBetToFeed(document.getElementById('liveFeed'), bet);
+});
+
+socket.on('admin:online', (count) => {
+  document.getElementById('onlineCount').textContent = count;
+  document.getElementById('s-online').textContent = count;
+});
+
+loadInitial();
+setInterval(loadStats, 30000);
+</script>
+</body>
+</html>

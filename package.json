@@ -7,10 +7,19 @@
     "start": "node server.js",
     "dev": "node server.js"
   },
-  "keywords": ["blackjack", "card-game", "multiplayer"],
+  "keywords": [
+    "blackjack",
+    "card-game",
+    "multiplayer"
+  ],
   "license": "MIT",
   "dependencies": {
+    "bcryptjs": "^3.0.3",
     "express": "^4.18.2",
+    "express-session": "^1.19.0",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0",
+    "passport-local": "^1.0.0",
     "socket.io": "^4.7.2"
   },
   "engines": {

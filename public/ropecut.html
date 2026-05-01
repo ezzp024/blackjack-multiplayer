@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rope Cut — Obsidian Casino</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+  <style>
+    .rc-bg{position:fixed;inset:0;background:radial-gradient(ellipse at 50% 0%,#1a0a00 0%,#0e0500 50%,#060200 100%);z-index:-1}
+    .rc-wrap{max-width:780px;margin:0 auto;padding:24px 16px}
+    .rc-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+    .rc-title-row{display:flex;align-items:center;gap:10px}
+    .rc-icon{width:44px;height:44px;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.25);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px}
+    .rc-title-row h1{font-size:1.3rem;font-weight:900;letter-spacing:3px}
+    .he-pill{background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);color:#f59e0b;font-size:0.7rem;font-weight:700;padding:4px 12px;border-radius:20px;letter-spacing:1px}
+    /* Stats */
+    .rc-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:18px}
+    .rc-stat{background:#110800;border:1px solid rgba(245,158,11,0.1);border-radius:10px;padding:10px;text-align:center}
+    .rc-stat .sv{font-size:1rem;font-weight:800;color:#fff}
+    .rc-stat .sl{font-size:0.6rem;color:#3a2000;text-transform:uppercase;letter-spacing:1.5px;margin-top:2px}
+    /* Layout */
+    .rc-layout{display:grid;grid-template-columns:1fr 200px;gap:14px;align-items:start}
+    /* Canvas */
+    .rc-canvas-wrap{background:#0a0500;border:1px solid rgba(245,158,11,0.12);border-radius:20px;overflow:hidden;position:relative;cursor:pointer;user-select:none}
+    #ropeCanvas{display:block;width:100%}
+    .cut-hint{position:absolute;bottom:12px;left:0;right:0;text-align:center;font-size:0.72rem;color:rgba(245,158,11,0.5);font-weight:700;letter-spacing:2px;pointer-events:none;transition:opacity 0.3s}
+    /* Controls */
+    .rc-ctrl{background:#110800;border:1px solid rgba(245,158,11,0.1);border-radius:20px;padding:18px;display:flex;flex-direction:column;gap:14px}
+    .rc-lbl{font-size:0.6rem;font-weight:800;color:#3a2000;text-transform:uppercase;letter-spacing:2px;margin-bottom:6px}
+    .bet-row{display:flex;gap:6px;align-items:center}
+    .bet-inp{flex:1;background:#060200;border:1px solid rgba(245,158,11,0.15);border-radius:8px;color:#fff;font-size:0.95rem;font-weight:700;padding:10px 10px;outline:none;font-family:inherit;min-width:0}
+    .bet-inp:focus{border-color:#f59e0b}
+    .fadj{background:#1a0e00;border:1px solid rgba(245,158,11,0.08);color:#4a6375;border-radius:6px;padding:8px 9px;font-size:0.75rem;font-weight:700;cursor:pointer;transition:all 0.15s}
+    .fadj:hover{background:#261400;color:#f59e0b}
+    .presets{display:flex;gap:5px;flex-wrap:wrap}
+    .presets button{background:#060200;border:1px solid rgba(245,158,11,0.08);color:#4a6375;border-radius:6px;padding:5px 0;font-size:0.7rem;font-weight:700;cursor:pointer;flex:1;transition:all 0.15s}
+    .presets button:hover{background:#0e0700;color:#f59e0b}
+    .cut-btn{width:100%;padding:14px;background:linear-gradient(135deg,#b45309,#f59e0b,#fbbf24);border:none;border-radius:12px;color:#000;font-size:0.95rem;font-weight:900;cursor:pointer;letter-spacing:1px;transition:all 0.15s;text-transform:uppercase;position:relative;overflow:hidden}
+    .cut-btn::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,0.15) 0%,transparent 50%);pointer-events:none}
+    .cut-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 6px 24px rgba(245,158,11,0.4)}
+    .cut-btn:disabled{opacity:0.4;cursor:not-allowed;transform:none}
+    .result-box{background:#060200;border:1px solid rgba(245,158,11,0.1);border-radius:10px;padding:12px;text-align:center;min-height:56px}
+    .result-mult{font-size:1.6rem;font-weight:900;line-height:1.1}
+    .result-amt{font-size:0.78rem;color:#4a6375;margin-top:3px}
+    /* Paytable */
+    .pay-row{display:flex;justify-content:space-between;padding:5px 0;font-size:0.72rem;border-bottom:1px solid rgba(245,158,11,0.06)}
+    .pay-row:last-child{border-bottom:none}
+    .pay-zone{color:#8ea3b1;font-weight:600}
+    .pay-mult{font-weight:800}
+    /* Hist */
+    .hist-row{display:flex;gap:5px;flex-wrap:wrap;margin-top:12px}
+    .hchip{padding:3px 8px;border-radius:10px;font-size:0.68rem;font-weight:800}
+    .hw{background:rgba(0,255,136,0.1);color:#00ff88;border:1px solid rgba(0,255,136,0.25)}
+    .hl{background:rgba(241,50,63,0.1);color:#f1323f;border:1px solid rgba(241,50,63,0.2)}
+    @media(max-width:600px){.rc-layout{grid-template-columns:1fr}.rc-stats{grid-template-columns:repeat(2,1fr)}}
+  </style>
+</head>
+<body>
+<div class="rc-bg"></div>
+<script src="/casino-core.js"></script>
+<script>Casino.renderSidebar('ropecut');Casino.requireAuth();</script>
+
+<main class="casino-main">
+<div class="rc-wrap">
+
+  <div class="rc-header">
+    <div class="rc-title-row">
+      <div class="rc-icon">✂️</div>
+      <h1>ROPE CUT</h1>
+    </div>
+    <span class="he-pill">HOUSE 4%</span>
+  </div>
+
+  <div class="rc-stats">
+    <div class="rc-stat"><div class="sv" id="st-bal">—</div><div class="sl">Balance</div></div>
+    <div class="rc-stat"><div class="sv" id="st-rounds">0</div><div class="sl">Rounds</div></div>
+    <div class="rc-stat"><div class="sv" id="st-best">—</div><div class="sl">Best Win</div></div>
+    <div class="rc-stat"><div class="sv" id="st-pl" style="color:var(--text2)">$0</div><div class="sl">Session P/L</div></div>
+  </div>
+
+  <div class="rc-layout">
+    <div>
+      <div class="rc-canvas-wrap" id="canvasWrap" onclick="cutRope()">
+        <canvas id="ropeCanvas" width="540" height="460"></canvas>
+        <div class="cut-hint" id="cutHint">TAP TO CUT</div>
+      </div>
+      <div class="hist-row" id="histRow"></div>
+    </div>
+
+    <div class="rc-ctrl">
+      <div>
+        <div class="rc-lbl">BET AMOUNT</div>
+        <div class="bet-row">
+          <input class="bet-inp" type="number" id="betAmt" value="50" min="5">
+          <button class="fadj" onclick="adjBet(0.5)">½</button>
+          <button class="fadj" onclick="adjBet(2)">×2</button>
+        </div>
+        <div class="presets" style="margin-top:6px">
+          <button onclick="qBet(10)">$10</button>
+          <button onclick="qBet(25)">$25</button>
+          <button onclick="qBet(100)">$100</button>
+        </div>
+      </div>
+
+      <div class="result-box">
+        <div class="result-mult" id="resultMult" style="color:#4a6375">—</div>
+        <div class="result-amt" id="resultAmt">Cut the rope to win</div>
+      </div>
+
+      <button class="cut-btn" id="cutBtn" onclick="cutRope()" disabled>✂ CUT!</button>
+
+      <div>
+        <div class="rc-lbl">ZONES</div>
+        <div class="pay-row"><span class="pay-zone">🟢 Center</span><span class="pay-mult" style="color:#00ff88">5.0×</span></div>
+        <div class="pay-row"><span class="pay-zone">🟡 Inner</span><span class="pay-mult" style="color:#f0c040">2.5×</span></div>
+        <div class="pay-row"><span class="pay-zone">🟠 Mid</span><span class="pay-mult" style="color:#f59e0b">1.5×</span></div>
+        <div class="pay-row"><span class="pay-zone">🔴 Outer</span><span class="pay-mult" style="color:#f1323f">0.5×</span></div>
+        <div class="pay-row"><span class="pay-zone">⚫ Edge</span><span class="pay-mult" style="color:#4a6375">0×</span></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</main>
+
+<script>
+const canvas = document.getElementById('ropeCanvas');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+
+// Rope physics
+const PIVOT = { x: W / 2, y: 30 };
+const ROPE_LEN = 260;
+let angle = -Math.PI / 3; // start angle from vertical
+let angleVel = 0.018; // angular velocity
+let pendulumActive = false;
+let cutDone = false;
+let gemX = 0, gemY = 0, gemVX = 0, gemVY = 0;
+let gemFalling = false;
+let resultMult = 0;
+let animId = null;
+let balance = 0, balanceReady = false;
+let rounds = 0, sessionPL = 0, bestWin = 0;
+let history = [];
+
+// Bucket zones (x positions relative to center)
+const BUCKETS = [
+  { label: '0×',   mult: 0,   color: '#1a1a2e', textColor: '#4a6375',  w: 70 },
+  { label: '0.5×', mult: 0.5, color: '#2d0a0a', textColor: '#f1323f',  w: 60 },
+  { label: '1.5×', mult: 1.5, color: '#2d1a00', textColor: '#f59e0b',  w: 56 },
+  { label: '2.5×', mult: 2.5, color: '#1a1a00', textColor: '#f0c040',  w: 48 },
+  { label: '5.0×', mult: 5.0, color: '#001a08', textColor: '#00ff88',  w: 44 },
+  { label: '2.5×', mult: 2.5, color: '#1a1a00', textColor: '#f0c040',  w: 48 },
+  { label: '1.5×', mult: 1.5, color: '#2d1a00', textColor: '#f59e0b',  w: 56 },
+  { label: '0.5×', mult: 0.5, color: '#2d0a0a', textColor: '#f1323f',  w: 60 },
+  { label: '0×',   mult: 0,   color: '#1a1a2e', textColor: '#4a6375',  w: 70 },
+];
+
+const BUCKET_Y = H - 70;
+const BUCKET_H = 60;
+
+// Pre-calculate bucket x positions
+function bucketPositions() {
+  const totalW = BUCKETS.reduce((s, b) => s + b.w, 0) + (BUCKETS.length - 1) * 3;
+  let x = (W - totalW) / 2;
+  return BUCKETS.map(b => {
+    const pos = { x, w: b.w };
+    x += b.w + 3;
+    return pos;
+  });
+}
+const bPos = bucketPositions();
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+
+  // Background gradient
+  const bg = ctx.createLinearGradient(0, 0, 0, H);
+  bg.addColorStop(0, '#0a0500');
+  bg.addColorStop(1, '#060200');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+
+  // Draw buckets
+  bPos.forEach((bp, i) => {
+    const b = BUCKETS[i];
+    ctx.fillStyle = b.color;
+    ctx.beginPath();
+    ctx.roundRect(bp.x, BUCKET_Y, bp.w, BUCKET_H, [0, 0, 6, 6]);
+    ctx.fill();
+    ctx.strokeStyle = b.textColor + '44';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.fillStyle = b.textColor;
+    ctx.font = '700 10px Inter,sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(b.label, bp.x + bp.w / 2, BUCKET_Y + 34);
+  });
+
+  // Pivot mount
+  ctx.fillStyle = '#f59e0b';
+  ctx.beginPath();
+  ctx.arc(PIVOT.x, PIVOT.y, 8, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#1a0e00';
+  ctx.beginPath();
+  ctx.arc(PIVOT.x, PIVOT.y, 4, 0, Math.PI * 2);
+  ctx.fill();
+
+  if (!gemFalling) {
+    gemX = PIVOT.x + Math.sin(angle) * ROPE_LEN;
+    gemY = PIVOT.y + Math.cos(angle) * ROPE_LEN;
+
+    // Rope glow
+    ctx.shadowColor = 'rgba(245,158,11,0.4)';
+    ctx.shadowBlur = 6;
+    ctx.beginPath();
+    ctx.moveTo(PIVOT.x, PIVOT.y);
+    ctx.lineTo(gemX, gemY);
+    ctx.strokeStyle = '#b45309';
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    if (!cutDone) {
+      // Pendulum shadow on buckets (indicator)
+      const bxNorm = (gemX - (W / 2));
+      ctx.fillStyle = 'rgba(245,158,11,0.15)';
+      ctx.beginPath();
+      ctx.ellipse(gemX, BUCKET_Y - 5, 18, 5, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Gem bob
+    const gemGrad = ctx.createRadialGradient(gemX - 4, gemY - 4, 2, gemX, gemY, 18);
+    gemGrad.addColorStop(0, '#fde68a');
+    gemGrad.addColorStop(0.5, '#f59e0b');
+    gemGrad.addColorStop(1, '#b45309');
+    ctx.shadowColor = 'rgba(245,158,11,0.6)';
+    ctx.shadowBlur = 20;
+    ctx.beginPath();
+    ctx.arc(gemX, gemY, 16, 0, Math.PI * 2);
+    ctx.fillStyle = gemGrad;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    // gem shine
+    ctx.beginPath();
+    ctx.arc(gemX - 4, gemY - 4, 5, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.fill();
+
+    // Scissors indicator at rope midpoint
+    const mx = PIVOT.x + Math.sin(angle) * ROPE_LEN * 0.52;
+    const my = PIVOT.y + Math.cos(angle) * ROPE_LEN * 0.52;
+    ctx.font = '22px serif';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.fillText('✂', mx, my + 8);
+
+  } else {
+    // Falling gem
+    ctx.shadowColor = 'rgba(245,158,11,0.5)';
+    ctx.shadowBlur = 16;
+    const gemGrad = ctx.createRadialGradient(gemX - 4, gemY - 4, 2, gemX, gemY, 18);
+    gemGrad.addColorStop(0, '#fde68a');
+    gemGrad.addColorStop(1, '#b45309');
+    ctx.beginPath();
+    ctx.arc(gemX, gemY, 16, 0, Math.PI * 2);
+    ctx.fillStyle = gemGrad;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // Trail
+    ctx.fillStyle = 'rgba(245,158,11,0.2)';
+    ctx.beginPath();
+    ctx.ellipse(gemX, gemY - 10, 6, 12, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function tick() {
+  if (!gemFalling) {
+    if (pendulumActive && !cutDone) {
+      angle += angleVel;
+      // Bounce at extremes
+      if (Math.abs(angle) > Math.PI / 2.4) angleVel *= -1;
+    }
+  } else {
+    // Physics: fall + horizontal drift
+    gemVY += 0.7; // gravity
+    gemX += gemVX;
+    gemY += gemVY;
+
+    // Check landing in bucket
+    if (gemY + 16 >= BUCKET_Y) {
+      gemY = BUCKET_Y - 16;
+      // Which bucket landed?
+      let landed = -1;
+      bPos.forEach((bp, i) => {
+        if (gemX >= bp.x && gemX <= bp.x + bp.w) landed = i;
+      });
+      if (landed === -1) { landed = gemX < W / 2 ? 0 : BUCKETS.length - 1; }
+      const mult = BUCKETS[landed].mult;
+      showResult(mult);
+      cancelAnimationFrame(animId);
+      // Bounce effect
+      gemVY = -gemVY * 0.3;
+      gemVX *= 0.6;
+      draw();
+      return;
+    }
+
+    if (gemY > H + 50) { // missed all buckets
+      showResult(0);
+      cancelAnimationFrame(animId);
+      return;
+    }
+  }
+
+  draw();
+  animId = requestAnimationFrame(tick);
+}
+
+function startPendulum() {
+  cutDone = false;
+  gemFalling = false;
+  angle = -Math.PI / 2.8;
+  angleVel = 0.018 + Math.random() * 0.006;
+  if (Math.random() < 0.5) angleVel *= -1;
+  pendulumActive = true;
+  document.getElementById('cutHint').style.opacity = '1';
+  document.getElementById('cutBtn').disabled = false;
+  if (animId) cancelAnimationFrame(animId);
+  animId = requestAnimationFrame(tick);
+}
+
+async function cutRope() {
+  if (cutDone || !pendulumActive || !balanceReady) return;
+  const bet = parseFloat(document.getElementById('betAmt').value);
+  if (!bet || bet <= 0 || bet > balance) return;
+
+  cutDone = true;
+  pendulumActive = false;
+  document.getElementById('cutBtn').disabled = true;
+  document.getElementById('cutHint').style.opacity = '0';
+
+  // Launch gem with current velocity
+  gemVX = angleVel * ROPE_LEN * Math.cos(angle) * 0.85;
+  gemVY = angleVel * ROPE_LEN * -Math.sin(angle) * 0.3 + 2;
+  if (gemVY < 1) gemVY = 1;
+  gemFalling = true;
+
+  // Store bet for result
+  window._currentBet = bet;
+}
+
+async function showResult(mult) {
+  resultMult = mult;
+  const bet = window._currentBet || 0;
+  const won = Math.round(bet * mult * 100) / 100;
+  const net = won - bet;
+
+  const rmEl = document.getElementById('resultMult');
+  const raEl = document.getElementById('resultAmt');
+  rmEl.textContent = mult + '×';
+  rmEl.style.color = mult >= 2.5 ? '#00ff88' : mult >= 1.5 ? '#f0c040' : mult >= 0.5 ? '#f59e0b' : '#f1323f';
+  raEl.textContent = net >= 0 ? `+$${won.toFixed(2)}` : `-$${bet.toFixed(2)}`;
+  raEl.style.color = net >= 0 ? '#00ff88' : '#f1323f';
+
+  rounds++;
+  sessionPL += net;
+  if (won > bestWin) bestWin = won;
+  history.unshift(net >= 0 ? 'w' : 'l');
+  if (history.length > 20) history.pop();
+
+  // Record with server
+  try {
+    const r = await fetch('/api/bet', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ game: 'ropecut', wagered: bet, returned: won })
+    });
+    if (r.ok) {
+      const d = await r.json();
+      balance = d.balance;
+      Casino.syncBalance(balance);
+    }
+  } catch {}
+
+  updateStats();
+  document.getElementById('histRow').innerHTML = history.map(h =>
+    `<span class="hchip h${h}">${h==='w'?'WIN':'LOSS'}</span>`
+  ).join('');
+
+  // Auto restart after 2s
+  setTimeout(startPendulum, 2000);
+}
+
+function updateStats() {
+  document.getElementById('st-bal').textContent = Casino.fmt(balance);
+  document.getElementById('st-rounds').textContent = rounds;
+  document.getElementById('st-best').textContent = bestWin > 0 ? Casino.fmt(bestWin) : '—';
+  const pl = document.getElementById('st-pl');
+  pl.textContent = (sessionPL >= 0 ? '+' : '') + Casino.fmt(sessionPL);
+  pl.style.color = sessionPL > 0 ? 'var(--green)' : sessionPL < 0 ? 'var(--red)' : 'var(--text2)';
+}
+
+function adjBet(m) {
+  const inp = document.getElementById('betAmt');
+  inp.value = Math.max(5, Math.min(Math.round(parseFloat(inp.value||0)*m), balance));
+}
+function qBet(v) { document.getElementById('betAmt').value = Math.min(v, balance); }
+
+fetch('/api/me').then(r => r.json()).then(d => {
+  balance = d.balance;
+  balanceReady = true;
+  Casino.syncBalance(balance);
+  updateStats();
+  startPendulum();
+}).catch(() => { startPendulum(); });
+</script>
+</body>
+</html>

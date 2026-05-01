@@ -140,7 +140,7 @@
       <button onclick="sb(50)">$50</button>
       <button onclick="sb(100)">$100</button>
     </div>
-    <button class="spin-btn" id="spinBtn" onclick="spin()">
+    <button class="spin-btn" id="spinBtn" onclick="spin()" disabled>
       <svg viewBox="0 0 20 20" fill="none" width="18" height="18" style="display:inline-block;vertical-align:middle;margin-right:8px"><path d="M10 3a7 7 0 0 1 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M17 3l0 7-7 0" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       SPIN
     </button>
@@ -450,7 +450,7 @@ function spawnSakura() {
 }
 
 // Init
-fetch('/api/me').then(r=>r.json()).then(d=>{ balance=d.balance; Casino.syncBalance(balance); document.getElementById('st-balance').textContent='$'+balance.toFixed(2); }).catch(()=>{});
+fetch('/api/me').then(r=>r.json()).then(d=>{ balance=d.balance; Casino.syncBalance(balance); document.getElementById('st-balance').textContent='$'+balance.toFixed(2); document.getElementById('spinBtn').disabled=false; }).catch(()=>{ document.getElementById('spinBtn').disabled=false; });
 buildPaytable();
 initStrips();
 spawnSakura();

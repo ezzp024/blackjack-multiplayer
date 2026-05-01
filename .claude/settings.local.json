@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Get-ChildItem \"C:\\\\Users\\\\popa\\\\Desktop\\\\New folder \\(12\\)\" | Where-Object { $_.Name -ne 'node_modules' } | Select-Object Name, Length)",
+      "PowerShell(Get-ChildItem \"C:\\\\Users\\\\popa\\\\Desktop\\\\New folder \\(12\\)\" -Force | Where-Object { $_.Name -ne 'node_modules' })",
+      "PowerShell(Get-ChildItem \"C:\\\\Users\\\\popa\\\\Desktop\\\\New folder \\(12\\)\" | Where-Object { $_.Name -notmatch \"node_modules\" } | Select-Object Name, LastWriteTime)",
+      "PowerShell(Stop-Process *)",
+      "PowerShell(Get-Command *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)"
+    ]
+  }
+}

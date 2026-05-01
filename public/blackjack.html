@@ -1,425 +1,447 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Blackjack — Obsidian Casino</title>
   <link rel="stylesheet" href="/styles.css">
-  <script src="/socket.io/socket.io.js"></script>
+  <style>
+    .bj-bg{position:fixed;inset:0;background:radial-gradient(ellipse at 50% 0%,#071a0e 0%,#040c08 60%,#020408 100%);z-index:-1}
+    .bj-wrap{max-width:780px;margin:0 auto;padding:24px 16px}
+    .bj-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+    .bj-title-row{display:flex;align-items:center;gap:10px}
+    .bj-icon{width:44px;height:44px;background:rgba(0,199,77,0.1);border:1px solid rgba(0,199,77,0.25);border-radius:12px;display:flex;align-items:center;justify-content:center}
+    .bj-icon svg{width:26px;height:26px}
+    .bj-title-row h1{font-size:1.3rem;font-weight:900;letter-spacing:3px}
+    .he-pill{background:rgba(0,199,77,0.08);border:1px solid rgba(0,199,77,0.2);color:#00c74d;font-size:0.7rem;font-weight:700;padding:4px 12px;border-radius:20px;letter-spacing:1px}
+    /* Stats row */
+    .bj-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:18px}
+    .bj-stat{background:#0a1510;border:1px solid rgba(0,199,77,0.1);border-radius:10px;padding:10px;text-align:center}
+    .bj-stat .sv{font-size:1rem;font-weight:800;color:#fff}
+    .bj-stat .sl{font-size:0.6rem;color:#2a4535;text-transform:uppercase;letter-spacing:1.5px;margin-top:2px}
+    /* Table felt */
+    .felt{background:linear-gradient(180deg,#0a1e10 0%,#071408 100%);border:2px solid rgba(0,199,77,0.12);border-radius:20px;padding:24px;margin-bottom:14px;position:relative;overflow:hidden;min-height:340px}
+    .felt::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(0,199,77,0.06) 0%,transparent 60%);pointer-events:none}
+    /* Zones */
+    .dealer-zone{margin-bottom:20px;text-align:center}
+    .zone-lbl{font-size:0.6rem;font-weight:800;color:#1a4028;letter-spacing:3px;text-transform:uppercase;margin-bottom:8px}
+    .card-row{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;min-height:100px;align-items:center}
+    .score-badge{display:inline-flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:4px 12px;font-size:0.85rem;font-weight:800;margin-top:6px;min-width:36px}
+    .score-badge.bj{background:rgba(255,200,0,0.15);border-color:rgba(255,200,0,0.4);color:#ffd700}
+    .score-badge.bust{background:rgba(241,50,63,0.15);border-color:rgba(241,50,63,0.3);color:#f1323f}
+    /* Center divider */
+    .center-line{border-top:1px solid rgba(0,199,77,0.08);margin:4px 0 16px}
+    /* Playing cards */
+    .card{width:62px;height:88px;border-radius:8px;background:#fff;border:1px solid rgba(0,0,0,0.1);display:flex;flex-direction:column;justify-content:space-between;padding:4px 5px;box-shadow:0 4px 12px rgba(0,0,0,0.5);flex-shrink:0;animation:cardIn 0.2s ease}
+    @keyframes cardIn{from{transform:translateY(-16px) scale(0.9);opacity:0}to{transform:none;opacity:1}}
+    .card.hidden{background:linear-gradient(135deg,#0a4020 25%,#083018 25%,#083018 50%,#0a4020 50%,#0a4020 75%,#083018 75%);background-size:10px 10px;border:2px solid rgba(0,199,77,0.2)}
+    .card .ctop,.card .cbot{font-size:0.72rem;font-weight:900;line-height:1.1}
+    .card .cmid{font-size:1.5rem;text-align:center;line-height:1}
+    .card .cbot{align-self:flex-end;transform:rotate(180deg)}
+    .card.red .ctop,.card.red .cbot,.card.red .cmid{color:#c62828}
+    .card.black .ctop,.card.black .cbot,.card.black .cmid{color:#111}
+    /* Message */
+    .bj-message{text-align:center;min-height:36px;font-size:1.1rem;font-weight:900;letter-spacing:1px;margin:8px 0}
+    .bj-message.win{color:#00ff88;text-shadow:0 0 20px rgba(0,255,136,0.5)}
+    .bj-message.lose{color:#f1323f;text-shadow:0 0 20px rgba(241,50,63,0.4)}
+    .bj-message.push{color:#f0c040}
+    .bj-message.bj{color:#ffd700;text-shadow:0 0 30px rgba(255,215,0,0.6)}
+    /* Controls */
+    .ctrl-panel{background:#0a1510;border:1px solid rgba(0,199,77,0.1);border-radius:16px;padding:18px}
+    .ctrl-lbl{font-size:0.62rem;font-weight:800;color:#1a4028;text-transform:uppercase;letter-spacing:2px;margin-bottom:8px}
+    .bet-row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+    .bet-inp{flex:1;background:#060e08;border:1px solid rgba(0,199,77,0.15);border-radius:8px;color:#fff;font-size:1rem;font-weight:700;padding:10px 12px;outline:none;font-family:inherit}
+    .bet-inp:focus{border-color:#00c74d}
+    .badj{background:#0f2018;border:1px solid rgba(0,199,77,0.1);color:#4a6375;border-radius:6px;padding:8px 12px;font-size:0.78rem;font-weight:700;cursor:pointer;transition:all 0.15s}
+    .badj:hover{background:#162e20;color:#00c74d}
+    .chip-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+    .chip{background:#060e08;border:1px solid rgba(0,199,77,0.12);color:#4a6375;border-radius:6px;padding:6px 10px;font-size:0.72rem;font-weight:700;cursor:pointer;transition:all 0.15s}
+    .chip:hover{background:#0f2018;color:#00c74d;border-color:rgba(0,199,77,0.3)}
+    .deal-btn{width:100%;padding:14px;background:linear-gradient(135deg,#00c74d,#00a03d);border:none;border-radius:12px;color:#000;font-size:1rem;font-weight:900;cursor:pointer;letter-spacing:1px;transition:all 0.15s;text-transform:uppercase;position:relative;overflow:hidden}
+    .deal-btn::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,0.15) 0%,transparent 50%);pointer-events:none}
+    .deal-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 6px 24px rgba(0,199,77,0.4)}
+    .deal-btn:disabled{opacity:0.4;cursor:not-allowed;transform:none}
+    .action-row{display:flex;gap:8px;margin-bottom:8px}
+    .abtn{flex:1;padding:13px;border:none;border-radius:10px;font-size:0.88rem;font-weight:900;cursor:pointer;letter-spacing:0.5px;transition:all 0.15s;text-transform:uppercase}
+    .abtn:hover:not(:disabled){transform:translateY(-1px)}
+    .abtn:disabled{opacity:0.35;cursor:not-allowed;transform:none}
+    .btn-hit{background:#00c74d;color:#000}
+    .btn-hit:hover:not(:disabled){box-shadow:0 4px 16px rgba(0,199,77,0.4)}
+    .btn-stand{background:#f0c040;color:#000}
+    .btn-stand:hover:not(:disabled){box-shadow:0 4px 16px rgba(240,192,64,0.4)}
+    .btn-dbl{background:#4168e0;color:#fff}
+    .btn-dbl:hover:not(:disabled){box-shadow:0 4px 16px rgba(65,104,224,0.4)}
+    .btn-next{width:100%;padding:13px;background:#162e20;border:1px solid rgba(0,199,77,0.2);border-radius:10px;color:#00c74d;font-size:0.9rem;font-weight:800;cursor:pointer;transition:all 0.15s;letter-spacing:1px}
+    .btn-next:hover{background:#1e4030;box-shadow:0 4px 16px rgba(0,199,77,0.2)}
+    /* History */
+    .hist-row{display:flex;gap:5px;flex-wrap:wrap;margin-top:12px}
+    .hchip{padding:3px 9px;border-radius:12px;font-size:0.68rem;font-weight:800}
+    .hw{background:rgba(0,255,136,0.1);color:#00ff88;border:1px solid rgba(0,255,136,0.25)}
+    .hl{background:rgba(241,50,63,0.1);color:#f1323f;border:1px solid rgba(241,50,63,0.2)}
+    .hp{background:rgba(240,192,64,0.1);color:#f0c040;border:1px solid rgba(240,192,64,0.2)}
+    @media(max-width:500px){.bj-stats{grid-template-columns:repeat(2,1fr)}.action-row{flex-wrap:wrap}}
+  </style>
 </head>
 <body>
+<div class="bj-bg"></div>
 <script src="/casino-core.js"></script>
 <script>Casino.renderSidebar('blackjack');Casino.requireAuth();</script>
 
 <main class="casino-main">
+<div class="bj-wrap">
 
-  <!-- SETUP SCREEN -->
-  <div id="setupScreen">
-    <div class="bj-setup-wrap">
-      <div class="bj-setup-card">
-        <div style="text-align:center;margin-bottom:24px">
-          <svg width="48" height="48" viewBox="0 0 48 48" fill="none" style="margin-bottom:12px">
-            <rect x="4" y="3" width="22" height="32" rx="3" fill="white" opacity="0.95"/>
-            <text x="8" y="16" font-size="10" font-weight="900" fill="#111" font-family="Georgia,serif">A</text>
-            <text x="15" y="26" font-size="14" text-anchor="middle" fill="#111" font-family="Georgia,serif">â™ </text>
-            <rect x="22" y="11" width="22" height="32" rx="3" fill="white" opacity="0.9"/>
-            <text x="26" y="24" font-size="10" font-weight="900" fill="#c62828" font-family="Georgia,serif">K</text>
-            <text x="33" y="34" font-size="14" text-anchor="middle" fill="#c62828" font-family="Georgia,serif">â™¥</text>
-          </svg>
-          <div style="font-size:1.4rem;font-weight:900;letter-spacing:2px">BLACKJACK</div>
-          <div style="font-size:0.8rem;color:var(--text3);margin-top:4px">Multiplayer Â· Up to 6 players</div>
-        </div>
-
-        <div class="tab-row">
-          <button class="tab-btn active" onclick="showTab('create',this)">Create Table</button>
-          <button class="tab-btn" onclick="showTab('join',this)">Join Table</button>
-        </div>
-
-        <div id="createTab">
-          <input class="form-input" id="createName" placeholder="Your name" maxlength="15">
-          <button class="btn-primary" onclick="createRoom()">CREATE TABLE</button>
-        </div>
-        <div id="joinTab" style="display:none">
-          <input class="form-input" id="joinName" placeholder="Your name" maxlength="15">
-          <input class="form-input" id="joinCode" placeholder="Room code" maxlength="6" style="text-transform:uppercase;font-weight:800;letter-spacing:4px;text-align:center">
-          <button class="btn-primary" onclick="joinRoom()">JOIN TABLE</button>
-        </div>
-        <div class="bj-error" id="errorMsg"></div>
+  <div class="bj-header">
+    <div class="bj-title-row">
+      <div class="bj-icon">
+        <svg viewBox="0 0 26 26" fill="none">
+          <rect x="1" y="1" width="11" height="16" rx="2" fill="white" opacity="0.95"/>
+          <text x="3" y="10" font-size="6" font-weight="900" fill="#111" font-family="Georgia,serif">A</text>
+          <text x="6.5" y="15" font-size="9" text-anchor="middle" fill="#111" font-family="Georgia,serif">♠</text>
+          <rect x="13" y="7" width="11" height="16" rx="2" fill="white" opacity="0.9"/>
+          <text x="15" y="16" font-size="6" font-weight="900" fill="#c62828" font-family="Georgia,serif">K</text>
+          <text x="18.5" y="21" font-size="9" text-anchor="middle" fill="#c62828" font-family="Georgia,serif">♥</text>
+        </svg>
       </div>
+      <h1>BLACKJACK</h1>
+    </div>
+    <span class="he-pill" id="hePill">HOUSE 0.5%</span>
+  </div>
+
+  <div class="bj-stats">
+    <div class="bj-stat"><div class="sv" id="st-balance">—</div><div class="sl">Balance</div></div>
+    <div class="bj-stat"><div class="sv" id="st-hands">0</div><div class="sl">Hands</div></div>
+    <div class="bj-stat"><div class="sv" id="st-wins">0</div><div class="sl">Wins</div></div>
+    <div class="bj-stat"><div class="sv" id="st-pl" style="color:var(--text2)">$0</div><div class="sl">Session P/L</div></div>
+  </div>
+
+  <div class="felt">
+    <div class="dealer-zone">
+      <div class="zone-lbl">DEALER</div>
+      <div class="card-row" id="dealerCards"></div>
+      <div id="dealerScore"></div>
+    </div>
+    <div class="center-line"></div>
+    <div class="bj-message" id="bjMsg"></div>
+    <div style="text-align:center">
+      <div class="zone-lbl">YOU</div>
+      <div class="card-row" id="playerCards"></div>
+      <div id="playerScore"></div>
     </div>
   </div>
 
-  <!-- LOBBY SCREEN -->
-  <div id="lobbyScreen" style="display:none">
-    <div style="padding:20px">
-      <div class="bj-lobby-card">
-        <div style="text-align:center;margin-bottom:20px">
-          <div style="font-size:0.7rem;color:var(--text3);letter-spacing:3px;margin-bottom:8px">ROOM CODE</div>
-          <div class="room-code-box" onclick="copyCode()">
-            <div class="room-code-val" id="roomCodeDisplay">------</div>
-            <div class="room-code-hint">Tap to copy Â· Share with friends</div>
-          </div>
-        </div>
-
-        <div style="font-size:0.75rem;font-weight:700;color:var(--text3);letter-spacing:2px;margin-bottom:10px">PLAYERS</div>
-        <div id="lobbyPlayerList" style="background:var(--bg3);border-radius:10px;margin-bottom:16px;overflow:hidden"></div>
-
-        <div style="display:flex;flex-direction:column;gap:8px">
-          <button class="btn-secondary" id="readyBtn" onclick="toggleReady()">I'M READY</button>
-          <button class="btn-primary" id="startBtn" onclick="startGame()" style="display:none">START GAME</button>
-          <button class="btn-danger" onclick="leaveRoom()" style="background:transparent;border:1px solid var(--border2);color:var(--text2)">Leave Room</button>
-        </div>
+  <div class="ctrl-panel" id="ctrlPanel">
+    <!-- BET PHASE -->
+    <div id="betPhase">
+      <div class="ctrl-lbl">YOUR BET</div>
+      <div class="bet-row">
+        <input class="bet-inp" type="number" id="betAmt" value="50" min="5" step="5">
+        <button class="badj" onclick="adjBet(0.5)">½</button>
+        <button class="badj" onclick="adjBet(2)">×2</button>
       </div>
+      <div class="chip-row">
+        <button class="chip" onclick="setBet(10)">$10</button>
+        <button class="chip" onclick="setBet(25)">$25</button>
+        <button class="chip" onclick="setBet(50)">$50</button>
+        <button class="chip" onclick="setBet(100)">$100</button>
+        <button class="chip" onclick="setBet(250)">$250</button>
+        <button class="chip" onclick="setBet(500)">$500</button>
+      </div>
+      <button class="deal-btn" id="dealBtn" onclick="deal()">DEAL CARDS</button>
+    </div>
+
+    <!-- ACTION PHASE -->
+    <div id="actionPhase" style="display:none">
+      <div class="ctrl-lbl" id="actionLbl">YOUR TURN</div>
+      <div class="action-row">
+        <button class="abtn btn-hit" id="hitBtn" onclick="hit()">HIT</button>
+        <button class="abtn btn-stand" id="standBtn" onclick="stand()">STAND</button>
+        <button class="abtn btn-dbl" id="dblBtn" onclick="doubleDown()">DOUBLE</button>
+      </div>
+    </div>
+
+    <!-- END PHASE -->
+    <div id="endPhase" style="display:none">
+      <button class="btn-next" onclick="nextHand()">NEXT HAND →</button>
     </div>
   </div>
 
-  <!-- GAME SCREEN -->
-  <div id="gameScreen" style="display:none">
-    <div class="game-page">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
-        <div style="display:flex;gap:8px;align-items:center">
-          <span style="background:var(--bg3);border:1px solid var(--border);padding:4px 12px;border-radius:16px;font-size:0.75rem;font-weight:700;color:var(--text2)" id="gameRoomCodeBadge"></span>
-          <span style="background:var(--bg3);border:1px solid var(--border);padding:4px 12px;border-radius:16px;font-size:0.75rem;font-weight:600;color:var(--text3)">Round <span id="roundBadge">1</span></span>
-        </div>
-      </div>
+  <div class="hist-row" id="histRow"></div>
 
-      <!-- TABLE FELT -->
-      <div class="bj-table-felt" style="margin-bottom:14px">
-        <div class="bj-dealer-zone">
-          <div class="zone-label">DEALER</div>
-          <div class="card-hand" id="dealerHand"></div>
-          <div id="dealerScore"></div>
-        </div>
-        <div class="bj-other-zone" id="otherPlayers"></div>
-        <div class="bj-center-zone">
-          <div class="pot-badge">
-            <div class="pb-label">POT</div>
-            <div class="pb-amount" id="potAmt">$0</div>
-          </div>
-        </div>
-        <div class="bj-message"><div class="bj-msg-text" id="bjMessage" style="display:none"></div></div>
-        <div class="player-badge-row">
-          <div class="player-badge-pill">
-            <span class="pbp-name" id="pbpName">You</span>
-            <span class="pbp-chips" id="pbpChips">$1000</span>
-            <span class="pbp-bet" id="pbpBet">Bet: $0</span>
-          </div>
-        </div>
-        <div class="bj-player-zone">
-          <div class="card-hand" id="playerHand"></div>
-          <div id="playerScore"></div>
-        </div>
-      </div>
-
-      <!-- CONTROLS -->
-      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:16px">
-        <!-- BETTING -->
-        <div id="bettingPanel">
-          <div style="font-size:0.7rem;font-weight:700;color:var(--text3);letter-spacing:2px;text-align:center;margin-bottom:10px" id="bettingTitle">PLACE YOUR BET</div>
-          <div id="betInputRow" style="display:flex;gap:8px;margin-bottom:10px;align-items:center">
-            <div class="bet-input-wrap">
-              <div class="bet-currency">$</div>
-              <input type="number" id="betInput" value="100" min="10" step="10" style="width:80px">
-            </div>
-            <button class="bet-half" onclick="halveBet()">Â½</button>
-            <button class="bet-double" onclick="doubleBet()">Ã—2</button>
-          </div>
-          <div class="bj-chips-row" id="chipsRow">
-            <button class="bj-chip bj-c10" onclick="setBet(10)">10</button>
-            <button class="bj-chip bj-c25" onclick="setBet(25)">25</button>
-            <button class="bj-chip bj-c50" onclick="setBet(50)">50</button>
-            <button class="bj-chip bj-c100" onclick="setBet(100)">100</button>
-            <button class="bj-chip bj-c500" onclick="setBet(500)">500</button>
-          </div>
-          <button class="btn-primary" id="dealBtn" onclick="deal()" style="display:none;margin-top:8px">DEAL CARDS</button>
-        </div>
-
-        <!-- ACTION -->
-        <div id="actionPanel" style="display:none">
-          <div class="bj-action-row">
-            <button class="bj-action-btn bj-hit" onclick="hit()">HIT</button>
-            <button class="bj-action-btn bj-stand" onclick="stand()">STAND</button>
-            <button class="bj-action-btn bj-double" id="dblBtn" onclick="doubleDown()">DOUBLE</button>
-          </div>
-        </div>
-
-        <!-- END -->
-        <div id="endPanel" style="display:none">
-          <button class="btn-primary" id="nextRoundBtn" onclick="nextRound()">NEXT ROUND</button>
-        </div>
-      </div>
-
-      <!-- PLAYER TABS -->
-      <div class="bj-player-tabs" id="playerTabs" style="margin-top:12px"></div>
-
-      <!-- SCOREBOARD toggle -->
-      <div style="margin-top:12px">
-        <button onclick="toggleScore()" style="background:var(--bg2);border:1px solid var(--border);color:var(--text3);padding:8px 16px;border-radius:8px;font-size:0.78rem;font-weight:600;width:100%;transition:background 0.2s" onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background='var(--bg2)'">
-          Scoreboard
-        </button>
-        <div id="scoreboard" style="display:none;margin-top:8px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden">
-          <table style="width:100%;border-collapse:collapse;font-size:0.82rem">
-            <thead>
-              <tr style="background:var(--bg3)">
-                <th style="padding:10px;text-align:left;color:var(--text3);font-weight:700;font-size:0.7rem;letter-spacing:1px">PLAYER</th>
-                <th style="padding:10px;text-align:center;color:var(--text3);font-weight:700;font-size:0.7rem">CHIPS</th>
-                <th style="padding:10px;text-align:center;color:var(--text3);font-weight:700;font-size:0.7rem">W</th>
-                <th style="padding:10px;text-align:center;color:var(--text3);font-weight:700;font-size:0.7rem">L</th>
-                <th style="padding:10px;text-align:center;color:var(--text3);font-weight:700;font-size:0.7rem">P</th>
-              </tr>
-            </thead>
-            <tbody id="scoreBody"></tbody>
-          </table>
-        </div>
-      </div>
-
-    </div>
-  </div>
+</div>
 </main>
 
 <script>
-const socket = io();
-let myId = null, myName = '', roomCode = '', gameState = null, scoreOpen = false;
+// ── Deck ──
+const SUITS = ['♠','♥','♦','♣'];
+const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+let deck = [], balance = 0, balanceReady = false;
+let playerHand = [], dealerHand = [], currentBet = 0;
+let phase = 'bet'; // bet | player | dealer | end
+let hands = 0, wins = 0, sessionPL = 0;
+let history = [];
 
-socket.on('connect', () => { myId = socket.id; });
-
-function showTab(tab, btn) {
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  document.getElementById('createTab').style.display = tab === 'create' ? 'block' : 'none';
-  document.getElementById('joinTab').style.display = tab === 'join' ? 'block' : 'none';
-}
-
-function showErr(msg) {
-  const el = document.getElementById('errorMsg');
-  el.textContent = msg;
-  setTimeout(() => { el.textContent = ''; }, 3000);
-}
-
-function createRoom() {
-  const name = document.getElementById('createName').value.trim();
-  if (!name) { showErr('Enter your name'); return; }
-  myName = name;
-  socket.emit('createRoom', { name });
-}
-
-function joinRoom() {
-  const name = document.getElementById('joinName').value.trim();
-  const code = document.getElementById('joinCode').value.trim().toUpperCase();
-  if (!name) { showErr('Enter your name'); return; }
-  if (!code || code.length < 4) { showErr('Enter a valid room code'); return; }
-  myName = name;
-  socket.emit('joinRoom', { name, code });
-}
-
-socket.on('roomCreated', ({ code }) => {
-  roomCode = code;
-  document.getElementById('setupScreen').style.display = 'none';
-  document.getElementById('lobbyScreen').style.display = 'block';
-  document.getElementById('roomCodeDisplay').textContent = code;
-});
-
-socket.on('joinError', msg => showErr(msg));
-socket.on('gameError', msg => showErr(msg));
-
-socket.on('roomUpdate', (state) => {
-  gameState = state;
-  if (state.phase === 'lobby') {
-    showLobby(state);
-  } else {
-    document.getElementById('lobbyScreen').style.display = 'none';
-    document.getElementById('gameScreen').style.display = 'block';
-    renderGame(state);
-  }
-});
-
-function showLobby(state) {
-  document.getElementById('lobbyScreen').style.display = 'block';
-  document.getElementById('gameScreen').style.display = 'none';
-  const me = state.players.find(p => p.id === myId);
-  const listEl = document.getElementById('lobbyPlayerList');
-  listEl.innerHTML = state.players.map(p =>
-    `<div class="lobby-player-row">
-      <span class="lpr-name">${p.isHost ? 'ðŸ‘‘ ' : ''}${p.name}</span>
-      <span class="lpr-chips" style="color:var(--text3);font-size:0.78rem">$${p.chips}</span>
-      ${p.ready ? '<span class="lpr-ready">READY</span>' : '<span style="font-size:0.75rem;color:var(--text3)">waiting</span>'}
-    </div>`
-  ).join('');
-  const readyBtn = document.getElementById('readyBtn');
-  readyBtn.textContent = me?.ready ? 'NOT READY' : "I'M READY";
-  readyBtn.style.background = me?.ready ? 'var(--bg4)' : '';
-  document.getElementById('startBtn').style.display = me?.isHost ? 'block' : 'none';
-}
-
-function toggleReady() { socket.emit('readyToggle'); }
-function startGame() { socket.emit('startGame'); }
-
-function leaveRoom() {
-  socket.emit('leaveRoom');
-  document.getElementById('lobbyScreen').style.display = 'none';
-  document.getElementById('gameScreen').style.display = 'none';
-  document.getElementById('setupScreen').style.display = 'block';
-  roomCode = ''; gameState = null;
-}
-
-function copyCode() {
-  navigator.clipboard.writeText(roomCode);
-  const el = document.getElementById('roomCodeDisplay');
-  const orig = el.textContent;
-  el.textContent = 'COPIED!';
-  setTimeout(() => { el.textContent = orig; }, 1000);
-}
-
-function renderGame(state) {
-  document.getElementById('gameRoomCodeBadge').textContent = roomCode;
-  document.getElementById('roundBadge').textContent = state.round;
-  document.getElementById('potAmt').textContent = `$${state.pot}`;
-  const me = state.players.find(p => p.id === myId);
-  if (me) {
-    document.getElementById('pbpName').textContent = me.name;
-    document.getElementById('pbpChips').textContent = `$${me.chips}`;
-    document.getElementById('pbpBet').textContent = `Bet: $${me.bet}`;
-    const ph = document.getElementById('playerHand');
-    ph.innerHTML = me.hand.length ? me.hand.map(c => renderCard(c)).join('') : '';
-    const ps = document.getElementById('playerScore');
-    if (me.hand.length) {
-      const t = calcHand(me.hand);
-      ps.innerHTML = t === 21 && me.hand.length === 2 ? '<span class="hand-score" style="color:var(--gold2)">BLACKJACK!</span>' : `<span class="hand-score">${t}</span>`;
-    } else ps.innerHTML = '';
-  }
-  const dh = document.getElementById('dealerHand');
-  if (state.dealer.hand.length) {
-    const showAll = state.phase === 'resolve';
-    dh.innerHTML = state.dealer.hand.map((c, i) => renderCard(c, !showAll && i === 1)).join('');
-    const ds = document.getElementById('dealerScore');
-    if (showAll) {
-      const t = calcHand(state.dealer.hand);
-      ds.innerHTML = t === 21 && state.dealer.hand.length === 2 ? '<span class="hand-score" style="color:var(--gold2)">BLACKJACK!</span>' : `<span class="hand-score">${t}</span>`;
-    } else ds.innerHTML = `<span class="hand-score">${state.dealer.visibleTotal}</span>`;
-  } else { dh.innerHTML = ''; document.getElementById('dealerScore').innerHTML = ''; }
-
-  document.getElementById('otherPlayers').innerHTML = state.players
-    .filter(p => p.id !== myId && p.bet > 0)
-    .map(p => `<div class="bj-other-player">
-      <div class="bj-other-name">${p.name}</div>
-      <div class="card-hand">${p.hand.map(c => renderCard(c, false, true)).join('')}</div>
-      ${p.hand.length ? `<span class="hand-score">${calcHand(p.hand)}</span>` : ''}
-    </div>`).join('');
-
-  const msgEl = document.getElementById('bjMessage');
-  if (state.message) {
-    msgEl.textContent = state.message;
-    msgEl.className = 'bj-msg-text ' + (state.messageType || '');
-    msgEl.style.display = 'block';
-  } else msgEl.style.display = 'none';
-
-  updatePlayerTabs(state, me);
-  updateControls(state, me);
-  updateScore(state);
-}
-
-function updatePlayerTabs(state, me) {
-  const sorted = state.players.filter(p => p.bet >= 10);
-  const current = sorted.find(p => !p.done);
-  document.getElementById('playerTabs').innerHTML = state.players.map(p =>
-    `<div class="bj-ptab ${p.id === myId ? 'active' : ''} ${current?.id === p.id ? 'active' : ''} ${p.done ? 'done' : ''}">${p.name}${p.id === myId ? ' (You)' : ''}</div>`
-  ).join('');
-}
-
-function updateControls(state, me) {
-  const bet = document.getElementById('bettingPanel');
-  const act = document.getElementById('actionPanel');
-  const end = document.getElementById('endPanel');
-  const dealBtn = document.getElementById('dealBtn');
-  const betRow = document.getElementById('betInputRow');
-  const chipsRow = document.getElementById('chipsRow');
-  const title = document.getElementById('bettingTitle');
-  [bet, act, end].forEach(el => el.style.display = 'none');
-
-  if (state.phase === 'betting') {
-    bet.style.display = 'block';
-    const hasDealt = state.players.some(p => p.hand.length > 0);
-    if (!me || me.chips <= 0) { title.textContent = 'No chips remaining'; betRow.style.display = 'none'; chipsRow.style.display = 'none'; dealBtn.style.display = 'none'; return; }
-    title.textContent = me.bet > 0 ? `BET PLACED ($${me.bet})` : 'PLACE YOUR BET';
-    betRow.style.display = 'flex'; chipsRow.style.display = 'flex';
-    dealBtn.style.display = (me.isHost && !hasDealt) ? 'block' : 'none';
-  } else if (state.phase === 'playing') {
-    const sorted = state.players.filter(p => p.bet >= 10);
-    const current = sorted.find(p => !p.done);
-    if (current?.id === myId) {
-      act.style.display = 'block';
-      document.getElementById('dblBtn').disabled = me.hand.length !== 2 || me.chips < me.bet;
-    } else {
-      bet.style.display = 'block';
-      betRow.style.display = 'none'; chipsRow.style.display = 'none'; dealBtn.style.display = 'none';
-      title.textContent = current ? `${current.name} is playing...` : 'Waiting...';
-    }
-  } else if (state.phase === 'dealer') {
-    bet.style.display = 'block';
-    betRow.style.display = 'none'; chipsRow.style.display = 'none'; dealBtn.style.display = 'none';
-    title.textContent = 'Dealer is playing...';
-  } else if (state.phase === 'resolve') {
-    end.style.display = 'block';
-    document.getElementById('nextRoundBtn').disabled = !me?.isHost;
+function buildDeck() {
+  deck = [];
+  for (let d = 0; d < 6; d++)
+    for (const s of SUITS)
+      for (const r of RANKS)
+        deck.push({ rank: r, suit: s });
+  // Fisher-Yates shuffle
+  for (let i = deck.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [deck[i], deck[j]] = [deck[j], deck[i]];
   }
 }
 
-function setBet(v) { const m = gameState?.players.find(p => p.id === myId); if (!m) return; document.getElementById('betInput').value = Math.min(v, m.chips); socket.emit('placeBet', { bet: Math.min(v, m.chips) }); }
-function halveBet() { const el = document.getElementById('betInput'); el.value = Math.max(10, Math.floor(parseInt(el.value) / 2)); socket.emit('placeBet', { bet: parseInt(el.value) }); }
-function doubleBet() { const m = gameState?.players.find(p => p.id === myId); if (!m) return; const el = document.getElementById('betInput'); el.value = Math.min(parseInt(el.value) * 2, m.chips); socket.emit('placeBet', { bet: parseInt(el.value) }); }
-function deal() {
-  const me = gameState?.players.find(p => p.id === myId);
-  if (!me) return;
-  if (me.bet < 10) { const b = parseInt(document.getElementById('betInput').value); if (b >= 10 && b <= me.chips) socket.emit('placeBet', { bet: b }); else return; }
-  setTimeout(() => socket.emit('deal'), 200);
-}
-function hit() { socket.emit('hit'); }
-function stand() { socket.emit('stand'); }
-function doubleDown() { socket.emit('doubleDown'); }
-function nextRound() { socket.emit('nextRound'); }
-
-function toggleScore() {
-  scoreOpen = !scoreOpen;
-  document.getElementById('scoreboard').style.display = scoreOpen ? 'block' : 'none';
+function draw() {
+  if (deck.length < 52) buildDeck();
+  return deck.pop();
 }
 
-function updateScore(state) {
-  document.getElementById('scoreBody').innerHTML = state.players.map(p =>
-    `<tr style="border-bottom:1px solid var(--border)">
-      <td style="padding:10px;font-weight:${p.id===myId?'700':'500'}">${p.name}${p.id===myId?' (You)':''}</td>
-      <td style="padding:10px;text-align:center;color:var(--gold2);font-weight:700">$${p.chips}</td>
-      <td style="padding:10px;text-align:center;color:var(--green)">${p.wins}</td>
-      <td style="padding:10px;text-align:center;color:var(--red)">${p.losses}</td>
-      <td style="padding:10px;text-align:center;color:var(--text3)">${p.pushes}</td>
-    </tr>`
-  ).join('');
-}
-
-function calcHand(hand) {
-  let t = 0, a = 0;
-  for (const c of hand) { t += cval(c); if (c.rank === 'A') a++; }
-  while (t > 21 && a > 0) { t -= 10; a--; }
+function handVal(hand) {
+  let t = 0, aces = 0;
+  for (const c of hand) {
+    if (c.rank === 'A') { t += 11; aces++; }
+    else if (['J','Q','K'].includes(c.rank)) t += 10;
+    else t += parseInt(c.rank);
+  }
+  while (t > 21 && aces > 0) { t -= 10; aces--; }
   return t;
 }
 
-function cval(c) {
-  if (['J','Q','K'].includes(c.rank)) return 10;
-  if (c.rank === 'A') return 11;
-  return parseInt(c.rank);
-}
+function isRed(suit) { return suit === '♥' || suit === '♦'; }
 
-function renderCard(card, hidden = false, small = false) {
-  if (hidden) return `<div class="playing-card${small?' small':''}"><div class="pcard-face hidden-card"></div></div>`;
-  const red = card.suit === 'â™¥' || card.suit === 'â™¦';
-  return `<div class="playing-card ${red ? 'red' : 'black'}${small?' small':''}">
-    <div class="pcard-face">
-      <div class="pcard-tl">${card.rank}<br>${card.suit}</div>
-      <div class="pcard-center">${card.suit}</div>
-      <div class="pcard-br">${card.rank}<br>${card.suit}</div>
-    </div>
+function cardHTML(c, hidden) {
+  if (hidden) return `<div class="card hidden"></div>`;
+  const red = isRed(c.suit);
+  return `<div class="card ${red?'red':'black'}">
+    <div class="ctop">${c.rank}<br>${c.suit}</div>
+    <div class="cmid">${c.suit}</div>
+    <div class="cbot">${c.rank}<br>${c.suit}</div>
   </div>`;
 }
+
+function renderHands(hideDealer = true) {
+  const dc = document.getElementById('dealerCards');
+  const pc = document.getElementById('playerCards');
+  dc.innerHTML = dealerHand.map((c,i) => cardHTML(c, hideDealer && i===1)).join('');
+  pc.innerHTML = playerHand.map(c => cardHTML(c)).join('');
+  renderScores(hideDealer);
+}
+
+function renderScores(hideDealer) {
+  const pv = handVal(playerHand);
+  const pEl = document.getElementById('playerScore');
+  if (playerHand.length) {
+    const bj = playerHand.length===2 && pv===21;
+    pEl.innerHTML = `<div class="score-badge ${bj?'bj':pv>21?'bust':''}">${bj?'BLACKJACK!':pv>21?'BUST':pv}</div>`;
+  } else pEl.innerHTML = '';
+
+  const dEl = document.getElementById('dealerScore');
+  if (dealerHand.length) {
+    if (hideDealer) {
+      const vis = handVal([dealerHand[0]]);
+      dEl.innerHTML = `<div class="score-badge">${vis}</div>`;
+    } else {
+      const dv = handVal(dealerHand);
+      const dbj = dealerHand.length===2 && dv===21;
+      dEl.innerHTML = `<div class="score-badge ${dbj?'bj':dv>21?'bust':''}">${dbj?'BLACKJACK!':dv>21?'BUST':dv}</div>`;
+    }
+  } else dEl.innerHTML = '';
+}
+
+function setMsg(txt, cls='') {
+  const el = document.getElementById('bjMsg');
+  el.textContent = txt;
+  el.className = 'bj-message ' + cls;
+}
+
+function showPhase(p) {
+  document.getElementById('betPhase').style.display = p==='bet' ? 'block' : 'none';
+  document.getElementById('actionPhase').style.display = p==='action' ? 'block' : 'none';
+  document.getElementById('endPhase').style.display = p==='end' ? 'block' : 'none';
+}
+
+function updateStats() {
+  document.getElementById('st-balance').textContent = Casino.fmt(balance);
+  document.getElementById('st-hands').textContent = hands;
+  document.getElementById('st-wins').textContent = wins;
+  const pl = document.getElementById('st-pl');
+  pl.textContent = (sessionPL >= 0 ? '+' : '') + Casino.fmt(sessionPL);
+  pl.style.color = sessionPL > 0 ? 'var(--green)' : sessionPL < 0 ? 'var(--red)' : 'var(--text2)';
+}
+
+function setBet(v) { document.getElementById('betAmt').value = Math.min(v, balance); }
+function adjBet(mult) {
+  const inp = document.getElementById('betAmt');
+  inp.value = Math.max(5, Math.min(Math.round(parseFloat(inp.value||0)*mult/5)*5, balance));
+}
+
+async function deal() {
+  if (!balanceReady) return;
+  const bet = Math.round(parseFloat(document.getElementById('betAmt').value));
+  if (!bet || bet < 5 || bet > balance) return;
+  currentBet = bet;
+
+  buildDeck();
+  playerHand = [draw(), draw()];
+  dealerHand = [draw(), draw()];
+  phase = 'player';
+  setMsg('');
+  showPhase('action');
+  renderHands(true);
+
+  const pv = handVal(playerHand);
+  const dv = handVal(dealerHand);
+  const pBJ = pv === 21 && playerHand.length === 2;
+  const dBJ = dv === 21 && dealerHand.length === 2;
+
+  if (pBJ || dBJ) {
+    await resolveHand(pBJ, dBJ);
+    return;
+  }
+
+  document.getElementById('dblBtn').disabled = balance < bet * 2;
+}
+
+function hit() {
+  if (phase !== 'player') return;
+  playerHand.push(draw());
+  renderHands(true);
+  document.getElementById('dblBtn').disabled = true;
+  const v = handVal(playerHand);
+  if (v >= 21) stand();
+}
+
+function stand() {
+  if (phase !== 'player') return;
+  phase = 'dealer';
+  showPhase('action');
+  document.getElementById('hitBtn').disabled = true;
+  document.getElementById('standBtn').disabled = true;
+  document.getElementById('dblBtn').disabled = true;
+  document.getElementById('actionLbl').textContent = 'DEALER PLAYING...';
+  renderHands(false);
+  setTimeout(dealerPlay, 600);
+}
+
+function doubleDown() {
+  if (phase !== 'player' || balance < currentBet * 2) return;
+  currentBet *= 2;
+  playerHand.push(draw());
+  renderHands(true);
+  stand();
+}
+
+function dealerPlay() {
+  renderHands(false);
+  const dv = handVal(dealerHand);
+  if (dv < 17) {
+    dealerHand.push(draw());
+    renderHands(false);
+    setTimeout(dealerPlay, 550);
+  } else {
+    resolveHand(false, false);
+  }
+}
+
+async function resolveHand(pBJ, dBJ) {
+  phase = 'end';
+  renderHands(false);
+  const pv = handVal(playerHand);
+  const dv = handVal(dealerHand);
+  if (!pBJ) pBJ = pv === 21 && playerHand.length === 2;
+  if (!dBJ) dBJ = dv === 21 && dealerHand.length === 2;
+
+  let returned = 0, msg = '', cls = '';
+
+  if (pv > 21) {
+    msg = `BUST! Lost $${currentBet}`; cls = 'lose';
+    returned = 0;
+  } else if (dv > 21) {
+    msg = `DEALER BUSTS! +$${currentBet}`; cls = 'win';
+    returned = currentBet * 2; wins++;
+  } else if (pBJ && !dBJ) {
+    const pay = Math.floor(currentBet * 1.5);
+    msg = `BLACKJACK! +$${pay}`; cls = 'bj';
+    returned = currentBet + pay; wins++;
+  } else if (dBJ && !pBJ) {
+    msg = `Dealer Blackjack. Lost $${currentBet}`; cls = 'lose';
+    returned = 0;
+  } else if (pv > dv) {
+    msg = `WIN! +$${currentBet}`; cls = 'win';
+    returned = currentBet * 2; wins++;
+  } else if (pv === dv) {
+    msg = 'PUSH — bet returned'; cls = 'push';
+    returned = currentBet;
+  } else {
+    msg = `Lost $${currentBet}`; cls = 'lose';
+    returned = 0;
+  }
+
+  setMsg(msg, cls);
+  hands++;
+  const net = returned - currentBet;
+  sessionPL += net;
+
+  // Add to history
+  history.unshift(cls === 'push' ? 'p' : cls === 'win' || cls === 'bj' ? 'w' : 'l');
+  if (history.length > 20) history.pop();
+  renderHistory();
+
+  // Record with server
+  try {
+    const r = await fetch('/api/bet', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ game: 'blackjack', wagered: currentBet, returned })
+    });
+    if (r.ok) {
+      const d = await r.json();
+      balance = d.balance;
+      Casino.syncBalance(balance);
+    }
+  } catch {}
+
+  updateStats();
+  showPhase('end');
+}
+
+function nextHand() {
+  playerHand = []; dealerHand = [];
+  document.getElementById('dealerCards').innerHTML = '';
+  document.getElementById('playerCards').innerHTML = '';
+  document.getElementById('dealerScore').innerHTML = '';
+  document.getElementById('playerScore').innerHTML = '';
+  document.getElementById('actionLbl').textContent = 'YOUR TURN';
+  document.getElementById('hitBtn').disabled = false;
+  document.getElementById('standBtn').disabled = false;
+  setMsg('');
+  phase = 'bet';
+  showPhase('bet');
+  // Re-enable double if affordable
+  document.getElementById('dblBtn').disabled = false;
+}
+
+function renderHistory() {
+  document.getElementById('histRow').innerHTML = history.map(h =>
+    `<span class="hchip h${h}">${h==='w'?'W':h==='l'?'L':'P'}</span>`
+  ).join('');
+}
+
+// Load balance + rates
+fetch('/api/me').then(r => r.json()).then(d => {
+  balance = d.balance;
+  balanceReady = true;
+  Casino.syncBalance(balance);
+  updateStats();
+}).catch(() => {});
+
+fetch('/api/rates').then(r => r.json()).then(d => {
+  if (d.blackjack?.house_edge != null) {
+    document.getElementById('hePill').textContent = 'HOUSE ' + (d.blackjack.house_edge * 100).toFixed(1) + '%';
+  }
+}).catch(() => {});
 </script>
 </body>
 </html>
-

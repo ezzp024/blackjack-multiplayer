@@ -67,7 +67,9 @@ const Casino = (() => {
         mines: { played: 0, won: 0, wagered: 0, returned: 0 },
         dice: { played: 0, won: 0, wagered: 0, returned: 0 },
         crash: { played: 0, won: 0, wagered: 0, returned: 0 },
-        plinko: { played: 0, won: 0, wagered: 0, returned: 0 },
+        plinko:  { played: 0, won: 0, wagered: 0, returned: 0 },
+        ropecut: { played: 0, won: 0, wagered: 0, returned: 0 },
+        keno:    { played: 0, won: 0, wagered: 0, returned: 0 },
       },
       history: [],
       createdAt: Date.now()
@@ -181,6 +183,8 @@ const Casino = (() => {
       { id: 'dice', label: 'Dice', href: '/dice', icon: ICONS.dice },
       { id: 'crash', label: 'Crash', href: '/crash', icon: ICONS.crash },
       { id: 'plinko', label: 'Plinko', href: '/plinko', icon: ICONS.plinko },
+      { id: 'ropecut', label: 'Rope Cut', href: '/ropecut', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 3C6 3 8 8 12 8C16 8 18 3 18 3"/><path d="M12 8v13"/><path d="M8 14l4 4 4-4"/></svg>` },
+      { id: 'keno', label: 'Keno', href: '/keno', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><text x="12" y="16" font-size="10" text-anchor="middle" fill="currentColor" stroke="none" font-weight="900">K</text></svg>` },
     ];
 
     const html = `

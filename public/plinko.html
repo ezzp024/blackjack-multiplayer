@@ -129,7 +129,7 @@
       </div>
 
       <div class="bal-display">Balance<br><strong id="balDisp">$0</strong></div>
-      <button class="drop-btn" id="dropBtn" onclick="dropBall()">DROP BALL</button>
+      <button class="drop-btn" id="dropBtn" onclick="dropBall()" disabled>DROP BALL</button>
 
       <div class="result-box">
         <div class="result-mult" id="resMult" style="color:#4a6375">—</div>
@@ -318,7 +318,7 @@ async function animateBall(steps, bucketIdx) {
       const { x: tx, y: ty } = getTarget(step);
       const dx = tx - ball.x, dy = ty - ball.y;
       const dist = Math.sqrt(dx * dx + dy * dy);
-      const speed = Math.max(5, dist * 0.2);
+      const speed = Math.min(7, Math.max(2, dist * 0.08));
 
       if (dist < speed + 1) {
         ball.x = tx; ball.y = ty; step++;
@@ -402,7 +402,7 @@ function adj(f) {
 }
 function sb(v) { document.getElementById('betInput').value = Math.min(v, balance); }
 
-fetch('/api/me').then(r=>r.json()).then(d=>{ balance=d.balance; document.getElementById('balDisp').textContent='$'+balance.toFixed(2); Casino.syncBalance(balance); }).catch(()=>{});
+fetch('/api/me').then(r=>r.json()).then(d=>{ balance=d.balance; document.getElementById('balDisp').textContent='$'+balance.toFixed(2); Casino.syncBalance(balance); document.getElementById('dropBtn').disabled=false; }).catch(()=>{ document.getElementById('dropBtn').disabled=false; });
 fetch('/api/rates').then(r=>r.json()).then(d=>{ if(d.plinko?.house_edge) document.getElementById('heBadge').textContent=(d.plinko.house_edge*100).toFixed(0)+'%'; }).catch(()=>{});
 
 canvasSize(); drawBoard(); renderBuckets();

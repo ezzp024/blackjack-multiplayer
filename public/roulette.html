@@ -50,7 +50,7 @@
           <button onclick="setChip(500)" id="chip-500">$500</button>
         </div>
         <div style="display:flex;gap:8px">
-          <button class="btn-primary" onclick="spinWheel()" id="spinBtn">SPIN</button>
+          <button class="btn-primary" onclick="spinWheel()" id="spinBtn" disabled>SPIN</button>
         </div>
       </div>
     </div>
@@ -351,6 +351,7 @@ function renderLastNumbers() {
 const p = Casino.getProfile();
 document.getElementById('st-balance').textContent = Casino.fmt(p.balance);
 document.getElementById('st-played').textContent = p.stats.roulette.played;
+fetch('/api/me').then(r=>r.json()).then(d=>{ Casino.syncBalance(d.balance); document.getElementById('st-balance').textContent=Casino.fmt(d.balance); document.getElementById('spinBtn').disabled=false; }).catch(()=>{ document.getElementById('spinBtn').disabled=false; });
 </script>
 </body>
 </html>

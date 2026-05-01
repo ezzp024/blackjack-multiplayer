@@ -161,7 +161,7 @@
       </div>
     </div>
     <div class="action-row">
-      <button class="btn-start" id="startBtn" onclick="startGame()">ENTER DUNGEON</button>
+      <button class="btn-start" id="startBtn" onclick="startGame()" disabled>ENTER DUNGEON</button>
       <button class="btn-cashout" id="cashoutBtn" onclick="cashout()">COLLECT TREASURE</button>
     </div>
   </div>
@@ -368,7 +368,8 @@ function qBet(v) { if (!gameActive) document.getElementById('betAmt').value = Ma
 fetch('/api/me').then(r=>r.json()).then(d=>{
   balance = d.balance;
   Casino.syncBalance(balance);
-}).catch(()=>{});
+  document.getElementById('startBtn').disabled = false;
+}).catch(()=>{ document.getElementById('startBtn').disabled = false; });
 
 // Rates
 fetch('/api/rates').then(r=>r.json()).then(d=>{

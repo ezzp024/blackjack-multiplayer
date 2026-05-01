@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Keno — Obsidian Casino</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+  <style>
+    .keno-bg{position:fixed;inset:0;background:radial-gradient(ellipse at 30% 20%,#0a0020 0%,#040010 60%,#020008 100%);z-index:-1}
+    .keno-wrap{max-width:860px;margin:0 auto;padding:24px 16px}
+    .keno-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+    .keno-title-row{display:flex;align-items:center;gap:10px}
+    .keno-icon{width:44px;height:44px;background:rgba(139,92,246,0.1);border:1px solid rgba(139,92,246,0.25);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px}
+    .keno-title-row h1{font-size:1.3rem;font-weight:900;letter-spacing:3px}
+    .he-pill{background:rgba(139,92,246,0.08);border:1px solid rgba(139,92,246,0.2);color:#8b5cf6;font-size:0.7rem;font-weight:700;padding:4px 12px;border-radius:20px;letter-spacing:1px}
+    /* Stats */
+    .keno-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:18px}
+    .keno-stat{background:#08002a;border:1px solid rgba(139,92,246,0.1);border-radius:10px;padding:10px;text-align:center}
+    .keno-stat .sv{font-size:1rem;font-weight:800;color:#fff}
+    .keno-stat .sl{font-size:0.6rem;color:#1a0050;text-transform:uppercase;letter-spacing:1.5px;margin-top:2px}
+    /* Layout */
+    .keno-layout{display:grid;grid-template-columns:1fr 200px;gap:16px}
+    /* Number grid */
+    .keno-grid-wrap{background:#05001a;border:1px solid rgba(139,92,246,0.1);border-radius:20px;padding:20px}
+    .pick-info{font-size:0.7rem;color:#3a1080;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;text-align:center}
+    .keno-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:6px;margin-bottom:14px}
+    .knum{aspect-ratio:1;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:0.78rem;font-weight:800;cursor:pointer;background:#0c0030;border:1px solid rgba(139,92,246,0.12);color:#4a6375;transition:all 0.15s;user-select:none}
+    .knum:hover:not(.drawn):not(.locked){background:#150050;border-color:rgba(139,92,246,0.35);color:#8b5cf6}
+    .knum.picked{background:rgba(139,92,246,0.2);border-color:#8b5cf6;color:#c4b5fd}
+    .knum.drawn{background:rgba(245,158,11,0.2);border-color:#f59e0b;color:#fde68a;animation:drawPop 0.3s ease}
+    .knum.hit{background:rgba(0,255,136,0.2);border-color:#00ff88;color:#00ff88;animation:hitPop 0.4s ease;box-shadow:0 0 12px rgba(0,255,136,0.3)}
+    .knum.locked{cursor:default}
+    @keyframes drawPop{0%{transform:scale(0.7);opacity:0}60%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
+    @keyframes hitPop{0%{transform:scale(0.7);opacity:0}50%{transform:scale(1.3)}100%{transform:scale(1)}}
+    /* Quick pick */
+    .qpick-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px}
+    .qpick{background:#0c0030;border:1px solid rgba(139,92,246,0.12);color:#4a6375;border-radius:6px;padding:5px 10px;font-size:0.7rem;font-weight:700;cursor:pointer;transition:all 0.15s}
+    .qpick:hover{background:#150050;color:#8b5cf6}
+    /* Controls panel */
+    .keno-ctrl{background:#08002a;border:1px solid rgba(139,92,246,0.1);border-radius:20px;padding:18px;display:flex;flex-direction:column;gap:14px}
+    .k-lbl{font-size:0.6rem;font-weight:800;color:#1a0050;text-transform:uppercase;letter-spacing:2px;margin-bottom:6px}
+    .bet-row{display:flex;gap:6px;align-items:center}
+    .bet-inp{flex:1;background:#040010;border:1px solid rgba(139,92,246,0.15);border-radius:8px;color:#fff;font-size:0.95rem;font-weight:700;padding:10px;outline:none;font-family:inherit;min-width:0}
+    .bet-inp:focus{border-color:#8b5cf6}
+    .fadj{background:#100030;border:1px solid rgba(139,92,246,0.08);color:#4a6375;border-radius:6px;padding:8px 9px;font-size:0.75rem;font-weight:700;cursor:pointer;transition:all 0.15s}
+    .fadj:hover{background:#180050;color:#8b5cf6}
+    .presets{display:flex;gap:5px;flex-wrap:wrap}
+    .presets button{background:#040010;border:1px solid rgba(139,92,246,0.08);color:#4a6375;border-radius:6px;padding:5px 0;font-size:0.7rem;font-weight:700;cursor:pointer;flex:1;transition:all 0.15s}
+    .presets button:hover{background:#0c0030;color:#8b5cf6}
+    .play-btn{width:100%;padding:14px;background:linear-gradient(135deg,#4c1d95,#8b5cf6,#a78bfa);border:none;border-radius:12px;color:#fff;font-size:0.9rem;font-weight:900;cursor:pointer;letter-spacing:1px;transition:all 0.15s;text-transform:uppercase}
+    .play-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 6px 24px rgba(139,92,246,0.4)}
+    .play-btn:disabled{opacity:0.4;cursor:not-allowed;transform:none}
+    /* Result */
+    .result-box{background:#040010;border:1px solid rgba(139,92,246,0.1);border-radius:10px;padding:12px;text-align:center;min-height:64px}
+    .result-main{font-size:1.5rem;font-weight:900;line-height:1.1}
+    .result-sub{font-size:0.75rem;color:#4a6375;margin-top:4px}
+    /* Paytable */
+    .pay-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+    .pay-cell{display:flex;justify-content:space-between;font-size:0.7rem;padding:4px 8px;background:#040010;border-radius:6px}
+    .pm{font-weight:800}
+    /* Hist */
+    .hist-row{display:flex;gap:4px;flex-wrap:wrap;margin-top:10px}
+    .hchip{padding:3px 8px;border-radius:10px;font-size:0.65rem;font-weight:800;border:1px solid}
+    .hw{background:rgba(0,255,136,0.1);color:#00ff88;border-color:rgba(0,255,136,0.25)}
+    .hl{background:rgba(241,50,63,0.1);color:#f1323f;border-color:rgba(241,50,63,0.2)}
+    @media(max-width:640px){.keno-layout{grid-template-columns:1fr}.keno-stats{grid-template-columns:repeat(2,1fr)}.keno-grid{grid-template-columns:repeat(8,1fr)}}
+  </style>
+</head>
+<body>
+<div class="keno-bg"></div>
+<script src="/casino-core.js"></script>
+<script>Casino.renderSidebar('keno');Casino.requireAuth();</script>
+
+<main class="casino-main">
+<div class="keno-wrap">
+
+  <div class="keno-header">
+    <div class="keno-title-row">
+      <div class="keno-icon">🎱</div>
+      <h1>KENO</h1>
+    </div>
+    <span class="he-pill">PICK UP TO 10</span>
+  </div>
+
+  <div class="keno-stats">
+    <div class="keno-stat"><div class="sv" id="st-bal">—</div><div class="sl">Balance</div></div>
+    <div class="keno-stat"><div class="sv" id="st-rounds">0</div><div class="sl">Rounds</div></div>
+    <div class="keno-stat"><div class="sv" id="st-hits">0</div><div class="sl">Best Hits</div></div>
+    <div class="keno-stat"><div class="sv" id="st-pl" style="color:var(--text2)">$0</div><div class="sl">Session P/L</div></div>
+  </div>
+
+  <div class="keno-layout">
+    <div>
+      <div class="keno-grid-wrap">
+        <div class="pick-info" id="pickInfo">Pick 1–10 numbers, then play</div>
+        <div class="keno-grid" id="kenoGrid"></div>
+        <div class="qpick-row">
+          <span style="font-size:0.65rem;color:#3a1080;font-weight:700;align-self:center">QUICK:</span>
+          <button class="qpick" onclick="quickPick(3)">3</button>
+          <button class="qpick" onclick="quickPick(5)">5</button>
+          <button class="qpick" onclick="quickPick(7)">7</button>
+          <button class="qpick" onclick="quickPick(10)">10</button>
+          <button class="qpick" onclick="clearPicks()" style="color:#f1323f">Clear</button>
+        </div>
+      </div>
+      <div class="hist-row" id="histRow"></div>
+    </div>
+
+    <div class="keno-ctrl">
+      <div>
+        <div class="k-lbl">BET</div>
+        <div class="bet-row">
+          <input class="bet-inp" type="number" id="betAmt" value="25" min="5">
+          <button class="fadj" onclick="adjBet(0.5)">½</button>
+          <button class="fadj" onclick="adjBet(2)">×2</button>
+        </div>
+        <div class="presets" style="margin-top:6px">
+          <button onclick="qBet(10)">$10</button>
+          <button onclick="qBet(25)">$25</button>
+          <button onclick="qBet(100)">$100</button>
+        </div>
+      </div>
+
+      <div class="result-box">
+        <div class="result-main" id="resultMain" style="color:#3a1080">—</div>
+        <div class="result-sub" id="resultSub">Pick numbers to play</div>
+      </div>
+
+      <button class="play-btn" id="playBtn" onclick="playKeno()" disabled>▶ DRAW!</button>
+
+      <div>
+        <div class="k-lbl">PAYTABLE (picks → multiplier)</div>
+        <div class="pay-grid" id="payGrid"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</main>
+
+<script>
+// Paytable: [picks][hits] = multiplier
+const PAYTABLE = {
+  1:  [0, 3.8],
+  2:  [0, 0, 7],
+  3:  [0, 0, 3, 30],
+  4:  [0, 0, 1.5, 8, 80],
+  5:  [0, 0, 1, 4, 20, 150],
+  6:  [0, 0, 0.5, 2, 10, 60, 400],
+  7:  [0, 0, 0.5, 1.5, 5, 20, 120, 800],
+  8:  [0, 0, 0.5, 1, 3, 10, 50, 300, 1500],
+  9:  [0, 0, 0.5, 1, 2, 6, 25, 100, 500, 2000],
+  10: [0, 0, 0.5, 1, 1.5, 4, 15, 60, 200, 1000, 5000],
+};
+
+let picked = new Set();
+let drawing = false;
+let balance = 0, balanceReady = false;
+let rounds = 0, sessionPL = 0, bestHits = 0;
+let history = [];
+
+function buildGrid() {
+  const grid = document.getElementById('kenoGrid');
+  grid.innerHTML = '';
+  for (let i = 1; i <= 80; i++) {
+    const btn = document.createElement('div');
+    btn.className = 'knum';
+    btn.textContent = i;
+    btn.id = 'kn' + i;
+    btn.onclick = () => toggleNum(i);
+    grid.appendChild(btn);
+  }
+}
+
+function toggleNum(n) {
+  if (drawing) return;
+  if (picked.has(n)) {
+    picked.delete(n);
+    document.getElementById('kn' + n).classList.remove('picked');
+  } else {
+    if (picked.size >= 10) return;
+    picked.add(n);
+    document.getElementById('kn' + n).classList.add('picked');
+  }
+  updatePickInfo();
+}
+
+function updatePickInfo() {
+  const s = picked.size;
+  document.getElementById('pickInfo').textContent = s === 0
+    ? 'Pick 1–10 numbers, then play'
+    : `${s} number${s>1?'s':''} picked — Pick up to ${10-s} more`;
+  document.getElementById('playBtn').disabled = s === 0 || !balanceReady;
+  renderPaytable();
+}
+
+function renderPaytable() {
+  const n = picked.size || 1;
+  const tbl = PAYTABLE[n] || PAYTABLE[1];
+  const grid = document.getElementById('payGrid');
+  grid.innerHTML = tbl.slice(1).map((m, i) => {
+    const hits = i + 1;
+    if (m === 0) return '';
+    const color = m >= 100 ? '#a78bfa' : m >= 10 ? '#00ff88' : m >= 2 ? '#f0c040' : '#8ea3b1';
+    return `<div class="pay-cell"><span style="color:#4a6375">${hits} hit${hits>1?'s':''}</span><span class="pm" style="color:${color}">${m}×</span></div>`;
+  }).filter(Boolean).join('');
+}
+
+function quickPick(n) {
+  if (drawing) return;
+  clearPicks();
+  const pool = Array.from({length:80},(_,i)=>i+1);
+  for (let i = pool.length-1; i > 0; i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [pool[i],pool[j]]=[pool[j],pool[i]];
+  }
+  pool.slice(0,n).forEach(num => {
+    picked.add(num);
+    document.getElementById('kn'+num).classList.add('picked');
+  });
+  updatePickInfo();
+}
+
+function clearPicks() {
+  if (drawing) return;
+  picked.forEach(n => document.getElementById('kn'+n).classList.remove('picked'));
+  picked.clear();
+  updatePickInfo();
+}
+
+async function playKeno() {
+  if (drawing || picked.size === 0 || !balanceReady) return;
+  const bet = parseFloat(document.getElementById('betAmt').value);
+  if (!bet || bet <= 0 || bet > balance) return;
+
+  drawing = true;
+  document.getElementById('playBtn').disabled = true;
+
+  // Lock grid
+  document.querySelectorAll('.knum').forEach(el => el.classList.add('locked'));
+
+  // Draw 20 numbers
+  const pool = Array.from({length:80},(_,i)=>i+1);
+  for (let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
+  const drawn = pool.slice(0,20);
+
+  // Animate draw
+  let hits = 0;
+  for (let i = 0; i < drawn.length; i++) {
+    await new Promise(r => setTimeout(r, 80));
+    const n = drawn[i];
+    const el = document.getElementById('kn'+n);
+    if (picked.has(n)) {
+      el.classList.add('hit');
+      hits++;
+    } else {
+      el.classList.add('drawn');
+    }
+  }
+
+  // Calculate win
+  const pickCount = picked.size;
+  const tbl = PAYTABLE[pickCount] || PAYTABLE[1];
+  const mult = tbl[Math.min(hits, tbl.length-1)] || 0;
+  const won = Math.round(bet * mult * 100) / 100;
+  const net = won - bet;
+
+  document.getElementById('resultMain').textContent = hits + ' HITS! ' + mult + '×';
+  document.getElementById('resultMain').style.color = net > 0 ? '#00ff88' : net < 0 ? '#f1323f' : '#f0c040';
+  document.getElementById('resultSub').textContent = net > 0 ? `+$${won.toFixed(2)}` : net < 0 ? `-$${bet.toFixed(2)}` : 'Push';
+
+  rounds++;
+  sessionPL += net;
+  if (hits > bestHits) bestHits = hits;
+  history.unshift(net >= 0 ? 'w' : 'l');
+  if (history.length > 20) history.pop();
+
+  // Server record
+  try {
+    const r = await fetch('/api/bet', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ game: 'keno', wagered: bet, returned: won })
+    });
+    if (r.ok) {
+      const d = await r.json();
+      balance = d.balance;
+      Casino.syncBalance(balance);
+    }
+  } catch {}
+
+  updateStats();
+  document.getElementById('histRow').innerHTML = history.map(h =>
+    `<span class="hchip h${h}">${h==='w'?'WIN':'LOSS'}</span>`
+  ).join('');
+
+  // Reset after 2.5s
+  await new Promise(r => setTimeout(r, 2500));
+  resetGrid();
+}
+
+function resetGrid() {
+  drawing = false;
+  picked.forEach(n => {
+    const el = document.getElementById('kn'+n);
+    el.classList.remove('hit','drawn','locked');
+    el.classList.add('picked');
+  });
+  document.querySelectorAll('.knum.drawn,.knum.hit').forEach(el => {
+    el.classList.remove('drawn','hit','locked');
+  });
+  document.querySelectorAll('.knum.locked').forEach(el => el.classList.remove('locked'));
+  document.getElementById('playBtn').disabled = picked.size === 0 || !balanceReady;
+}
+
+function updateStats() {
+  document.getElementById('st-bal').textContent = Casino.fmt(balance);
+  document.getElementById('st-rounds').textContent = rounds;
+  document.getElementById('st-hits').textContent = bestHits;
+  const pl = document.getElementById('st-pl');
+  pl.textContent = (sessionPL >= 0 ? '+' : '') + Casino.fmt(sessionPL);
+  pl.style.color = sessionPL > 0 ? 'var(--green)' : sessionPL < 0 ? 'var(--red)' : 'var(--text2)';
+}
+
+function adjBet(m) {
+  const inp = document.getElementById('betAmt');
+  inp.value = Math.max(5, Math.min(Math.round(parseFloat(inp.value||0)*m), balance));
+}
+function qBet(v) { document.getElementById('betAmt').value = Math.min(v, balance); }
+
+buildGrid();
+renderPaytable();
+
+fetch('/api/me').then(r=>r.json()).then(d=>{
+  balance = d.balance;
+  balanceReady = true;
+  Casino.syncBalance(balance);
+  updateStats();
+}).catch(()=>{});
+</script>
+</body>
+</html>

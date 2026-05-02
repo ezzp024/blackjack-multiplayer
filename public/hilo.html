@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HiLo — Obsidian Casino</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+  <style>
+    .hilo-bg{position:fixed;inset:0;background:radial-gradient(ellipse at 50% 0%,#001a33 0%,#000d1a 50%,#020408 100%);z-index:-1}
+    .hilo-wrap{max-width:680px;margin:0 auto;padding:24px 16px}
+    .hilo-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+    .hilo-title-row{display:flex;align-items:center;gap:12px}
+    .hilo-icon{width:46px;height:46px;background:rgba(33,150,243,0.1);border:1px solid rgba(33,150,243,0.25);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px}
+    .hilo-title-row h1{font-size:1.3rem;font-weight:900;letter-spacing:3px}
+    .he-pill{background:rgba(33,150,243,0.08);border:1px solid rgba(33,150,243,0.2);color:#64b5f6;font-size:0.7rem;font-weight:700;padding:4px 12px;border-radius:20px;letter-spacing:1px}
+
+    /* Stats */
+    .hilo-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px}
+    .hilo-stat{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:12px;text-align:center}
+    .hilo-stat .sv{font-size:1.1rem;font-weight:800;color:#fff}
+    .hilo-stat .sl{font-size:0.65rem;font-weight:700;color:#3d5a6e;letter-spacing:1.5px;text-transform:uppercase;margin-top:3px}
+
+    /* Card arena */
+    .card-arena{
+      background:linear-gradient(160deg,#001020 0%,#00081a 100%);
+      border:1px solid rgba(33,150,243,0.12);
+      border-radius:20px;padding:36px 24px;margin-bottom:16px;
+      display:flex;flex-direction:column;align-items:center;gap:28px;
+      min-height:340px;justify-content:center;
+      position:relative;overflow:hidden;
+    }
+
+    .card-arena::before{
+      content:'';position:absolute;top:-80px;right:-80px;
+      width:240px;height:240px;
+      background:radial-gradient(circle,rgba(33,150,243,0.07) 0%,transparent 65%);
+      pointer-events:none;
+    }
+
+    .cards-row{display:flex;align-items:center;gap:24px;flex-wrap:wrap;justify-content:center}
+
+    /* Playing card */
+    .hilo-card{
+      width:90px;height:126px;border-radius:10px;
+      position:relative;flex-shrink:0;
+      transition:transform 0.4s cubic-bezier(0.34,1.4,0.64,1);
+      cursor:default;
+    }
+
+    .hilo-card.animate-in{animation:cardSlide 0.45s cubic-bezier(0.34,1.4,0.64,1)}
+    @keyframes cardSlide{from{opacity:0;transform:translateX(60px) scale(0.7)}to{opacity:1;transform:translateX(0) scale(1)}}
+
+    .hilo-card .face{
+      width:100%;height:100%;
+      background:#f5f5f0;border-radius:10px;
+      border:1px solid #ccc;
+      box-shadow:0 6px 20px rgba(0,0,0,0.5);
+      display:flex;align-items:center;justify-content:center;
+      flex-direction:column;position:relative;
+      font-family:'Georgia',serif;
+    }
+
+    .hilo-card.red .face{color:#c62828}
+    .hilo-card.black .face{color:#111}
+
+    .hilo-card .c-tl{position:absolute;top:5px;left:7px;font-size:0.72rem;font-weight:900;line-height:1.1;text-align:left}
+    .hilo-card .c-br{position:absolute;bottom:5px;right:7px;font-size:0.72rem;font-weight:900;line-height:1.1;transform:rotate(180deg);text-align:left}
+    .hilo-card .c-mid{font-size:2.4rem;line-height:1}
+
+    .hilo-card.hidden .face{
+      background:repeating-linear-gradient(45deg,#1565c0 0px,#1565c0 6px,#1976d2 6px,#1976d2 12px);
+      border:2px solid rgba(255,255,255,0.15);
+    }
+
+    .vs-arrow{
+      font-size:1.8rem;opacity:0.3;
+      display:flex;flex-direction:column;align-items:center;gap:4px;
+      color:white;user-select:none;
+    }
+
+    /* Multiplier chain */
+    .mult-display{
+      text-align:center;
+    }
+
+    .mult-value{
+      font-size:3rem;font-weight:900;
+      background:linear-gradient(135deg,#fff 0%,rgba(255,255,255,0.7) 100%);
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+      line-height:1;
+      transition:all 0.3s;
+    }
+
+    .mult-label{font-size:0.72rem;color:#3d5a6e;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-top:4px}
+
+    .streak-row{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:8px;min-height:22px}
+    .streak-badge{
+      padding:2px 10px;border-radius:12px;font-size:0.7rem;font-weight:700;
+      animation:popIn 0.3s cubic-bezier(0.34,1.5,0.64,1);
+    }
+    @keyframes popIn{from{transform:scale(0)}to{transform:scale(1)}}
+    .streak-hi{background:rgba(0,230,118,0.15);color:#00e676;border:1px solid rgba(0,230,118,0.25)}
+    .streak-lo{background:rgba(33,150,243,0.15);color:#64b5f6;border:1px solid rgba(33,150,243,0.25)}
+    .streak-eq{background:rgba(255,214,0,0.15);color:#ffd600;border:1px solid rgba(255,214,0,0.25)}
+
+    /* Result overlay */
+    .result-overlay{
+      position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+      background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);
+      border-radius:20px;animation:fadeIn 0.3s ease;
+      z-index:10;flex-direction:column;gap:12px;
+    }
+
+    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+    .result-big{font-size:2rem;font-weight:900;text-align:center}
+    .result-big.win{color:#00e676;text-shadow:0 0 20px rgba(0,230,118,0.5)}
+    .result-big.lose{color:#ff1744;text-shadow:0 0 20px rgba(255,23,68,0.5)}
+
+    /* Action buttons */
+    .hilo-actions{
+      display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;
+    }
+
+    .hilo-btn{
+      padding:14px;border:none;border-radius:12px;
+      font-size:0.9rem;font-weight:800;letter-spacing:0.5px;
+      transition:all 0.2s;cursor:pointer;
+      display:flex;flex-direction:column;align-items:center;gap:4px;
+    }
+
+    .hilo-btn:hover:not(:disabled){transform:translateY(-2px)}
+    .hilo-btn:disabled{opacity:0.3;cursor:not-allowed;transform:none}
+
+    .hilo-btn .btn-icon{font-size:1.4rem}
+    .hilo-btn .btn-odd{font-size:0.7rem;opacity:0.7;font-weight:600}
+
+    .btn-higher{background:linear-gradient(135deg,#00c853,#00e676);color:#000;box-shadow:0 4px 16px rgba(0,230,118,0.25)}
+    .btn-higher:hover:not(:disabled){box-shadow:0 6px 24px rgba(0,230,118,0.45)}
+
+    .btn-lower{background:linear-gradient(135deg,#1565c0,#2196f3);color:#fff;box-shadow:0 4px 16px rgba(33,150,243,0.25)}
+    .btn-lower:hover:not(:disabled){box-shadow:0 6px 24px rgba(33,150,243,0.45)}
+
+    .btn-cashout{background:linear-gradient(135deg,#e65100,#ff6d00);color:#fff;box-shadow:0 4px 16px rgba(255,109,0,0.25)}
+    .btn-cashout:hover:not(:disabled){box-shadow:0 6px 24px rgba(255,109,0,0.45)}
+
+    /* Bet row */
+    .hilo-bet-panel{
+      background:rgba(255,255,255,0.03);
+      border:1px solid rgba(255,255,255,0.07);
+      border-radius:16px;padding:18px 20px;
+    }
+  </style>
+</head>
+<body>
+<div class="hilo-bg"></div>
+<script src="/casino-core.js"></script>
+<script>Casino.renderSidebar('hilo');Casino.requireAuth();</script>
+
+<main class="casino-main">
+<div class="hilo-wrap">
+
+  <div class="hilo-header">
+    <div class="hilo-title-row">
+      <div class="hilo-icon">🃏</div>
+      <h1>HI-LO</h1>
+    </div>
+    <div class="he-pill">CLASSIC CARDS</div>
+  </div>
+
+  <!-- Stats -->
+  <div class="hilo-stats">
+    <div class="hilo-stat"><div class="sv" id="statPlayed">0</div><div class="sl">Played</div></div>
+    <div class="hilo-stat"><div class="sv" id="statWins">0</div><div class="sl">Wins</div></div>
+    <div class="hilo-stat"><div class="sv" id="statStreak">0</div><div class="sl">Best Streak</div></div>
+    <div class="hilo-stat"><div class="sv" id="statPL" style="color:#00e676">$0</div><div class="sl">Session P/L</div></div>
+  </div>
+
+  <!-- Card arena -->
+  <div class="card-arena" id="cardArena">
+    <div class="mult-display">
+      <div class="mult-value" id="multDisplay">1.00x</div>
+      <div class="mult-label">CURRENT MULTIPLIER</div>
+      <div class="streak-row" id="streakRow"></div>
+    </div>
+
+    <div class="cards-row" id="cardsRow">
+      <div class="hilo-card hidden" id="prevCard"><div class="face"></div></div>
+      <div class="vs-arrow">
+        <span>↑</span>
+        <span style="font-size:0.6rem;letter-spacing:2px">HI/LO</span>
+        <span>↓</span>
+      </div>
+      <div class="hilo-card hidden" id="currCard"><div class="face"></div></div>
+    </div>
+  </div>
+
+  <!-- Action buttons -->
+  <div class="hilo-actions">
+    <button class="hilo-btn btn-higher" id="btnHi" disabled onclick="guess('hi')">
+      <span class="btn-icon">⬆️</span>
+      HIGHER
+      <span class="btn-odd" id="oddHi">—</span>
+    </button>
+    <button class="hilo-btn btn-cashout" id="btnCashout" disabled onclick="cashout()">
+      <span class="btn-icon">💰</span>
+      CASHOUT
+      <span class="btn-odd" id="cashoutAmt">—</span>
+    </button>
+    <button class="hilo-btn btn-lower" id="btnLo" disabled onclick="guess('lo')">
+      <span class="btn-icon">⬇️</span>
+      LOWER
+      <span class="btn-odd" id="oddLo">—</span>
+    </button>
+  </div>
+
+  <!-- Bet panel -->
+  <div class="hilo-bet-panel">
+    <div class="bet-label">BET AMOUNT</div>
+    <div class="bet-panel-row" style="margin-bottom:10px">
+      <div class="bet-input-wrap">
+        <span class="bet-currency">$</span>
+        <input type="number" id="betInput" value="100" min="1" max="50000">
+      </div>
+      <button class="bet-half" onclick="setBet(0.5)">½</button>
+      <button class="bet-double" onclick="setBet(2)">2×</button>
+    </div>
+    <div class="bet-quick">
+      <button onclick="setFixed(10)">$10</button>
+      <button onclick="setFixed(50)">$50</button>
+      <button onclick="setFixed(100)">$100</button>
+      <button onclick="setFixed(500)">$500</button>
+      <button onclick="setFixed(1000)">$1K</button>
+    </div>
+    <button class="btn-primary" id="btnDeal" style="margin-top:14px" onclick="startGame()" disabled>DEAL CARD</button>
+  </div>
+
+</div>
+</main>
+
+<script>
+// ── Deck ──
+const SUITS = ['♠','♥','♦','♣'];
+const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+const RANK_VAL = {A:1,2:2,3:3,4:4,5:5,6:6,7:7,8:8,9:9,10:10,J:11,Q:12,K:13};
+const RED_SUITS = ['♥','♦'];
+
+let deck = [];
+let currentCard = null;
+let currentMult = 1.0;
+let currentBet = 0;
+let inGame = false;
+let streak = [];
+let sessionPL = 0, sessPlayed = 0, sessWins = 0, bestStreak = 0;
+
+function buildDeck() {
+  deck = [];
+  for (const s of SUITS) for (const r of RANKS) deck.push({rank:r, suit:s});
+  // Fisher-Yates
+  for (let i = deck.length-1; i > 0; i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [deck[i],deck[j]] = [deck[j],deck[i]];
+  }
+}
+
+function drawCard() {
+  if (deck.length < 5) buildDeck();
+  return deck.pop();
+}
+
+function cardVal(c) { return RANK_VAL[c.rank]; }
+function isRed(c) { return RED_SUITS.includes(c.suit); }
+
+function renderCard(el, card) {
+  const face = el.querySelector('.face');
+  el.className = 'hilo-card animate-in ' + (isRed(card) ? 'red' : 'black');
+  face.innerHTML = `
+    <div class="c-tl">${card.rank}<br>${card.suit}</div>
+    <div class="c-mid">${card.suit}</div>
+    <div class="c-br">${card.rank}<br>${card.suit}</div>`;
+  setTimeout(() => el.classList.remove('animate-in'), 450);
+}
+
+function calcOdds(currentVal, dir) {
+  // cards remaining probabilities based on full deck value distribution
+  // Lower: cards with rank < currentVal
+  // Higher: cards with rank > currentVal (with deck simplification)
+  const total = 52;
+  const lowerCount = (currentVal - 1) * 4; // all ranks below
+  const higherCount = (13 - currentVal) * 4;
+  const equalCount = total - lowerCount - higherCount; // same value (other suits)
+
+  const hiProb = higherCount / (total - equalCount || 1);
+  const loProb = lowerCount / (total - equalCount || 1);
+
+  // Multiplier with small house edge
+  const EDGE = 0.04;
+  const hiMult = hiProb > 0.01 ? ((1 / hiProb) * (1 - EDGE)) : 50;
+  const loMult = loProb > 0.01 ? ((1 / loProb) * (1 - EDGE)) : 50;
+
+  return { hiMult: Math.max(1.05, Math.min(48, hiMult)), loMult: Math.max(1.05, Math.min(48, loMult)), hiProb, loProb };
+}
+
+function updateOdds() {
+  if (!currentCard) return;
+  const { hiMult, loMult, hiProb, loProb } = calcOdds(cardVal(currentCard), '');
+  document.getElementById('oddHi').textContent = hiMult.toFixed(2) + 'x · ' + Math.round(hiProb*100) + '%';
+  document.getElementById('oddLo').textContent = loMult.toFixed(2) + 'x · ' + Math.round(loProb*100) + '%';
+}
+
+function updateMultDisplay() {
+  document.getElementById('multDisplay').textContent = currentMult.toFixed(2) + 'x';
+  const cashAmt = Math.floor(currentBet * currentMult * 100) / 100;
+  document.getElementById('cashoutAmt').textContent = Casino.fmt(cashAmt);
+}
+
+function startGame() {
+  const bal = Casino.getBalance();
+  const bet = parseFloat(document.getElementById('betInput').value);
+  if (!bet || bet <= 0 || bet > bal) { return; }
+
+  buildDeck();
+  currentBet = bet;
+  currentMult = 1.0;
+  streak = [];
+  inGame = true;
+
+  currentCard = drawCard();
+
+  // Show prev card = hidden, curr = drawn card
+  const prevEl = document.getElementById('prevCard');
+  const currEl = document.getElementById('currCard');
+  prevEl.className = 'hilo-card hidden';
+  prevEl.querySelector('.face').innerHTML = '';
+  renderCard(currEl, currentCard);
+
+  document.getElementById('streakRow').innerHTML = '';
+  updateOdds();
+  updateMultDisplay();
+
+  document.getElementById('btnDeal').disabled = true;
+  document.getElementById('betInput').disabled = true;
+  document.getElementById('btnHi').disabled = false;
+  document.getElementById('btnLo').disabled = false;
+  document.getElementById('btnCashout').disabled = false;
+}
+
+async function guess(dir) {
+  if (!inGame) return;
+
+  const prevCard = currentCard;
+  const nextCard = drawCard();
+
+  const prevEl = document.getElementById('prevCard');
+  const currEl = document.getElementById('currCard');
+
+  // Move current to prev slot
+  renderCard(prevEl, prevCard);
+  renderCard(currEl, nextCard);
+
+  const prevVal = cardVal(prevCard);
+  const nextVal = cardVal(nextCard);
+  const { hiMult, loMult } = calcOdds(prevVal, dir);
+
+  let correct = false;
+  if (dir === 'hi') correct = nextVal > prevVal;
+  if (dir === 'lo') correct = nextVal < prevVal;
+  const isTie = nextVal === prevVal;
+
+  if (isTie) {
+    // Push - no change to multiplier, show tie
+    streak.push('eq');
+    addStreakBadge('eq', 'SAME');
+    currentCard = nextCard;
+    updateOdds();
+    updateMultDisplay();
+    return;
+  }
+
+  if (correct) {
+    const addMult = dir === 'hi' ? hiMult : loMult;
+    currentMult = currentMult * addMult;
+    streak.push(dir === 'hi' ? 'hi' : 'lo');
+    addStreakBadge(dir === 'hi' ? 'hi' : 'lo', dir === 'hi' ? 'HI ↑' : 'LO ↓');
+    currentCard = nextCard;
+    updateOdds();
+    updateMultDisplay();
+    if (streak.filter(s=>s!=='eq').length > bestStreak) bestStreak = streak.filter(s=>s!=='eq').length;
+    document.getElementById('statStreak').textContent = bestStreak;
+  } else {
+    // Wrong — lose
+    inGame = false;
+    sessPlayed++;
+    sessionPL -= currentBet;
+    await Casino.recordBet('hilo', currentBet, 0);
+    updateStats();
+    showResult(false, nextCard);
+  }
+}
+
+async function cashout() {
+  if (!inGame) return;
+  inGame = false;
+  const returned = Math.floor(currentBet * currentMult * 100) / 100;
+  sessPlayed++;
+  sessWins++;
+  sessionPL += returned - currentBet;
+  await Casino.recordBet('hilo', currentBet, returned);
+  updateStats();
+  showResult(true, null, returned);
+}
+
+function showResult(win, revealCard, returned) {
+  const arena = document.getElementById('cardArena');
+  const overlay = document.createElement('div');
+  overlay.className = 'result-overlay';
+
+  if (win) {
+    overlay.innerHTML = `
+      <div class="result-big win">WIN!</div>
+      <div style="color:#00e676;font-size:1.2rem;font-weight:700">+${Casino.fmt(returned - currentBet)}</div>
+      <div style="color:rgba(255,255,255,0.5);font-size:0.85rem">${currentMult.toFixed(2)}x multiplier</div>`;
+  } else {
+    overlay.innerHTML = `
+      <div class="result-big lose">BUST!</div>
+      <div style="color:#ff1744;font-size:1.2rem;font-weight:700">-${Casino.fmt(currentBet)}</div>
+      <div style="color:rgba(255,255,255,0.5);font-size:0.85rem">Wrong guess</div>`;
+  }
+
+  arena.appendChild(overlay);
+
+  document.getElementById('btnHi').disabled = true;
+  document.getElementById('btnLo').disabled = true;
+  document.getElementById('btnCashout').disabled = true;
+
+  setTimeout(() => {
+    overlay.remove();
+    document.getElementById('btnDeal').disabled = false;
+    document.getElementById('betInput').disabled = false;
+  }, 1800);
+}
+
+function addStreakBadge(type, label) {
+  const row = document.getElementById('streakRow');
+  const badge = document.createElement('span');
+  badge.className = 'streak-badge streak-' + (type === 'hi' ? 'hi' : type === 'lo' ? 'lo' : 'eq');
+  badge.textContent = label;
+  row.appendChild(badge);
+}
+
+function updateStats() {
+  document.getElementById('statPlayed').textContent = sessPlayed;
+  document.getElementById('statWins').textContent = sessWins;
+  const plEl = document.getElementById('statPL');
+  plEl.textContent = (sessionPL >= 0 ? '+' : '') + Casino.fmt(sessionPL);
+  plEl.style.color = sessionPL >= 0 ? '#00e676' : '#ff1744';
+}
+
+function setBet(mult) {
+  const inp = document.getElementById('betInput');
+  inp.value = Math.max(1, Math.round(parseFloat(inp.value || 0) * mult));
+}
+
+function setFixed(v) { document.getElementById('betInput').value = v; }
+
+// Wait for auth then enable
+const _origRequireAuth = Casino.requireAuth;
+Casino.requireAuth = function() {
+  fetch('/api/me').then(r => {
+    if (!r.ok) { window.location.href = '/login'; return; }
+    r.json().then(d => {
+      const p = { balance: d.balance, name: d.name };
+      const stored = JSON.parse(localStorage.getItem('obsidianCasino_v2') || '{}');
+      localStorage.setItem('obsidianCasino_v2', JSON.stringify({ ...stored, ...p }));
+      const el = document.getElementById('balanceDisplay');
+      if (el) el.textContent = Casino.fmt(d.balance);
+      document.getElementById('btnDeal').disabled = false;
+    });
+  }).catch(() => { window.location.href = '/login'; });
+};
+
+buildDeck();
+</script>
+</body>
+</html>

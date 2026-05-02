@@ -32,6 +32,7 @@ function defaultDB() {
       blackjack: { house_edge: 0.005, enabled: true, label: 'House Edge' },
       ropecut:   { house_edge: 0.04,  enabled: true, label: 'House Edge' },
       keno:      { house_edge: 0.04,  enabled: true, label: 'House Edge' },
+      hilo:      { house_edge: 0.04,  enabled: true, label: 'House Edge' },
     }
   };
 }
@@ -232,7 +233,7 @@ app.delete('/admin/api/player/:id', requireAdmin, (req, res) => {
 });
 
 // ─────────────────────────── PAGES ───────────────────────────
-const GAME_PAGES = { '/': 'index.html', '/blackjack': 'blackjack.html', '/slots': 'slots.html', '/roulette': 'roulette.html', '/mines': 'mines.html', '/dice': 'dice.html', '/profile': 'profile.html', '/crash': 'crash.html', '/plinko': 'plinko.html', '/ropecut': 'ropecut.html', '/keno': 'keno.html' };
+const GAME_PAGES = { '/': 'index.html', '/blackjack': 'blackjack.html', '/slots': 'slots.html', '/roulette': 'roulette.html', '/mines': 'mines.html', '/dice': 'dice.html', '/profile': 'profile.html', '/crash': 'crash.html', '/plinko': 'plinko.html', '/ropecut': 'ropecut.html', '/keno': 'keno.html', '/hilo': 'hilo.html' };
 Object.entries(GAME_PAGES).forEach(([route, file]) => {
   app.get(route, requireAuth, (req, res) => res.sendFile(path.join(__dirname, 'public', file)));
 });

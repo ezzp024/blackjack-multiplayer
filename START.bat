@@ -63,19 +63,8 @@ set "TUNNEL_URL="
 for /l %%i in (1,1,30) do (
     if not defined TUNNEL_URL (
         timeout /t 1 /nobreak >nul
-        for /f "tokens=*" %%L in ('findstr "trycloudflare.com" logs\tunnel.log 2^>nul') do (
-            set "LINE=%%L"
-            for /f "tokens=*" %%U in ('echo !LINE! ^| findstr /o "https://[^ ]*trycloudflare[^ ]*"') do (
-                set "TUNNEL_URL=%%U"
-            )
-        )
-        if not defined TUNNEL_URL (
-            findstr "https://" logs\tunnel.log >nul 2>&1
-            if not errorlevel 1 (
-                for /f "tokens=*" %%L in ('findstr "https://" logs\tunnel.log 2^>nul') do (
-                    set "TUNNEL_URL=%%L"
-                )
-            )
+        for /f "usebackq delims=" %%U in (`powershell -NoProfile -Command "try { $m = (Select-String -Path 'logs\tunnel.log' -Pattern 'https://\S+\.trycloudflare\.com').Matches.Value | Select-Object -First 1; if($m){Write-Output $m} } catch {}"  2^>nul`) do (
+            set "TUNNEL_URL=%%U"
         )
     )
 )

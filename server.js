@@ -232,8 +232,233 @@ app.delete('/admin/api/player/:id', requireAdmin, (req, res) => {
   res.json({ ok: true });
 });
 
+// ─────────────────────────── CRYPTO PAYMENTS ───────────────────────────
+const NOWPAY_KEY     = process.env.NOWPAY_API_KEY     || '';
+const NOWPAY_PAYOUT  = process.env.NOWPAY_PAYOUT_KEY  || '';
+const NOWPAY_IPN_SEC = process.env.NOWPAY_IPN_SECRET  || '';
+const DEPOSIT_FEE    = parseFloat(process.env.DEPOSIT_FEE_PCT  || '0.01');  // 1%
+const WITHDRAW_FEE   = parseFloat(process.env.WITHDRAW_FEE_PCT || '0.015'); // 1.5%
+
+if (!DB.transactions)  DB.transactions = [];
+if (!DB.nextTxId)      DB.nextTxId = 1;
+
+const httpsLib = require('https');
+function nowpayReq(method, path, body, key) {
+  return new Promise((resolve, reject) => {
+    const data = body ? JSON.stringify(body) : null;
+    const opts = {
+      hostname: 'api.nowpayments.io', path: '/v1' + path, method,
+      headers: { 'x-api-key': key, 'Content-Type': 'application/json',
+        ...(data ? { 'Content-Length': Buffer.byteLength(data) } : {}) }
+    };
+    const req = httpsLib.request(opts, res => {
+      let raw = '';
+      res.on('data', c => raw += c);
+      res.on('end', () => {
+        try { resolve({ status: res.statusCode, data: JSON.parse(raw) }); }
+        catch { resolve({ status: res.statusCode, data: raw }); }
+      });
+    });
+    req.on('error', reject);
+    if (data) req.write(data);
+    req.end();
+  });
+}
+
+// Verify IPN signature
+function verifyIPN(rawBody, sig, secret) {
+  if (!secret || !sig) return !secret; // skip if not configured
+  try {
+    const obj = JSON.parse(rawBody);
+    function sortObj(o) {
+      if (Array.isArray(o)) return o.map(sortObj);
+      if (o && typeof o === 'object') {
+        const out = {};
+        Object.keys(o).sort().forEach(k => { out[k] = sortObj(o[k]); });
+        return out;
+      }
+      return o;
+    }
+    const sorted = JSON.stringify(sortObj(obj));
+    const hmac = crypto.createHmac('sha512', secret).update(sorted).digest('hex');
+    return hmac === sig;
+  } catch { return false; }
+}
+
+// GET /api/crypto/currencies — supported coins
+app.get('/api/crypto/currencies', requireAuth, async (req, res) => {
+  if (!NOWPAY_KEY) return res.json({ currencies: ['btc','eth','usdt','ltc','bnb','sol','doge','xrp','trx','usdc'] });
+  try {
+    const r = await nowpayReq('GET', '/currencies', null, NOWPAY_KEY);
+    if (r.status === 200) return res.json({ currencies: r.data.currencies || [] });
+    res.status(r.status).json({ error: 'Failed to fetch currencies' });
+  } catch { res.status(500).json({ error: 'Network error' }); }
+});
+
+// POST /api/crypto/deposit — create payment
+app.post('/api/crypto/deposit', requireAuth, async (req, res) => {
+  if (!NOWPAY_KEY) return res.status(503).json({ error: 'Crypto payments not configured. Set NOWPAY_API_KEY in .env' });
+  const { crypto, amount_usd } = req.body;
+  const amt = parseFloat(amount_usd);
+  if (!crypto || !amt || amt < 1 || amt > 100000) return res.status(400).json({ error: 'Invalid amount (min $1, max $100,000)' });
+
+  const fee = Math.round(amt * DEPOSIT_FEE * 100) / 100;
+  const net = Math.round((amt - fee) * 100) / 100;
+  const txId = DB.nextTxId++;
+
+  try {
+    const r = await nowpayReq('POST', '/payment', {
+      price_amount: amt,
+      price_currency: 'usd',
+      pay_currency: crypto.toLowerCase(),
+      order_id: String(txId),
+      order_description: `Deposit for ${req.user.name}`,
+      ipn_callback_url: process.env.SITE_URL + '/api/crypto/ipn',
+    }, NOWPAY_KEY);
+
+    if (r.status !== 200 && r.status !== 201) {
+      return res.status(400).json({ error: r.data?.message || 'Payment creation failed' });
+    }
+
+    const tx = {
+      id: txId, user_id: req.user.id, user_name: req.user.name,
+      type: 'deposit', status: 'pending',
+      crypto: crypto.toLowerCase(),
+      amount_usd: amt, fee_usd: fee, net_usd: net,
+      payment_id: r.data.payment_id,
+      pay_address: r.data.pay_address,
+      pay_amount: r.data.pay_amount,
+      pay_currency: r.data.pay_currency,
+      created_at: Date.now(), confirmed_at: null,
+    };
+    DB.transactions.push(tx);
+    saveDB();
+
+    res.json({ ok: true, tx, pay_address: r.data.pay_address, pay_amount: r.data.pay_amount, pay_currency: r.data.pay_currency });
+  } catch (e) { res.status(500).json({ error: 'Network error: ' + e.message }); }
+});
+
+// POST /api/crypto/withdraw — create payout
+app.post('/api/crypto/withdraw', requireAuth, async (req, res) => {
+  if (!NOWPAY_PAYOUT) return res.status(503).json({ error: 'Withdrawals not configured. Set NOWPAY_PAYOUT_KEY in .env' });
+  const { crypto, wallet_address, amount_usd } = req.body;
+  const amt = parseFloat(amount_usd);
+  const user = DB.users[req.user.id];
+  if (!user) return res.status(401).json({ error: 'No user' });
+  if (!crypto || !wallet_address || !amt || amt < 5) return res.status(400).json({ error: 'Invalid request (min $5 withdrawal)' });
+  if (amt > user.balance) return res.status(400).json({ error: 'Insufficient balance' });
+  if (!/^[a-zA-Z0-9]{10,100}$/.test(wallet_address)) return res.status(400).json({ error: 'Invalid wallet address' });
+
+  const fee = Math.round(amt * WITHDRAW_FEE * 100) / 100;
+  const net = Math.round((amt - fee) * 100) / 100;
+  const txId = DB.nextTxId++;
+
+  // Deduct balance immediately (pending payout)
+  user.balance = Math.round((user.balance - amt) * 100) / 100;
+  user.last_seen = Date.now();
+
+  const tx = {
+    id: txId, user_id: req.user.id, user_name: req.user.name,
+    type: 'withdraw', status: 'pending',
+    crypto: crypto.toLowerCase(),
+    amount_usd: amt, fee_usd: fee, net_usd: net,
+    wallet_address,
+    payout_id: null,
+    created_at: Date.now(), confirmed_at: null,
+  };
+  DB.transactions.push(tx);
+  saveDB();
+
+  try {
+    const r = await nowpayReq('POST', '/payout', {
+      ipn_callback_url: process.env.SITE_URL + '/api/crypto/ipn',
+      withdrawals: [{
+        address: wallet_address,
+        currency: crypto.toLowerCase(),
+        amount: net,
+        ipn_callback_url: process.env.SITE_URL + '/api/crypto/ipn',
+        extra_id: String(txId),
+      }]
+    }, NOWPAY_PAYOUT);
+
+    if (r.status !== 200 && r.status !== 201) {
+      // Refund on failure
+      user.balance = Math.round((user.balance + amt) * 100) / 100;
+      tx.status = 'failed';
+      saveDB();
+      return res.status(400).json({ error: r.data?.message || 'Payout failed' });
+    }
+
+    tx.payout_id = r.data?.id || r.data?.withdrawals?.[0]?.id;
+    saveDB();
+    res.json({ ok: true, tx, net_usd: net, fee_usd: fee });
+  } catch (e) {
+    user.balance = Math.round((user.balance + amt) * 100) / 100;
+    tx.status = 'failed';
+    saveDB();
+    res.status(500).json({ error: 'Network error: ' + e.message });
+  }
+});
+
+// POST /api/crypto/ipn — NOWPayments webhook
+app.post('/api/crypto/ipn', express.raw({ type: '*/*' }), (req, res) => {
+  const sig = req.headers['x-nowpayments-sig'];
+  const rawBody = req.body?.toString?.() || '';
+  if (!verifyIPN(rawBody, sig, NOWPAY_IPN_SEC)) return res.status(400).send('Bad signature');
+
+  let data;
+  try { data = JSON.parse(rawBody); } catch { return res.status(400).send('Bad JSON'); }
+
+  const { payment_status, order_id, price_amount, actually_paid, payment_id } = data;
+
+  if (payment_status === 'finished' || payment_status === 'confirmed') {
+    const tx = DB.transactions.find(t => String(t.id) === String(order_id) && t.type === 'deposit');
+    if (tx && tx.status === 'pending') {
+      tx.status = 'confirmed';
+      tx.confirmed_at = Date.now();
+      const user = DB.users[tx.user_id];
+      if (user) {
+        user.balance = Math.round((user.balance + tx.net_usd) * 100) / 100;
+        user.last_seen = Date.now();
+        io.to('admin_room').emit('admin:deposit', { ...tx, balance: user.balance });
+      }
+      saveDB();
+    }
+  }
+
+  if (payment_status === 'finished' && data.extra_id) {
+    const tx = DB.transactions.find(t => String(t.id) === String(data.extra_id) && t.type === 'withdraw');
+    if (tx && tx.status === 'pending') { tx.status = 'confirmed'; tx.confirmed_at = Date.now(); saveDB(); }
+  }
+
+  res.status(200).send('OK');
+});
+
+// GET /api/crypto/transactions
+app.get('/api/crypto/transactions', requireAuth, (req, res) => {
+  const txs = DB.transactions.filter(t => t.user_id === req.user.id).slice(-50).reverse();
+  res.json(txs);
+});
+
+// GET /api/crypto/rate?crypto=btc&usd=100
+app.get('/api/crypto/rate', requireAuth, async (req, res) => {
+  if (!NOWPAY_KEY) return res.json({ rate: null });
+  const { crypto, usd } = req.query;
+  if (!crypto || !usd) return res.status(400).json({ error: 'Missing params' });
+  try {
+    const r = await nowpayReq('GET', `/estimate?amount=${usd}&currency_from=usd&currency_to=${crypto}`, null, NOWPAY_KEY);
+    if (r.status === 200) return res.json({ estimated_amount: r.data.estimated_amount, currency_to: r.data.currency_to });
+    res.json({ rate: null });
+  } catch { res.json({ rate: null }); }
+});
+
+// Admin: all transactions
+app.get('/admin/api/transactions', requireAdmin, (req, res) => {
+  res.json(DB.transactions.slice(-500).reverse());
+});
+
 // ─────────────────────────── PAGES ───────────────────────────
-const GAME_PAGES = { '/': 'index.html', '/blackjack': 'blackjack.html', '/slots': 'slots.html', '/roulette': 'roulette.html', '/mines': 'mines.html', '/dice': 'dice.html', '/profile': 'profile.html', '/crash': 'crash.html', '/plinko': 'plinko.html', '/ropecut': 'ropecut.html', '/keno': 'keno.html', '/hilo': 'hilo.html' };
+const GAME_PAGES = { '/': 'index.html', '/blackjack': 'blackjack.html', '/slots': 'slots.html', '/roulette': 'roulette.html', '/mines': 'mines.html', '/dice': 'dice.html', '/profile': 'profile.html', '/crash': 'crash.html', '/plinko': 'plinko.html', '/ropecut': 'ropecut.html', '/keno': 'keno.html', '/hilo': 'hilo.html', '/wallet': 'wallet.html' };
 Object.entries(GAME_PAGES).forEach(([route, file]) => {
   app.get(route, requireAuth, (req, res) => res.sendFile(path.join(__dirname, 'public', file)));
 });

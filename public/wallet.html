@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wallet — Obsidian Casino</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    .wallet-wrap{max-width:780px;margin:0 auto}
+
+    /* Balance hero */
+    .wallet-hero{
+      background:linear-gradient(135deg,rgba(0,30,60,0.8) 0%,rgba(0,15,35,0.9) 100%);
+      border:1px solid rgba(255,214,0,0.15);
+      border-radius:20px;padding:32px 36px;margin-bottom:24px;
+      display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px;
+      position:relative;overflow:hidden;
+    }
+
+    .wallet-hero::before{
+      content:'';position:absolute;top:-60px;right:-60px;
+      width:240px;height:240px;
+      background:radial-gradient(circle,rgba(255,214,0,0.06) 0%,transparent 65%);
+      pointer-events:none;
+    }
+
+    .wallet-bal-label{font-size:0.65rem;font-weight:700;color:#3d5a6e;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:6px}
+    .wallet-bal-amount{font-size:2.4rem;font-weight:900;color:#ffea00;text-shadow:0 0 24px rgba(255,214,0,0.3)}
+    .wallet-hero-actions{display:flex;gap:10px;flex-wrap:wrap}
+
+    .wh-btn{
+      padding:11px 22px;border-radius:10px;font-size:0.88rem;font-weight:800;
+      letter-spacing:0.5px;border:none;cursor:pointer;transition:all 0.2s;
+      display:flex;align-items:center;gap:8px;
+    }
+
+    .wh-btn-deposit{
+      background:linear-gradient(135deg,#00c853,#00e676);color:#000;
+      box-shadow:0 4px 16px rgba(0,230,118,0.25);
+    }
+    .wh-btn-deposit:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(0,230,118,0.4)}
+
+    .wh-btn-withdraw{
+      background:rgba(255,255,255,0.06);
+      border:1px solid rgba(255,255,255,0.12);
+      color:white;
+    }
+    .wh-btn-withdraw:hover{background:rgba(255,255,255,0.1)}
+
+    /* Tabs */
+    .wallet-tabs{display:flex;gap:4px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:4px;margin-bottom:20px}
+    .wtab{flex:1;padding:10px;background:none;border:none;color:#7a9ab0;font-weight:700;font-size:0.88rem;border-radius:9px;transition:all 0.2s;cursor:pointer}
+    .wtab.active{background:rgba(255,255,255,0.08);color:#fff}
+
+    /* Panel */
+    .wallet-panel{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:24px}
+
+    /* Crypto selector */
+    .crypto-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px;margin-bottom:20px}
+
+    .crypto-btn{
+      padding:10px 8px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);
+      background:rgba(255,255,255,0.03);color:#7a9ab0;
+      font-size:0.75rem;font-weight:700;cursor:pointer;transition:all 0.2s;
+      display:flex;flex-direction:column;align-items:center;gap:5px;
+      text-transform:uppercase;letter-spacing:0.5px;
+    }
+
+    .crypto-btn .crypto-icon{font-size:1.4rem}
+    .crypto-btn:hover{background:rgba(255,255,255,0.07);border-color:rgba(255,255,255,0.15);color:#fff}
+    .crypto-btn.selected{background:rgba(0,230,118,0.08);border-color:rgba(0,230,118,0.4);color:#00e676}
+
+    /* Amount input */
+    .amount-row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:end;margin-bottom:16px}
+    .amount-group{display:flex;flex-direction:column;gap:6px}
+    .amount-label{font-size:0.65rem;font-weight:700;color:#3d5a6e;letter-spacing:2px;text-transform:uppercase}
+    .amount-inp-wrap{display:flex;align-items:center;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.1);border-radius:10px;overflow:hidden;transition:border-color 0.2s}
+    .amount-inp-wrap:focus-within{border-color:rgba(255,214,0,0.4);box-shadow:0 0 0 2px rgba(255,214,0,0.06)}
+    .amount-prefix{padding:0 14px;height:46px;display:flex;align-items:center;color:#ffd600;font-weight:800;font-size:1rem;border-right:1px solid rgba(255,255,255,0.08);background:rgba(255,214,0,0.04)}
+    .amount-inp-wrap input{background:none;border:none;color:#fff;font-size:1.05rem;font-weight:700;padding:0 14px;height:46px;outline:none;flex:1;min-width:0}
+    .amount-quick{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+    .amount-quick button{padding:5px 12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:6px;color:#7a9ab0;font-size:0.73rem;font-weight:700;cursor:pointer;transition:all 0.15s}
+    .amount-quick button:hover{background:rgba(255,255,255,0.08);color:#fff}
+
+    .fee-info{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:0.82rem}
+    .fee-row{display:flex;justify-content:space-between;align-items:center;padding:3px 0;color:#7a9ab0}
+    .fee-row .fee-val{font-weight:700;color:#fff}
+    .fee-row.net .fee-val{color:#00e676;font-size:1rem;font-weight:900}
+
+    /* Deposit result */
+    .deposit-result{display:none;flex-direction:column;align-items:center;gap:16px;padding:8px 0}
+    .deposit-result.show{display:flex}
+
+    .dep-addr-box{
+      background:rgba(0,0,0,0.4);border:1px solid rgba(0,230,118,0.2);border-radius:12px;
+      padding:20px;width:100%;
+      display:flex;flex-direction:column;align-items:center;gap:12px;
+    }
+
+    .dep-amount{font-size:1.5rem;font-weight:900;color:#00e676;text-shadow:0 0 12px rgba(0,230,118,0.4)}
+    .dep-amount-label{font-size:0.7rem;color:#3d5a6e;letter-spacing:2px;text-transform:uppercase}
+
+    #qrCode{background:white;padding:10px;border-radius:10px}
+
+    .dep-address{
+      word-break:break-all;text-align:center;font-size:0.82rem;font-family:monospace;
+      color:#7a9ab0;background:rgba(255,255,255,0.04);padding:10px 14px;
+      border-radius:8px;cursor:pointer;width:100%;transition:all 0.2s;
+      border:1px solid rgba(255,255,255,0.06);
+    }
+    .dep-address:hover{background:rgba(255,255,255,0.07);color:#fff}
+
+    .dep-warning{font-size:0.78rem;color:#ffb300;text-align:center;padding:10px 14px;background:rgba(255,179,0,0.06);border:1px solid rgba(255,179,0,0.15);border-radius:8px;width:100%}
+
+    /* Wallet address input (withdraw) */
+    .addr-inp-wrap{display:flex;flex-direction:column;gap:6px;margin-bottom:16px}
+    .addr-inp-wrap input{background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:#fff;font-size:0.88rem;padding:12px 16px;outline:none;transition:border-color 0.2s;font-family:monospace}
+    .addr-inp-wrap input:focus{border-color:rgba(0,230,118,0.4);box-shadow:0 0 0 2px rgba(0,230,118,0.06)}
+    .addr-inp-wrap input::placeholder{color:#3d5a6e;font-family:'Inter',sans-serif}
+
+    /* Transaction history */
+    .tx-list{display:flex;flex-direction:column;gap:8px}
+    .tx-item{
+      background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);
+      border-radius:12px;padding:14px 16px;
+      display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;
+    }
+
+    .tx-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0}
+    .tx-icon.dep{background:rgba(0,230,118,0.1)}
+    .tx-icon.wit{background:rgba(255,23,68,0.1)}
+
+    .tx-main .tx-type{font-weight:700;font-size:0.88rem}
+    .tx-main .tx-detail{font-size:0.75rem;color:#3d5a6e;margin-top:2px}
+
+    .tx-right{text-align:right}
+    .tx-amount{font-weight:800;font-size:0.92rem}
+    .tx-amount.dep{color:#00e676}
+    .tx-amount.wit{color:#ff1744}
+    .tx-status{font-size:0.68rem;font-weight:700;padding:2px 8px;border-radius:5px;display:inline-block;margin-top:4px}
+    .tx-status.confirmed{background:rgba(0,230,118,0.1);color:#00e676}
+    .tx-status.pending{background:rgba(255,214,0,0.1);color:#ffd600}
+    .tx-status.failed{background:rgba(255,23,68,0.1);color:#ff1744}
+
+    .no-txs{text-align:center;padding:40px;color:#3d5a6e;font-size:0.88rem}
+
+    /* Step indicator */
+    .step-hint{display:flex;align-items:center;gap:8px;margin-bottom:16px;font-size:0.8rem;color:#3d5a6e}
+    .step-dot{width:22px;height:22px;border-radius:50%;background:rgba(0,230,118,0.15);border:1px solid rgba(0,230,118,0.3);color:#00e676;font-size:0.65rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+
+    .error-msg{background:rgba(255,23,68,0.08);border:1px solid rgba(255,23,68,0.2);border-radius:8px;padding:10px 14px;color:#ff5c7a;font-size:0.82rem;margin-bottom:12px;display:none}
+    .error-msg.show{display:block}
+
+    .success-msg{background:rgba(0,230,118,0.08);border:1px solid rgba(0,230,118,0.2);border-radius:8px;padding:10px 14px;color:#00e676;font-size:0.82rem;margin-bottom:12px;display:none}
+    .success-msg.show{display:block}
+  </style>
+</head>
+<body>
+<script src="/casino-core.js"></script>
+<script>Casino.renderSidebar('wallet');Casino.requireAuth();</script>
+
+<main class="casino-main">
+<div class="wallet-wrap">
+
+  <!-- Balance hero -->
+  <div class="wallet-hero">
+    <div>
+      <div class="wallet-bal-label">CASINO BALANCE</div>
+      <div class="wallet-bal-amount" id="walletBal">$0.00</div>
+    </div>
+    <div class="wallet-hero-actions">
+      <button class="wh-btn wh-btn-deposit" onclick="switchTab('deposit')">
+        <span>↓</span> Deposit
+      </button>
+      <button class="wh-btn wh-btn-withdraw" onclick="switchTab('withdraw')">
+        <span>↑</span> Withdraw
+      </button>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="wallet-tabs">
+    <button class="wtab active" id="tab-deposit" onclick="switchTab('deposit')">Deposit</button>
+    <button class="wtab" id="tab-withdraw" onclick="switchTab('withdraw')">Withdraw</button>
+    <button class="wtab" id="tab-history" onclick="switchTab('history')">History</button>
+  </div>
+
+  <!-- DEPOSIT TAB -->
+  <div id="pane-deposit">
+    <div class="wallet-panel">
+      <div class="step-hint">
+        <div class="step-dot">1</div>
+        <span>Select cryptocurrency</span>
+      </div>
+      <div class="crypto-grid" id="depCryptoGrid">
+        <!-- filled by JS -->
+      </div>
+
+      <div class="step-hint">
+        <div class="step-dot">2</div>
+        <span>Enter deposit amount (USD equivalent)</span>
+      </div>
+
+      <div class="amount-row">
+        <div class="amount-group">
+          <div class="amount-label">Amount (USD)</div>
+          <div class="amount-inp-wrap">
+            <span class="amount-prefix">$</span>
+            <input type="number" id="depAmt" value="100" min="1" max="100000" oninput="updateDepFee()">
+          </div>
+          <div class="amount-quick">
+            <button onclick="setDepAmt(50)">$50</button>
+            <button onclick="setDepAmt(100)">$100</button>
+            <button onclick="setDepAmt(500)">$500</button>
+            <button onclick="setDepAmt(1000)">$1K</button>
+            <button onclick="setDepAmt(5000)">$5K</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="fee-info" id="depFeeBox">
+        <div class="fee-row"><span>Deposit amount</span><span class="fee-val" id="df-gross">$100.00</span></div>
+        <div class="fee-row"><span>Platform fee (<span id="df-fee-pct">1%</span>)</span><span class="fee-val" id="df-fee">-$1.00</span></div>
+        <div class="fee-row net"><span>You receive</span><span class="fee-val" id="df-net">$99.00</span></div>
+      </div>
+
+      <div class="error-msg" id="depError"></div>
+
+      <!-- Deposit result (address + QR) -->
+      <div class="deposit-result" id="depResult">
+        <div class="dep-addr-box">
+          <div class="dep-amount-label">SEND EXACTLY</div>
+          <div class="dep-amount" id="depSendAmt">—</div>
+          <div id="qrCode"></div>
+          <div class="dep-address" id="depAddr" onclick="copyAddr(this)" title="Click to copy">
+            Click to copy address
+          </div>
+          <div class="dep-warning">
+            ⚠️ Send only <span id="depCoinName"></span> to this address. Any other coin will be lost permanently. This address expires in 60 minutes.
+          </div>
+        </div>
+        <button class="btn-secondary" onclick="resetDeposit()" style="width:100%">Create New Deposit</button>
+      </div>
+
+      <button class="btn-primary" id="btnDeposit" onclick="createDeposit()" disabled>
+        Generate Payment Address
+      </button>
+    </div>
+  </div>
+
+  <!-- WITHDRAW TAB -->
+  <div id="pane-withdraw" style="display:none">
+    <div class="wallet-panel">
+      <div class="step-hint">
+        <div class="step-dot">1</div>
+        <span>Select cryptocurrency to receive</span>
+      </div>
+      <div class="crypto-grid" id="witCryptoGrid"></div>
+
+      <div class="step-hint">
+        <div class="step-dot">2</div>
+        <span>Enter your wallet address</span>
+      </div>
+      <div class="addr-inp-wrap">
+        <div class="amount-label">Your <span id="witCoinName">Crypto</span> Wallet Address</div>
+        <input type="text" id="witAddr" placeholder="Paste your wallet address here..." oninput="updateWitFee()">
+      </div>
+
+      <div class="step-hint">
+        <div class="step-dot">3</div>
+        <span>Enter withdrawal amount (USD)</span>
+      </div>
+      <div class="amount-inp-wrap" style="margin-bottom:10px">
+        <span class="amount-prefix">$</span>
+        <input type="number" id="witAmt" value="50" min="5" oninput="updateWitFee()">
+      </div>
+      <div class="amount-quick" style="margin-bottom:16px">
+        <button onclick="setWitAmt(50)">$50</button>
+        <button onclick="setWitAmt(100)">$100</button>
+        <button onclick="setWitAmt(500)">$500</button>
+        <button onclick="setWitAmt(1000)">$1K</button>
+        <button onclick="witMax()">MAX</button>
+      </div>
+
+      <div class="fee-info" id="witFeeBox">
+        <div class="fee-row"><span>Withdrawal amount</span><span class="fee-val" id="wf-gross">$50.00</span></div>
+        <div class="fee-row"><span>Platform fee (<span id="wf-fee-pct">1.5%</span>)</span><span class="fee-val" id="wf-fee">-$0.75</span></div>
+        <div class="fee-row net"><span>You receive</span><span class="fee-val" id="wf-net">$49.25</span></div>
+      </div>
+
+      <div class="error-msg" id="witError"></div>
+      <div class="success-msg" id="witSuccess"></div>
+
+      <button class="btn-primary" id="btnWithdraw" onclick="createWithdraw()" disabled>
+        Submit Withdrawal
+      </button>
+    </div>
+  </div>
+
+  <!-- HISTORY TAB -->
+  <div id="pane-history" style="display:none">
+    <div id="txList"></div>
+  </div>
+
+</div>
+</main>
+
+<script>
+const CRYPTO_LIST = [
+  { id:'btc',  label:'Bitcoin',   icon:'₿',  color:'#f7931a' },
+  { id:'eth',  label:'Ethereum',  icon:'Ξ',  color:'#627eea' },
+  { id:'usdt', label:'Tether',    icon:'₮',  color:'#26a17b' },
+  { id:'usdc', label:'USD Coin',  icon:'$',  color:'#2775ca' },
+  { id:'ltc',  label:'Litecoin',  icon:'Ł',  color:'#b8b8b8' },
+  { id:'bnb',  label:'BNB',       icon:'B',  color:'#f3ba2f' },
+  { id:'sol',  label:'Solana',    icon:'◎',  color:'#9945ff' },
+  { id:'doge', label:'Dogecoin',  icon:'Ð',  color:'#c2a633' },
+  { id:'xrp',  label:'XRP',       icon:'✕',  color:'#00aae4' },
+  { id:'trx',  label:'TRON',      icon:'T',  color:'#ff0013' },
+];
+
+let selectedDepCrypto = 'btc';
+let selectedWitCrypto = 'btc';
+let depFeeRate = 0.01, witFeeRate = 0.015;
+
+// Load fee rates from server
+fetch('/api/rates').then(r=>r.ok&&r.json()).then(rates => {
+  // platform fee info displayed — kept for display only
+}).catch(()=>{});
+
+// Load balance
+function refreshBalance() {
+  const p = Casino.getProfile();
+  document.getElementById('walletBal').textContent = Casino.fmt(p.balance);
+}
+
+// Build crypto grids
+function buildCryptoGrids() {
+  const depGrid = document.getElementById('depCryptoGrid');
+  const witGrid = document.getElementById('witCryptoGrid');
+
+  CRYPTO_LIST.forEach(c => {
+    const makeBtn = (selectedVar, onChange) => {
+      const btn = document.createElement('button');
+      btn.className = 'crypto-btn' + (window[selectedVar] === c.id ? ' selected' : '');
+      btn.dataset.id = c.id;
+      btn.innerHTML = `<span class="crypto-icon" style="color:${c.color}">${c.icon}</span>${c.id.toUpperCase()}`;
+      btn.onclick = () => onChange(c.id, btn.closest('.crypto-grid'));
+      return btn;
+    };
+
+    depGrid.appendChild(makeBtn('selectedDepCrypto', (id, grid) => {
+      selectedDepCrypto = id;
+      grid.querySelectorAll('.crypto-btn').forEach(b => b.classList.toggle('selected', b.dataset.id === id));
+      updateDepFee();
+    }));
+
+    witGrid.appendChild(makeBtn('selectedWitCrypto', (id, grid) => {
+      selectedWitCrypto = id;
+      grid.querySelectorAll('.crypto-btn').forEach(b => b.classList.toggle('selected', b.dataset.id === id));
+      document.getElementById('witCoinName').textContent = id.toUpperCase();
+      updateWitFee();
+    }));
+  });
+}
+
+function fmt2(n) {
+  return '$' + parseFloat(n).toFixed(2);
+}
+
+function updateDepFee() {
+  const gross = parseFloat(document.getElementById('depAmt').value) || 0;
+  const fee = Math.round(gross * depFeeRate * 100) / 100;
+  const net = Math.round((gross - fee) * 100) / 100;
+  document.getElementById('df-gross').textContent = fmt2(gross);
+  document.getElementById('df-fee').textContent = '-' + fmt2(fee);
+  document.getElementById('df-net').textContent = fmt2(net);
+  document.getElementById('df-fee-pct').textContent = (depFeeRate * 100) + '%';
+  document.getElementById('btnDeposit').disabled = gross < 1 || !selectedDepCrypto;
+}
+
+function updateWitFee() {
+  const gross = parseFloat(document.getElementById('witAmt').value) || 0;
+  const fee = Math.round(gross * witFeeRate * 100) / 100;
+  const net = Math.round((gross - fee) * 100) / 100;
+  document.getElementById('wf-gross').textContent = fmt2(gross);
+  document.getElementById('wf-fee').textContent = '-' + fmt2(fee);
+  document.getElementById('wf-net').textContent = fmt2(net);
+  document.getElementById('wf-fee-pct').textContent = (witFeeRate * 100) + '%';
+  const addr = document.getElementById('witAddr').value.trim();
+  document.getElementById('btnWithdraw').disabled = gross < 5 || !addr || !selectedWitCrypto;
+}
+
+function setDepAmt(v) { document.getElementById('depAmt').value = v; updateDepFee(); }
+function setWitAmt(v) { document.getElementById('witAmt').value = v; updateWitFee(); }
+function witMax() {
+  const p = Casino.getProfile();
+  document.getElementById('witAmt').value = Math.floor(p.balance);
+  updateWitFee();
+}
+
+// ── CREATE DEPOSIT ──
+async function createDeposit() {
+  const btn = document.getElementById('btnDeposit');
+  const errEl = document.getElementById('depError');
+  errEl.className = 'error-msg';
+  btn.disabled = true;
+  btn.textContent = 'Creating payment...';
+
+  const amount_usd = parseFloat(document.getElementById('depAmt').value);
+
+  try {
+    const r = await fetch('/api/crypto/deposit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ crypto: selectedDepCrypto, amount_usd })
+    });
+    const d = await r.json();
+
+    if (!r.ok) {
+      errEl.textContent = d.error || 'Failed to create deposit';
+      errEl.className = 'error-msg show';
+      btn.disabled = false;
+      btn.textContent = 'Generate Payment Address';
+      return;
+    }
+
+    // Show result
+    document.getElementById('depSendAmt').textContent = `${d.pay_amount} ${d.pay_currency?.toUpperCase()}`;
+    document.getElementById('depAddr').textContent = d.pay_address;
+    document.getElementById('depAddr').dataset.addr = d.pay_address;
+    document.getElementById('depCoinName').textContent = d.pay_currency?.toUpperCase();
+
+    // QR code
+    document.getElementById('qrCode').innerHTML = '';
+    new QRCode(document.getElementById('qrCode'), {
+      text: d.pay_address,
+      width: 160, height: 160,
+      colorDark: '#000000', colorLight: '#ffffff',
+    });
+
+    document.getElementById('depResult').className = 'deposit-result show';
+    btn.style.display = 'none';
+    document.getElementById('depFeeBox').style.display = 'none';
+  } catch (e) {
+    errEl.textContent = 'Network error. Try again.';
+    errEl.className = 'error-msg show';
+    btn.disabled = false;
+    btn.textContent = 'Generate Payment Address';
+  }
+}
+
+function resetDeposit() {
+  document.getElementById('depResult').className = 'deposit-result';
+  document.getElementById('btnDeposit').style.display = 'block';
+  document.getElementById('depFeeBox').style.display = 'block';
+  document.getElementById('qrCode').innerHTML = '';
+  updateDepFee();
+}
+
+function copyAddr(el) {
+  const addr = el.dataset.addr || el.textContent;
+  navigator.clipboard.writeText(addr).then(() => {
+    const orig = el.textContent;
+    el.textContent = '✓ Copied!';
+    el.style.color = '#00e676';
+    setTimeout(() => { el.textContent = orig; el.style.color = ''; }, 2000);
+  });
+}
+
+// ── CREATE WITHDRAWAL ──
+async function createWithdraw() {
+  const btn = document.getElementById('btnWithdraw');
+  const errEl = document.getElementById('witError');
+  const sucEl = document.getElementById('witSuccess');
+  errEl.className = 'error-msg';
+  sucEl.className = 'success-msg';
+  btn.disabled = true;
+  btn.textContent = 'Processing...';
+
+  const amount_usd = parseFloat(document.getElementById('witAmt').value);
+  const wallet_address = document.getElementById('witAddr').value.trim();
+
+  try {
+    const r = await fetch('/api/crypto/withdraw', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ crypto: selectedWitCrypto, wallet_address, amount_usd })
+    });
+    const d = await r.json();
+
+    if (!r.ok) {
+      errEl.textContent = d.error || 'Withdrawal failed';
+      errEl.className = 'error-msg show';
+      btn.disabled = false;
+      btn.textContent = 'Submit Withdrawal';
+      return;
+    }
+
+    const fee = d.fee_usd || 0;
+    sucEl.textContent = `Withdrawal submitted! You receive $${d.net_usd.toFixed(2)} in ${selectedWitCrypto.toUpperCase()} (fee: $${fee.toFixed(2)}). Processing time: 10–60 minutes.`;
+    sucEl.className = 'success-msg show';
+
+    // Refresh balance
+    const p = Casino.getProfile();
+    p.balance -= amount_usd;
+    document.getElementById('walletBal').textContent = Casino.fmt(p.balance);
+
+    btn.textContent = 'Submit Withdrawal';
+    btn.disabled = false;
+    document.getElementById('witAmt').value = '';
+    document.getElementById('witAddr').value = '';
+    loadHistory();
+  } catch (e) {
+    errEl.textContent = 'Network error. Try again.';
+    errEl.className = 'error-msg show';
+    btn.disabled = false;
+    btn.textContent = 'Submit Withdrawal';
+  }
+}
+
+// ── HISTORY ──
+async function loadHistory() {
+  const container = document.getElementById('txList');
+  try {
+    const r = await fetch('/api/crypto/transactions');
+    if (!r.ok) { container.innerHTML = '<div class="no-txs">Could not load history.</div>'; return; }
+    const txs = await r.json();
+    if (!txs.length) { container.innerHTML = '<div class="no-txs">No transactions yet.</div>'; return; }
+
+    const timeAgo = ts => {
+      const d = Date.now() - ts;
+      if (d < 60000) return 'just now';
+      if (d < 3600000) return Math.floor(d/60000) + 'm ago';
+      if (d < 86400000) return Math.floor(d/3600000) + 'h ago';
+      return new Date(ts).toLocaleDateString();
+    };
+
+    container.innerHTML = '<div class="tx-list">' + txs.map(t => {
+      const isDep = t.type === 'deposit';
+      return `<div class="tx-item">
+        <div class="tx-icon ${isDep ? 'dep' : 'wit'}">${isDep ? '↓' : '↑'}</div>
+        <div class="tx-main">
+          <div class="tx-type">${isDep ? 'Deposit' : 'Withdrawal'} · ${t.crypto?.toUpperCase()}</div>
+          <div class="tx-detail">${timeAgo(t.created_at)}${t.wallet_address ? ' · ' + t.wallet_address.slice(0,12) + '...' : ''}</div>
+        </div>
+        <div class="tx-right">
+          <div class="tx-amount ${isDep ? 'dep' : 'wit'}">${isDep ? '+' : '-'}$${t.amount_usd.toFixed(2)}</div>
+          <div class="tx-status ${t.status}">${t.status}</div>
+        </div>
+      </div>`;
+    }).join('') + '</div>';
+  } catch { container.innerHTML = '<div class="no-txs">Error loading history.</div>'; }
+}
+
+// ── TABS ──
+function switchTab(tab) {
+  ['deposit','withdraw','history'].forEach(t => {
+    document.getElementById('pane-' + t).style.display = t === tab ? 'block' : 'none';
+    document.getElementById('tab-' + t).classList.toggle('active', t === tab);
+  });
+  if (tab === 'history') loadHistory();
+}
+
+// Init
+buildCryptoGrids();
+updateDepFee();
+updateWitFee();
+refreshBalance();
+
+// Override requireAuth to update balance after server sync
+const _origRA = Casino.requireAuth;
+window._origCasinoRA = Casino.requireAuth;
+fetch('/api/me').then(r=>r.ok&&r.json()).then(d=>{
+  if (!d) return;
+  document.getElementById('walletBal').textContent = Casino.fmt(d.balance);
+  const el = document.getElementById('balanceDisplay');
+  if (el) el.textContent = Casino.fmt(d.balance);
+});
+</script>
+</body>
+</html>

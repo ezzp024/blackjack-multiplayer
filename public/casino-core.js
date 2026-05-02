@@ -209,6 +209,10 @@ const Casino = (() => {
           `).join('')}
         </nav>
         <div class="sidebar-bottom">
+          <a href="/wallet" class="nav-item ${activePage === 'wallet' ? 'active' : ''}">
+            <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M16 12h2M2 10h20"/><path d="M6 6V4a1 1 0 011-1h10a1 1 0 011 1v2"/></svg></span>
+            <span class="nav-label">Wallet</span>
+          </a>
           <a href="/profile" class="nav-item ${activePage === 'profile' ? 'active' : ''}">
             <span class="nav-icon">${ICONS.profile}</span>
             <span class="nav-label">Profile</span>

@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cosmic Spin — Obsidian Casino</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+  <style>
+    .space-bg{position:fixed;inset:0;z-index:-1;background:radial-gradient(ellipse at 30% 20%,#0a003a 0%,#030018 50%,#000008 100%);overflow:hidden}
+    .nebula{position:absolute;border-radius:50%;filter:blur(60px);pointer-events:none}
+    .nebula-1{width:400px;height:300px;background:rgba(80,0,200,0.08);top:5%;left:10%}
+    .nebula-2{width:300px;height:400px;background:rgba(0,150,255,0.06);top:20%;right:5%}
+    .nebula-3{width:350px;height:250px;background:rgba(200,0,100,0.05);bottom:10%;left:30%}
+    .stars-layer{position:absolute;inset:0}
+    .star{position:absolute;border-radius:50%;background:#fff}
+    .shooting-star{position:absolute;height:1px;background:linear-gradient(90deg,rgba(255,255,255,0.8),transparent);animation:shoot linear infinite;pointer-events:none}
+    @keyframes shoot{0%{transform:translateX(-100px) translateY(0);opacity:1}100%{transform:translateX(300px) translateY(100px);opacity:0}}
+
+    .space-wrap{max-width:680px;margin:0 auto;padding:24px 16px}
+    .sp-header{text-align:center;margin-bottom:24px}
+    .sp-logo-row{display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:4px}
+    .sp-logo-icon{width:52px;height:52px;background:rgba(100,60,255,0.12);border:1px solid rgba(100,80,255,0.3);border-radius:12px;display:flex;align-items:center;justify-content:center}
+    .sp-title{font-size:1.6rem;font-weight:900;letter-spacing:4px;background:linear-gradient(135deg,#a080ff,#4060ff,#00c8ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .sp-subtitle{font-size:0.7rem;color:#2a2060;letter-spacing:4px;text-transform:uppercase;font-weight:700}
+
+    .slot-machine-frame{background:linear-gradient(180deg,#060018,#020010);border:2px solid rgba(80,60,200,0.2);border-radius:20px;padding:20px;margin-bottom:16px;position:relative;overflow:hidden}
+    .slot-machine-frame::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(80,60,200,0.04) 0%,transparent 40%)}
+    .corner{position:absolute;width:30px;height:30px}
+    .corner-tl{top:8px;left:8px;border-top:2px solid rgba(100,80,255,0.4);border-left:2px solid rgba(100,80,255,0.4)}
+    .corner-tr{top:8px;right:8px;border-top:2px solid rgba(100,80,255,0.4);border-right:2px solid rgba(100,80,255,0.4)}
+    .corner-bl{bottom:8px;left:8px;border-bottom:2px solid rgba(100,80,255,0.4);border-left:2px solid rgba(100,80,255,0.4)}
+    .corner-br{bottom:8px;right:8px;border-bottom:2px solid rgba(100,80,255,0.4);border-right:2px solid rgba(100,80,255,0.4)}
+
+    .reels-outer{background:#030010;border:1px solid rgba(80,60,200,0.25);border-radius:12px;padding:10px;margin-bottom:14px;position:relative}
+    .payline{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);height:2px;background:linear-gradient(90deg,transparent,rgba(80,60,255,0.5),rgba(120,100,255,0.9),rgba(80,60,255,0.5),transparent);pointer-events:none;z-index:5}
+    .payline-end{position:absolute;top:50%;transform:translateY(-50%);width:14px;height:14px;border:2px solid rgba(120,100,255,0.6);border-radius:50%;background:rgba(100,80,255,0.1)}
+    .payline-end-left{left:4px}
+    .payline-end-right{right:4px}
+    .reels-row{display:flex;gap:6px;justify-content:center}
+    .reel-col{flex:1;max-width:160px;height:200px;overflow:hidden;border-radius:8px;background:#020008;border:1px solid rgba(255,255,255,0.04)}
+    .reel-strip{display:flex;flex-direction:column;transition:transform 0.6s cubic-bezier(0.25,0.46,0.45,0.94)}
+    .symbol-cell{height:200px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .symbol-cell svg{width:80%;height:80%;max-width:120px;max-height:120px}
+    .reel-col.winner{box-shadow:0 0 20px rgba(100,80,255,0.7),inset 0 0 15px rgba(100,80,255,0.15);border-color:rgba(100,80,255,0.6);animation:reelGlow 0.4s ease 3}
+    @keyframes reelGlow{0%,100%{box-shadow:0 0 10px rgba(100,80,255,0.3)}50%{box-shadow:0 0 35px rgba(120,100,255,0.9),inset 0 0 20px rgba(100,80,255,0.25)}}
+
+    .slot-msg{text-align:center;font-size:1rem;font-weight:900;letter-spacing:2px;min-height:32px;padding:6px 0}
+    .paytable-row{display:flex;justify-content:space-between;padding:6px 12px;border-bottom:1px solid rgba(255,255,255,0.04);font-size:0.75rem}
+    .paytable-row:last-child{border-bottom:none}
+    .paytable-row .sym-name{color:#8ea3b1;font-weight:600}
+    .paytable-row .sym-payout{color:#a080ff;font-weight:800}
+
+    .controls-card{background:#060018;border:1px solid rgba(80,60,200,0.2);border-radius:16px;padding:18px}
+    .ctrl-label{font-size:0.62rem;font-weight:800;color:#1a1450;text-transform:uppercase;letter-spacing:2px;margin-bottom:7px}
+    .bet-input-row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+    .bet-inp{flex:1;background:#040012;border:1px solid rgba(80,60,200,0.2);border-radius:8px;color:#fff;font-size:1rem;font-weight:700;padding:10px 12px;outline:none;font-family:inherit}
+    .bet-inp:focus{border-color:rgba(100,80,255,0.5)}
+    .bet-adj{background:#0a0828;border:1px solid rgba(80,60,180,0.2);color:#8ea3b1;border-radius:6px;padding:8px 12px;font-size:0.78rem;font-weight:700;cursor:pointer;transition:all 0.15s}
+    .bet-adj:hover{background:#120e40;color:#a080ff}
+    .bet-presets{display:flex;gap:6px;margin-bottom:14px}
+    .bet-presets button{flex:1;background:#040012;border:1px solid rgba(80,60,180,0.15);color:#1a1450;border-radius:6px;padding:6px 0;font-size:0.72rem;font-weight:700;cursor:pointer;transition:all 0.15s}
+    .bet-presets button:hover{background:#0a0828;color:#a080ff;border-color:rgba(100,80,255,0.3)}
+    .spin-btn{width:100%;padding:15px;background:linear-gradient(135deg,#3020a0,#6040d0,#8060ff);border:none;border-radius:12px;color:#fff;font-size:1rem;font-weight:900;cursor:pointer;letter-spacing:2px;transition:all 0.15s;text-transform:uppercase;position:relative;overflow:hidden;border-top:1px solid rgba(180,160,255,0.3)}
+    .spin-btn::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,0.1) 0%,transparent 50%);pointer-events:none}
+    .spin-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 6px 24px rgba(80,60,200,0.5)}
+    .spin-btn:disabled{opacity:0.4;cursor:not-allowed;transform:none}
+
+    .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px}
+    .stat-card-mini{background:#060018;border:1px solid rgba(80,60,200,0.12);border-radius:10px;padding:10px;text-align:center}
+    .stat-card-mini .sv{font-size:1rem;font-weight:800;color:#fff}
+    .stat-card-mini .sl{font-size:0.6rem;color:#1a1450;text-transform:uppercase;letter-spacing:1.5px;margin-top:2px}
+
+    .win-blast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);font-size:4.5rem;font-weight:900;z-index:9999;pointer-events:none;animation:blastPop 1s ease forwards;letter-spacing:4px;text-transform:uppercase;white-space:nowrap}
+    @keyframes blastPop{0%{transform:translate(-50%,-50%) scale(0.1) rotate(-10deg);opacity:0}35%{transform:translate(-50%,-50%) scale(1.1) rotate(2deg);opacity:1}65%{transform:translate(-50%,-50%) scale(0.96)}100%{transform:translate(-50%,-50%) scale(1);opacity:0}}
+  </style>
+</head>
+<body>
+<div class="space-bg">
+  <div class="nebula nebula-1"></div>
+  <div class="nebula nebula-2"></div>
+  <div class="nebula nebula-3"></div>
+  <div class="stars-layer" id="starField"></div>
+</div>
+<script src="/casino-core.js"></script>
+<script>Casino.renderSidebar('slots');Casino.requireAuth();</script>
+
+<main class="casino-main">
+<div class="space-wrap">
+
+  <div class="sp-header">
+    <div class="sp-logo-row">
+      <div class="sp-logo-icon">
+        <svg viewBox="0 0 32 32" fill="none" width="32" height="32">
+          <circle cx="16" cy="16" r="7" fill="rgba(100,80,255,0.2)" stroke="#6040ff" stroke-width="1.5"/>
+          <circle cx="16" cy="16" r="3" fill="#8060ff"/>
+          <ellipse cx="16" cy="16" rx="14" ry="5" fill="none" stroke="rgba(100,80,255,0.4)" stroke-width="1" transform="rotate(-20 16 16)"/>
+          <circle cx="24" cy="10" r="1.5" fill="#a080ff"/>
+          <circle cx="6" cy="22" r="1" fill="#a080ff"/>
+        </svg>
+      </div>
+      <div class="sp-title">COSMIC SPIN</div>
+    </div>
+    <div class="sp-subtitle">Beyond the Event Horizon · 96% RTP</div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card-mini"><div class="sv" id="st-balance">$0</div><div class="sl">Balance</div></div>
+    <div class="stat-card-mini"><div class="sv" id="st-spins">0</div><div class="sl">Spins</div></div>
+    <div class="stat-card-mini"><div class="sv" id="st-wins">0</div><div class="sl">Wins</div></div>
+    <div class="stat-card-mini"><div class="sv" id="st-best">—</div><div class="sl">Best Win</div></div>
+  </div>
+
+  <div class="slot-machine-frame">
+    <div class="corner corner-tl"></div>
+    <div class="corner corner-tr"></div>
+    <div class="corner corner-bl"></div>
+    <div class="corner corner-br"></div>
+
+    <div class="reels-outer">
+      <div class="payline"></div>
+      <div class="payline-end payline-end-left"></div>
+      <div class="payline-end payline-end-right"></div>
+      <div class="reels-row" id="reelsRow">
+        <div class="reel-col" id="reel0"><div class="reel-strip" id="strip0"></div></div>
+        <div class="reel-col" id="reel1"><div class="reel-strip" id="strip1"></div></div>
+        <div class="reel-col" id="reel2"><div class="reel-strip" id="strip2"></div></div>
+      </div>
+    </div>
+
+    <div class="slot-msg" id="slotMsg" style="color:#2a2060">— Launch into the cosmos —</div>
+  </div>
+
+  <div class="controls-card">
+    <div class="ctrl-label">Wager</div>
+    <div class="bet-input-row">
+      <input type="number" class="bet-inp" id="betAmt" value="10" min="1">
+      <button class="bet-adj" onclick="adjBet(0.5)">½</button>
+      <button class="bet-adj" onclick="adjBet(2)">2×</button>
+    </div>
+    <div class="bet-presets">
+      <button onclick="sb(5)">$5</button>
+      <button onclick="sb(10)">$10</button>
+      <button onclick="sb(25)">$25</button>
+      <button onclick="sb(50)">$50</button>
+      <button onclick="sb(100)">$100</button>
+    </div>
+    <button class="spin-btn" id="spinBtn" onclick="spin()" disabled>
+      <svg viewBox="0 0 20 20" fill="none" width="18" height="18" style="display:inline-block;vertical-align:middle;margin-right:8px"><path d="M10 3a7 7 0 0 1 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M17 3l0 7-7 0" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      LAUNCH
+    </button>
+  </div>
+
+  <div style="background:#060018;border:1px solid rgba(80,60,200,0.15);border-radius:12px;margin-top:14px;overflow:hidden">
+    <div style="padding:10px 14px;border-bottom:1px solid rgba(80,60,180,0.15);font-size:0.65rem;font-weight:800;color:#1a1450;text-transform:uppercase;letter-spacing:2px">Paytable · 3 of a Kind</div>
+    <div id="paytable"></div>
+  </div>
+</div>
+</main>
+
+<script>
+const SYMBOLS = [
+  {
+    id:'blackhole', label:'Black Hole', color:'#a080ff', weight:1, p3:300,
+    svg:`<svg viewBox="0 0 80 80" fill="none">
+      <defs>
+        <radialGradient id="bhg" cx="50%" cy="50%" r="50%"><stop stop-color="#2010a0"/><stop offset="0.6" stop-color="#080030"/><stop offset="1" stop-color="#000"/></radialGradient>
+        <radialGradient id="bhring" cx="50%" cy="50%" r="50%"><stop stop-color="rgba(120,80,255,0.6)"/><stop offset="1" stop-color="transparent"/></radialGradient>
+      </defs>
+      <circle cx="40" cy="40" r="30" fill="url(#bhring)"/>
+      <ellipse cx="40" cy="40" rx="28" ry="10" fill="none" stroke="rgba(120,80,255,0.4)" stroke-width="2" transform="rotate(-15 40 40)"/>
+      <ellipse cx="40" cy="40" rx="28" ry="10" fill="none" stroke="rgba(80,60,200,0.3)" stroke-width="1" transform="rotate(15 40 40)"/>
+      <circle cx="40" cy="40" r="14" fill="url(#bhg)"/>
+      <circle cx="40" cy="40" r="8" fill="#000"/>
+      <circle cx="37" cy="37" r="3" fill="rgba(80,60,200,0.3)"/>
+    </svg>`
+  },
+  {
+    id:'alien', label:'Alien', color:'#40ff80', weight:2, p3:150,
+    svg:`<svg viewBox="0 0 80 80" fill="none">
+      <defs><radialGradient id="alg" cx="50%" cy="40%" r="55%"><stop stop-color="#60ff90"/><stop offset="1" stop-color="#104020"/></radialGradient></defs>
+      <ellipse cx="40" cy="38" rx="20" ry="24" fill="url(#alg)"/>
+      <ellipse cx="31" cy="34" rx="9" ry="12" fill="#080808" transform="rotate(-8 31 34)"/>
+      <ellipse cx="49" cy="34" rx="9" ry="12" fill="#080808" transform="rotate(8 49 34)"/>
+      <ellipse cx="31" cy="34" rx="6" ry="9" fill="#001a08" transform="rotate(-8 31 34)"/>
+      <ellipse cx="49" cy="34" rx="6" ry="9" fill="#001a08" transform="rotate(8 49 34)"/>
+      <circle cx="30" cy="32" r="3" fill="#60ff90"/>
+      <circle cx="48" cy="32" r="3" fill="#60ff90"/>
+      <circle cx="31" cy="31" r="1.5" fill="rgba(255,255,255,0.7)"/>
+      <circle cx="49" cy="31" r="1.5" fill="rgba(255,255,255,0.7)"/>
+      <path d="M36 52 Q40 56 44 52" fill="none" stroke="#40c060" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="34" y1="22" x2="30" y2="12" stroke="#40c060" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="46" y1="22" x2="50" y2="12" stroke="#40c060" stroke-width="1.5" stroke-linecap="round"/>
+      <circle cx="30" cy="11" r="2" fill="#60ff90"/>
+      <circle cx="50" cy="11" r="2" fill="#60ff90"/>
+    </svg>`
+  },
+  {
+    id:'rocket', label:'Rocket', color:'#ff8040', weight:3, p3:70,
+    svg:`<svg viewBox="0 0 80 80" fill="none">
+      <defs><linearGradient id="rktg" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#ff8060"/><stop offset="1" stop-color="#c03020"/></linearGradient></defs>
+      <path d="M40 8 Q50 18 52 34 L52 56 Q40 64 28 56 L28 34 Q30 18 40 8Z" fill="url(#rktg)"/>
+      <ellipse cx="40" cy="14" rx="6" ry="8" fill="#ff6040"/>
+      <rect x="36" y="30" width="8" height="16" rx="2" fill="#1a0808" opacity="0.8"/>
+      <circle cx="40" cy="38" r="4" fill="#0080ff" opacity="0.6"/>
+      <path d="M28 52 L18 64 L28 60 Z" fill="#c03020"/>
+      <path d="M52 52 L62 64 L52 60 Z" fill="#c03020"/>
+      <path d="M32 60 Q40 68 48 60" fill="none" stroke="rgba(255,160,60,0.6)" stroke-width="3" stroke-linecap="round"/>
+      <ellipse cx="40" cy="64" rx="6" ry="10" fill="rgba(255,120,40,0.3)" filter="blur(4px)"/>
+      <path d="M36 28 L40 20 L44 28" fill="rgba(255,255,255,0.2)"/>
+    </svg>`
+  },
+  {
+    id:'planet', label:'Planet', color:'#40c0ff', weight:4, p3:40,
+    svg:`<svg viewBox="0 0 80 80" fill="none">
+      <defs><radialGradient id="plg" cx="35%" cy="30%" r="65%"><stop stop-color="#60d0ff"/><stop offset="1" stop-color="#1040a0"/></radialGradient></defs>
+      <circle cx="40" cy="40" r="22" fill="url(#plg)"/>
+      <ellipse cx="40" cy="40" rx="34" ry="12" fill="none" stroke="rgba(200,180,100,0.4)" stroke-width="3" transform="rotate(-20 40 40)"/>
+      <path d="M20 30 Q34 26 50 32" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="5" stroke-linecap="round"/>
+      <path d="M22 40 Q36 36 52 42" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="4" stroke-linecap="round"/>
+      <circle cx="34" cy="34" r="3" fill="rgba(255,255,255,0.12)"/>
+    </svg>`
+  },
+  {
+    id:'ufo', label:'UFO', color:'#c0c0ff', weight:5, p3:22,
+    svg:`<svg viewBox="0 0 80 80" fill="none">
+      <defs>
+        <linearGradient id="ufog" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#d0d0ff"/><stop offset="1" stop-color="#6060c0"/></linearGradient>
+        <radialGradient id="ufob" cx="50%" cy="50%" r="50%"><stop stop-color="rgba(100,200,255,0.15)"/><stop offset="1" stop-color="transparent"/></radialGradient>
+      </defs>
+      <ellipse cx="40" cy="44" rx="30" ry="10" fill="url(#ufog)"/>
+      <ellipse cx="40" cy="34" rx="16" ry="14" fill="#a0a0e0"/>
+      <ellipse cx="40" cy="30" rx="10" ry="8" fill="#c0c0ff" stroke="rgba(255,255,255,0.3)" stroke-width="0.5"/>
+      <ellipse cx="40" cy="44" rx="30" ry="10" fill="none" stroke="rgba(200,200,255,0.3)" stroke-width="1"/>
+      <circle cx="28" cy="48" r="3" fill="rgba(120,255,200,0.7)"/>
+      <circle cx="40" cy="50" r="3" fill="rgba(120,200,255,0.7)"/>
+      <circle cx="52" cy="48" r="3" fill="rgba(180,120,255,0.7)"/>
+      <ellipse cx="40" cy="58" rx="12" ry="14" fill="url(#ufob)"/>
+    </svg>`
+  },
+  {
+    id:'asteroid', label:'Asteroid', color:'#a08070', weight:6, p3:13,
+    svg:`<svg viewBox="0 0 80 80" fill="none">
+      <defs><radialGradient id="astg" cx="35%" cy="30%" r="65%"><stop stop-color="#c0a888"/><stop offset="1" stop-color="#504030"/></radialGradient></defs>
+      <path d="M20 28 Q30 14 50 18 Q66 22 62 42 Q58 60 40 62 Q22 64 18 48 Q14 36 20 28Z" fill="url(#astg)"/>
+      <circle cx="30" cy="30" r="4" fill="rgba(0,0,0,0.3)"/>
+      <circle cx="50" cy="36" r="5" fill="rgba(0,0,0,0.25)"/>
+      <circle cx="38" cy="52" r="3" fill="rgba(0,0,0,0.2)"/>
+      <circle cx="56" cy="26" r="2" fill="rgba(255,255,255,0.1)"/>
+      <path d="M12 40 L6 46" stroke="rgba(200,180,120,0.5)" stroke-width="1" stroke-linecap="round"/>
+      <path d="M14 34 L8 28" stroke="rgba(200,180,120,0.4)" stroke-width="1" stroke-linecap="round"/>
+    </svg>`
+  },
+  {
+    id:'star7', label:'Star', color:'#fff080', weight:7, p3:9,
+    svg:`<svg viewBox="0 0 80 80" fill="none">
+      <defs><radialGradient id="starg" cx="50%" cy="50%" r="50%"><stop stop-color="#fff4a0"/><stop offset="1" stop-color="#c0a020"/></radialGradient></defs>
+      <path d="M40 10 L46 30 L68 30 L50 44 L57 66 L40 53 L23 66 L30 44 L12 30 L34 30 Z" fill="url(#starg)" stroke="rgba(255,240,120,0.4)" stroke-width="0.5"/>
+      <circle cx="40" cy="38" r="8" fill="rgba(255,255,200,0.3)"/>
+      <circle cx="40" cy="38" r="4" fill="rgba(255,255,200,0.5)"/>
+    </svg>`
+  },
+  {
+    id:'satellite', label:'Satellite', color:'#80a0c0', weight:9, p3:5,
+    svg:`<svg viewBox="0 0 80 80" fill="none">
+      <rect x="34" y="34" width="12" height="12" rx="2" fill="#6080a0" stroke="rgba(160,200,240,0.4)" stroke-width="1"/>
+      <rect x="8" y="37" width="22" height="6" rx="2" fill="#3060a0"/>
+      <rect x="50" y="37" width="22" height="6" rx="2" fill="#3060a0"/>
+      <rect x="6" y="33" width="26" height="2" rx="1" fill="rgba(80,160,255,0.3)"/>
+      <rect x="6" y="45" width="26" height="2" rx="1" fill="rgba(80,160,255,0.3)"/>
+      <rect x="48" y="33" width="26" height="2" rx="1" fill="rgba(80,160,255,0.3)"/>
+      <rect x="48" y="45" width="26" height="2" rx="1" fill="rgba(80,160,255,0.3)"/>
+      <circle cx="40" cy="40" r="3" fill="#80c0ff"/>
+      <line x1="34" y1="34" x2="30" y2="30" stroke="rgba(160,200,240,0.4)" stroke-width="1"/>
+      <circle cx="28" cy="28" r="3" fill="rgba(255,200,80,0.6)"/>
+    </svg>`
+  },
+];
+
+let spinning = false, balance = 0, spins = 0, wins = 0, bestWin = 0;
+
+function weightedRandom() {
+  const total = SYMBOLS.reduce((s,sym) => s + sym.weight, 0);
+  let r = Math.random() * total;
+  for (const sym of SYMBOLS) { r -= sym.weight; if (r <= 0) return sym; }
+  return SYMBOLS[SYMBOLS.length - 1];
+}
+
+function buildStrip(stripEl, targetSym) {
+  stripEl.innerHTML = '';
+  for (let i = 0; i < 24; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'symbol-cell';
+    cell.innerHTML = weightedRandom().svg;
+    stripEl.appendChild(cell);
+  }
+  const finalCell = document.createElement('div');
+  finalCell.className = 'symbol-cell';
+  finalCell.innerHTML = targetSym.svg;
+  stripEl.appendChild(finalCell);
+}
+
+function initStrips() {
+  for (let i = 0; i < 3; i++) {
+    const strip = document.getElementById('strip' + i);
+    strip.style.transition = 'none';
+    strip.style.transform = 'translateY(0)';
+    buildStrip(strip, weightedRandom());
+    const total = strip.children.length;
+    strip.style.transform = `translateY(-${(total - 1) * 200}px)`;
+  }
+}
+
+async function spin() {
+  if (spinning) return;
+  const bet = Math.max(1, parseFloat(document.getElementById('betAmt').value) || 10);
+  if (bet > balance) return;
+
+  spinning = true;
+  document.getElementById('spinBtn').disabled = true;
+  document.getElementById('slotMsg').textContent = '';
+  [0,1,2].forEach(i => document.getElementById('reel' + i).classList.remove('winner'));
+
+  const targets = [weightedRandom(), weightedRandom(), weightedRandom()];
+  const isWin = targets[0].id === targets[1].id && targets[1].id === targets[2].id;
+  const winSym = isWin ? targets[0] : null;
+  const multiplier = isWin ? winSym.p3 : 0;
+  const returned = isWin ? Math.round(bet * multiplier * 100) / 100 : 0;
+
+  const promises = targets.map((target, i) => new Promise(resolve => {
+    const strip = document.getElementById('strip' + i);
+    buildStrip(strip, target);
+    strip.style.transition = 'none';
+    strip.style.transform = 'translateY(0)';
+    void strip.offsetHeight;
+    const total = strip.children.length;
+    setTimeout(() => {
+      strip.style.transition = `transform ${0.8 + i * 0.2}s cubic-bezier(0.25,0.46,0.45,0.94)`;
+      strip.style.transform = `translateY(-${(total - 1) * 200}px)`;
+      setTimeout(resolve, (0.8 + i * 0.2) * 1000 + 100);
+    }, i * 100);
+  }));
+
+  await Promise.all(promises);
+
+  spins++;
+  if (isWin) {
+    wins++;
+    if (returned > bestWin) bestWin = returned;
+    [0,1,2].forEach(i => document.getElementById('reel' + i).classList.add('winner'));
+    const winColor = winSym.color;
+    document.getElementById('slotMsg').style.color = winColor;
+    document.getElementById('slotMsg').textContent = `${winSym.label} × ${multiplier} → +$${returned.toFixed(2)}`;
+    const k = document.createElement('div');
+    k.className = 'win-blast';
+    k.style.cssText = `color:${winColor};text-shadow:0 0 40px ${winColor}`;
+    k.textContent = multiplier >= 100 ? '🚀 COSMIC WIN!' : multiplier >= 40 ? 'WARP SPEED!' : 'WIN!';
+    document.body.appendChild(k);
+    setTimeout(() => k.remove(), 1000);
+    document.getElementById('st-best').textContent = '$' + bestWin.toFixed(2);
+  } else {
+    document.getElementById('slotMsg').style.color = '#2a2060';
+    document.getElementById('slotMsg').textContent = '— Lost in space —';
+  }
+
+  try {
+    const r = await fetch('/api/bet', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ game:'slots', wagered:bet, returned }) });
+    if (r.ok) { const d = await r.json(); balance = d.balance; Casino.syncBalance(balance); }
+  } catch {}
+
+  document.getElementById('st-balance').textContent = '$' + balance.toFixed(2);
+  document.getElementById('st-spins').textContent = spins;
+  document.getElementById('st-wins').textContent = wins;
+  spinning = false;
+  document.getElementById('spinBtn').disabled = false;
+  initStrips();
+}
+
+function adjBet(f) {
+  const el = document.getElementById('betAmt');
+  el.value = Math.max(1, Math.min(Math.round(parseFloat(el.value || 1) * f), balance));
+}
+function sb(v) { document.getElementById('betAmt').value = Math.min(v, balance); }
+
+function buildPaytable() {
+  const pt = document.getElementById('paytable');
+  SYMBOLS.forEach(s => {
+    const row = document.createElement('div');
+    row.className = 'paytable-row';
+    row.innerHTML = `<div style="display:flex;align-items:center;gap:8px"><div style="width:24px;height:24px">${s.svg}</div><span class="sym-name">${s.label}</span></div><span class="sym-payout">${s.p3}×</span>`;
+    pt.appendChild(row);
+  });
+}
+
+// Stars
+(function() {
+  const sf = document.getElementById('starField');
+  for (let i = 0; i < 120; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const size = Math.random() * 2.5 + 0.3;
+    const opacity = Math.random() * 0.6 + 0.2;
+    s.style.cssText = `left:${Math.random()*100}%;top:${Math.random()*100}%;width:${size}px;height:${size}px;opacity:${opacity}`;
+    if (Math.random() > 0.7) {
+      s.style.animation = `twinkle ${2+Math.random()*4}s linear infinite alternate`;
+      s.style.animationDelay = Math.random()*4 + 's';
+    }
+    sf.appendChild(s);
+  }
+  // Shooting stars
+  for (let i = 0; i < 3; i++) {
+    const ss = document.createElement('div');
+    ss.className = 'shooting-star';
+    ss.style.cssText = `left:${Math.random()*60}%;top:${Math.random()*40}%;width:${60+Math.random()*80}px;animation-duration:${3+Math.random()*4}s;animation-delay:${Math.random()*6}s`;
+    sf.appendChild(ss);
+  }
+})();
+
+fetch('/api/me').then(r=>r.json()).then(d=>{ balance=d.balance; Casino.syncBalance(balance); document.getElementById('st-balance').textContent='$'+balance.toFixed(2); document.getElementById('spinBtn').disabled=false; }).catch(()=>{ document.getElementById('spinBtn').disabled=false; });
+buildPaytable();
+initStrips();
+</script>
+</body>
+</html>

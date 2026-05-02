@@ -12,7 +12,13 @@
       "Bash(npm list *)",
       "Bash(npm install *)",
       "Bash(node --check server.js)",
-      "Bash(node --check crypto-wallet.js)"
+      "Bash(node --check crypto-wallet.js)",
+      "Bash(node server.js)",
+      "Bash(curl -s http://localhost:3000 -o /dev/null -w \"%{http_code}\")",
+      "Bash(node -e ' *)",
+      "Bash(curl -s http://localhost:3000/slots-egypt -o /dev/null -w \"%{http_code}\")",
+      "Bash(curl -s http://localhost:3000/slots-space -o /dev/null -w \"%{http_code}\")",
+      "Bash(curl -s http://localhost:3000/plinko -o /dev/null -w \"%{http_code}\")"
     ]
   }
 }

@@ -12,16 +12,24 @@
 
 <main class="casino-main">
   <div class="lobby-hero">
+    <div class="hero-eyebrow">Live Casino</div>
     <div class="hero-text">
-      <h1>Play Smart.<br><span>Win Big.</span></h1>
-      <p>9 casino games. One wallet. Real stakes.</p>
+      <h1>Play Sharp.<br><span>Win Real.</span></h1>
+      <p>12 premium casino games with provably fair outcomes, crypto deposits, and instant payouts.</p>
       <div class="hero-balance-row">
         <div class="hero-balance-box">
-          <div class="label">YOUR BALANCE</div>
+          <div class="label">Your Balance</div>
           <div class="amount" id="heroBalance">$5,000</div>
         </div>
         <button class="refill-btn" id="refillBtn" onclick="doRefill()" style="display:none">+ Free $1,000</button>
+        <a href="/wallet" class="refill-btn" style="text-decoration:none;display:none" id="depositBtn">Deposit Crypto</a>
       </div>
+    </div>
+    <div class="hero-live-stats">
+      <div class="hero-stat"><div class="hs-val" id="heroGamesPlayed">0</div><div class="hs-lbl">Games Played</div></div>
+      <div class="hero-stat"><div class="hs-val" id="heroTotalWon">$0</div><div class="hs-lbl">Total Won</div></div>
+      <div class="hero-stat"><div class="hs-val">12</div><div class="hs-lbl">Games Available</div></div>
+      <div class="hero-stat"><div class="hs-val" style="color:var(--green)">LIVE</div><div class="hs-lbl">Server Status</div></div>
     </div>
   </div>
 
@@ -40,8 +48,11 @@
       </div>
       <div class="game-card-info">
         <div class="game-card-name">Blackjack</div>
-        <div class="game-card-desc">Beat the dealer. Multiplayer rooms.</div>
-        <span class="game-card-badge badge-green">MULTIPLAYER</span>
+        <div class="game-card-desc">Beat the dealer. Live AI dealer tables.</div>
+        <div class="game-card-footer">
+          <span class="game-card-badge badge-green">MULTIPLAYER</span>
+          <span class="game-card-rtp">RTP 99.5%</span>
+        </div>
       </div>
     </a>
 
@@ -58,9 +69,12 @@
         </svg>
       </div>
       <div class="game-card-info">
-        <div class="game-card-name">Slots</div>
-        <div class="game-card-desc">9 unique symbols. Up to 200x payout.</div>
-        <span class="game-card-badge badge-purple">JACKPOT 200×</span>
+        <div class="game-card-name">Blue Samurai Slots</div>
+        <div class="game-card-desc">Japanese-themed slots. Dragon pays 200×.</div>
+        <div class="game-card-footer">
+          <span class="game-card-badge badge-purple">JACKPOT 200×</span>
+          <span class="game-card-rtp">RTP 96%</span>
+        </div>
       </div>
     </a>
 
@@ -80,8 +94,11 @@
       </div>
       <div class="game-card-info">
         <div class="game-card-name">Roulette</div>
-        <div class="game-card-desc">European wheel. 37 numbers. 35:1 max.</div>
-        <span class="game-card-badge badge-red">UP TO 35×</span>
+        <div class="game-card-desc">European wheel. 37 numbers. 35:1 max payout.</div>
+        <div class="game-card-footer">
+          <span class="game-card-badge badge-red">UP TO 35×</span>
+          <span class="game-card-rtp">RTP 97.3%</span>
+        </div>
       </div>
     </a>
 
@@ -92,7 +109,7 @@
           <rect x="31" y="8" width="19" height="19" rx="3" fill="rgba(245,158,11,0.15)" stroke="rgba(245,158,11,0.3)" stroke-width="1"/>
           <rect x="54" y="8" width="19" height="19" rx="3" fill="rgba(245,158,11,0.15)" stroke="rgba(245,158,11,0.3)" stroke-width="1"/>
           <rect x="8" y="31" width="19" height="19" rx="3" fill="rgba(0,199,77,0.15)" stroke="rgba(0,199,77,0.4)" stroke-width="1"/>
-          <polygon points="17.5,34 20,41 17.5,40 15,47 22,44 24,48 24.5,40 27,38 20,37" fill="rgba(0,199,77,0.8)" stroke="rgba(0,199,77,0.4)" stroke-width="0.5"/>
+          <polygon points="17.5,34 20,41 17.5,40 15,47 22,44 24,48 24.5,40 27,38 20,37" fill="rgba(0,199,77,0.8)"/>
           <rect x="31" y="31" width="19" height="19" rx="3" fill="rgba(241,50,63,0.15)" stroke="rgba(241,50,63,0.3)" stroke-width="1"/>
           <circle cx="40.5" cy="40.5" r="5" fill="rgba(241,50,63,0.6)"/>
           <line x1="40.5" y1="31" x2="40.5" y2="35" stroke="rgba(241,50,63,0.8)" stroke-width="1.5"/>
@@ -103,13 +120,16 @@
           <rect x="8" y="54" width="19" height="19" rx="3" fill="rgba(245,158,11,0.15)" stroke="rgba(245,158,11,0.3)" stroke-width="1"/>
           <rect x="31" y="54" width="19" height="19" rx="3" fill="rgba(245,158,11,0.15)" stroke="rgba(245,158,11,0.3)" stroke-width="1"/>
           <rect x="54" y="54" width="19" height="19" rx="3" fill="rgba(0,199,77,0.15)" stroke="rgba(0,199,77,0.4)" stroke-width="1"/>
-          <polygon points="63.5,57 66,64 63.5,63 61,70 68,67 70,71 70.5,63 73,61 66,60" fill="rgba(0,199,77,0.8)" stroke="rgba(0,199,77,0.4)" stroke-width="0.5"/>
+          <polygon points="63.5,57 66,64 63.5,63 61,70 68,67 70,71 70.5,63 73,61 66,60" fill="rgba(0,199,77,0.8)"/>
         </svg>
       </div>
       <div class="game-card-info">
         <div class="game-card-name">Mines</div>
-        <div class="game-card-desc">Find gems, avoid mines. Cashout anytime.</div>
-        <span class="game-card-badge badge-amber">UP TO 24× MINES</span>
+        <div class="game-card-desc">Find gems, avoid mines. Cash out any time.</div>
+        <div class="game-card-footer">
+          <span class="game-card-badge badge-amber">UP TO 24×</span>
+          <span class="game-card-rtp">RTP 97%</span>
+        </div>
       </div>
     </a>
 
@@ -134,98 +154,111 @@
       </div>
       <div class="game-card-info">
         <div class="game-card-name">Dice</div>
-        <div class="game-card-desc">Roll over or under. Set your odds.</div>
-        <span class="game-card-badge badge-blue">CUSTOM ODDS</span>
+        <div class="game-card-desc">Roll over or under. Set your own odds.</div>
+        <div class="game-card-footer">
+          <span class="game-card-badge badge-blue">CUSTOM ODDS</span>
+          <span class="game-card-rtp">RTP 99%</span>
+        </div>
       </div>
     </a>
 
     <a href="/crash" class="game-card">
-      <div class="game-card-art" style="background:linear-gradient(135deg,rgba(0,40,20,0.6),rgba(0,80,40,0.3))">
+      <div class="game-card-art" style="background:linear-gradient(160deg,#010e06 0%,#021a0d 50%,#000a04 100%)">
         <svg viewBox="0 0 80 80" fill="none">
-          <path d="M40 8C30 8 22 14 20 24L14 58l12-9h28l12 9-6-34C58 14 50 8 40 8z" fill="rgba(0,255,136,0.15)" stroke="#00ff88" stroke-width="1.2"/>
-          <path d="M30 58l-6 14h32l-6-14" fill="rgba(255,100,100,0.2)" stroke="rgba(255,100,100,0.5)" stroke-width="1"/>
-          <circle cx="40" cy="28" r="5" fill="#00ff88" opacity="0.7"/>
+          <path d="M10 70 L40 10 L70 70" fill="none" stroke="rgba(0,255,136,0.3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M10 70 Q30 45 50 35" fill="none" stroke="#00ff88" stroke-width="2.5" stroke-linecap="round"/>
+          <circle cx="50" cy="35" r="5" fill="#00ff88" opacity="0.8"/>
+          <circle cx="50" cy="35" r="9" fill="rgba(0,255,136,0.15)"/>
+          <text x="52" y="28" font-size="7" fill="rgba(0,255,136,0.7)" font-weight="900" font-family="Inter,sans-serif">2.4×</text>
         </svg>
       </div>
       <div class="game-card-info">
         <div class="game-card-name">Crash</div>
-        <div class="game-card-desc">Rocket goes up — cashout before it crashes.</div>
-        <span class="game-card-badge badge-green">LIVE MULTIPLIER</span>
+        <div class="game-card-desc">Multiplier climbs — cash out before it crashes.</div>
+        <div class="game-card-footer">
+          <span class="game-card-badge badge-green">LIVE</span>
+          <span class="game-card-rtp">RTP 97%</span>
+        </div>
       </div>
     </a>
 
     <a href="/ropecut" class="game-card">
-      <div class="game-card-art" style="background:linear-gradient(135deg,rgba(30,15,0,0.6),rgba(80,40,0,0.3))">
+      <div class="game-card-art" style="background:linear-gradient(160deg,#0e0800 0%,#201400 50%,#080400 100%)">
         <svg viewBox="0 0 80 80" fill="none">
-          <circle cx="40" cy="12" r="6" fill="rgba(245,158,11,0.8)" stroke="#f59e0b" stroke-width="1"/>
-          <line x1="40" y1="18" x2="40" y2="52" stroke="#b45309" stroke-width="3" stroke-linecap="round"/>
-          <circle cx="40" cy="58" r="10" fill="rgba(245,158,11,0.7)" stroke="#fbbf24" stroke-width="1.5"/>
-          <line x1="26" y1="38" x2="30" y2="34" stroke="white" stroke-width="2" stroke-linecap="round"/>
-          <line x1="30" y1="38" x2="26" y2="34" stroke="white" stroke-width="2" stroke-linecap="round"/>
-          <rect x="6" y="62" width="16" height="12" rx="2" fill="rgba(0,255,136,0.3)" stroke="rgba(0,255,136,0.5)" stroke-width="1"/>
-          <rect x="24" y="62" width="13" height="12" rx="2" fill="rgba(240,192,64,0.3)" stroke="rgba(240,192,64,0.5)" stroke-width="1"/>
-          <rect x="39" y="62" width="13" height="12" rx="2" fill="rgba(245,158,11,0.3)" stroke="rgba(245,158,11,0.5)" stroke-width="1"/>
-          <rect x="54" y="62" width="16" height="12" rx="2" fill="rgba(241,50,63,0.3)" stroke="rgba(241,50,63,0.5)" stroke-width="1"/>
+          <circle cx="40" cy="10" r="5" fill="rgba(245,158,11,0.8)" stroke="#f59e0b" stroke-width="1"/>
+          <line x1="40" y1="15" x2="40" y2="50" stroke="#b45309" stroke-width="3" stroke-linecap="round" stroke-dasharray="3,2"/>
+          <circle cx="40" cy="56" r="10" fill="rgba(245,158,11,0.6)" stroke="#fbbf24" stroke-width="1.5"/>
+          <line x1="28" y1="36" x2="32" y2="32" stroke="rgba(255,255,255,0.7)" stroke-width="2" stroke-linecap="round"/>
+          <line x1="32" y1="36" x2="28" y2="32" stroke="rgba(255,255,255,0.7)" stroke-width="2" stroke-linecap="round"/>
+          <rect x="6" y="66" width="15" height="10" rx="2" fill="rgba(0,255,136,0.25)" stroke="rgba(0,255,136,0.5)" stroke-width="1"/>
+          <rect x="24" y="66" width="12" height="10" rx="2" fill="rgba(240,192,64,0.25)" stroke="rgba(240,192,64,0.5)" stroke-width="1"/>
+          <rect x="39" y="66" width="12" height="10" rx="2" fill="rgba(245,158,11,0.25)" stroke="rgba(245,158,11,0.5)" stroke-width="1"/>
+          <rect x="54" y="66" width="15" height="10" rx="2" fill="rgba(241,50,63,0.25)" stroke="rgba(241,50,63,0.5)" stroke-width="1"/>
         </svg>
       </div>
       <div class="game-card-info">
         <div class="game-card-name">Rope Cut</div>
-        <div class="game-card-desc">Cut the rope at the right moment. Land in the prize zone.</div>
-        <span class="game-card-badge badge-amber">UP TO 5×</span>
+        <div class="game-card-desc">Cut at the right moment. Land in the prize zone.</div>
+        <div class="game-card-footer">
+          <span class="game-card-badge badge-amber">UP TO 5×</span>
+          <span class="game-card-rtp">RTP 97%</span>
+        </div>
       </div>
     </a>
 
     <a href="/keno" class="game-card">
-      <div class="game-card-art" style="background:linear-gradient(135deg,rgba(10,0,40,0.6),rgba(30,0,80,0.3))">
+      <div class="game-card-art" style="background:linear-gradient(160deg,#060020 0%,#100040 50%,#030010 100%)">
         <svg viewBox="0 0 80 80" fill="none">
-          <rect x="6" y="6" width="16" height="16" rx="3" fill="rgba(139,92,246,0.3)" stroke="rgba(139,92,246,0.4)" stroke-width="1"/>
-          <rect x="25" y="6" width="16" height="16" rx="3" fill="rgba(139,92,246,0.2)" stroke="rgba(139,92,246,0.3)" stroke-width="1"/>
-          <rect x="44" y="6" width="16" height="16" rx="3" fill="rgba(0,255,136,0.25)" stroke="rgba(0,255,136,0.4)" stroke-width="1"/>
-          <rect x="63" y="6" width="11" height="16" rx="3" fill="rgba(139,92,246,0.15)" stroke="rgba(139,92,246,0.2)" stroke-width="1"/>
-          <rect x="6" y="25" width="16" height="16" rx="3" fill="rgba(0,255,136,0.2)" stroke="rgba(0,255,136,0.35)" stroke-width="1"/>
-          <rect x="25" y="25" width="16" height="16" rx="3" fill="rgba(139,92,246,0.3)" stroke="rgba(139,92,246,0.4)" stroke-width="1"/>
-          <rect x="44" y="25" width="16" height="16" rx="3" fill="rgba(139,92,246,0.15)" stroke="rgba(139,92,246,0.2)" stroke-width="1"/>
-          <rect x="63" y="25" width="11" height="16" rx="3" fill="rgba(0,255,136,0.2)" stroke="rgba(0,255,136,0.3)" stroke-width="1"/>
-          <text x="14" y="48" font-size="9" text-anchor="middle" fill="#c4b5fd" font-weight="900" font-family="Inter,sans-serif">7</text>
-          <text x="33" y="48" font-size="9" text-anchor="middle" fill="#00ff88" font-weight="900" font-family="Inter,sans-serif">23</text>
-          <text x="52" y="48" font-size="9" text-anchor="middle" fill="#c4b5fd" font-weight="900" font-family="Inter,sans-serif">41</text>
-          <circle cx="14" cy="61" r="6" fill="rgba(240,192,64,0.8)" stroke="#f0c040" stroke-width="1"/>
-          <circle cx="33" cy="61" r="6" fill="rgba(240,192,64,0.6)" stroke="#f0c040" stroke-width="1"/>
-          <circle cx="52" cy="61" r="6" fill="rgba(240,192,64,0.4)" stroke="#f0c040" stroke-width="1"/>
+          <rect x="6" y="6" width="15" height="15" rx="3" fill="rgba(139,92,246,0.25)" stroke="rgba(139,92,246,0.4)" stroke-width="1"/>
+          <rect x="24" y="6" width="15" height="15" rx="3" fill="rgba(139,92,246,0.15)" stroke="rgba(139,92,246,0.3)" stroke-width="1"/>
+          <rect x="42" y="6" width="15" height="15" rx="3" fill="rgba(0,230,118,0.2)" stroke="rgba(0,230,118,0.4)" stroke-width="1"/>
+          <rect x="60" y="6" width="15" height="15" rx="3" fill="rgba(139,92,246,0.1)" stroke="rgba(139,92,246,0.2)" stroke-width="1"/>
+          <rect x="6" y="24" width="15" height="15" rx="3" fill="rgba(0,230,118,0.15)" stroke="rgba(0,230,118,0.3)" stroke-width="1"/>
+          <rect x="24" y="24" width="15" height="15" rx="3" fill="rgba(139,92,246,0.25)" stroke="rgba(139,92,246,0.4)" stroke-width="1"/>
+          <rect x="42" y="24" width="15" height="15" rx="3" fill="rgba(139,92,246,0.1)" stroke="rgba(139,92,246,0.2)" stroke-width="1"/>
+          <rect x="60" y="24" width="15" height="15" rx="3" fill="rgba(0,230,118,0.15)" stroke="rgba(0,230,118,0.3)" stroke-width="1"/>
+          <circle cx="14" cy="55" r="7" fill="rgba(240,192,64,0.8)" stroke="#f0c040" stroke-width="1.5"/>
+          <circle cx="32" cy="55" r="7" fill="rgba(240,192,64,0.6)" stroke="#f0c040" stroke-width="1"/>
+          <circle cx="50" cy="55" r="7" fill="rgba(139,92,246,0.6)" stroke="rgba(139,92,246,0.8)" stroke-width="1"/>
+          <circle cx="68" cy="55" r="7" fill="rgba(139,92,246,0.3)" stroke="rgba(139,92,246,0.5)" stroke-width="1"/>
         </svg>
       </div>
       <div class="game-card-info">
         <div class="game-card-name">Keno</div>
-        <div class="game-card-desc">Pick numbers, watch the draw. Up to 5000× jackpot.</div>
-        <span class="game-card-badge badge-purple">JACKPOT 5000×</span>
+        <div class="game-card-desc">Pick your numbers. Watch the draw unfold.</div>
+        <div class="game-card-footer">
+          <span class="game-card-badge badge-purple">JACKPOT 5000×</span>
+          <span class="game-card-rtp">RTP 92%</span>
+        </div>
       </div>
     </a>
 
     <a href="/plinko" class="game-card">
-      <div class="game-card-art" style="background:linear-gradient(135deg,rgba(0,20,60,0.6),rgba(0,40,100,0.3))">
+      <div class="game-card-art" style="background:linear-gradient(160deg,#010a20 0%,#021840 50%,#000a18 100%)">
         <svg viewBox="0 0 80 80" fill="none">
-          <circle cx="40" cy="12" r="6" fill="#00b4ff" opacity="0.9"/>
-          <circle cx="24" cy="30" r="5" fill="rgba(0,180,255,0.5)"/>
-          <circle cx="40" cy="30" r="5" fill="rgba(0,180,255,0.5)"/>
-          <circle cx="56" cy="30" r="5" fill="rgba(0,180,255,0.5)"/>
-          <circle cx="16" cy="48" r="4" fill="rgba(0,180,255,0.3)"/>
-          <circle cx="32" cy="48" r="4" fill="rgba(0,180,255,0.3)"/>
-          <circle cx="48" cy="48" r="4" fill="rgba(0,180,255,0.3)"/>
-          <circle cx="64" cy="48" r="4" fill="rgba(0,180,255,0.3)"/>
-          <rect x="10" y="62" width="14" height="12" rx="2" fill="rgba(0,255,136,0.3)" stroke="rgba(0,255,136,0.5)" stroke-width="1"/>
-          <rect x="27" y="62" width="12" height="12" rx="2" fill="rgba(240,192,64,0.3)" stroke="rgba(240,192,64,0.5)" stroke-width="1"/>
-          <rect x="42" y="62" width="12" height="12" rx="2" fill="rgba(0,255,136,0.3)" stroke="rgba(0,255,136,0.5)" stroke-width="1"/>
-          <rect x="57" y="62" width="14" height="12" rx="2" fill="rgba(241,50,63,0.3)" stroke="rgba(241,50,63,0.5)" stroke-width="1"/>
+          <circle cx="40" cy="10" r="6" fill="#00b4ff" opacity="0.9"/>
+          <circle cx="26" cy="26" r="4" fill="rgba(0,180,255,0.45)"/>
+          <circle cx="40" cy="26" r="4" fill="rgba(0,180,255,0.45)"/>
+          <circle cx="54" cy="26" r="4" fill="rgba(0,180,255,0.45)"/>
+          <circle cx="18" cy="42" r="3.5" fill="rgba(0,180,255,0.3)"/>
+          <circle cx="32" cy="42" r="3.5" fill="rgba(0,180,255,0.3)"/>
+          <circle cx="46" cy="42" r="3.5" fill="rgba(0,180,255,0.3)"/>
+          <circle cx="60" cy="42" r="3.5" fill="rgba(0,180,255,0.3)"/>
+          <rect x="8" y="58" width="14" height="14" rx="3" fill="rgba(0,255,136,0.2)" stroke="rgba(0,255,136,0.4)" stroke-width="1"/>
+          <rect x="25" y="58" width="12" height="14" rx="3" fill="rgba(240,192,64,0.2)" stroke="rgba(240,192,64,0.4)" stroke-width="1"/>
+          <rect x="40" y="58" width="12" height="14" rx="3" fill="rgba(0,180,255,0.2)" stroke="rgba(0,180,255,0.4)" stroke-width="1"/>
+          <rect x="55" y="58" width="14" height="14" rx="3" fill="rgba(241,50,63,0.2)" stroke="rgba(241,50,63,0.4)" stroke-width="1"/>
         </svg>
       </div>
       <div class="game-card-info">
-        <div class="game-card-name">Plinko</div>
-        <div class="game-card-desc">Drop the ball. Watch it bounce to riches.</div>
-        <span class="game-card-badge badge-blue">UP TO 1000×</span>
+        <div class="game-card-name">Crystal Plinko</div>
+        <div class="game-card-desc">Drop the ball through pegs. 1000× max win.</div>
+        <div class="game-card-footer">
+          <span class="game-card-badge badge-blue">UP TO 1000×</span>
+          <span class="game-card-rtp">RTP 96%</span>
+        </div>
       </div>
     </a>
-  </div>
-
     <a href="/hilo" class="game-card">
       <div class="game-card-art" style="background:linear-gradient(145deg,#001428,#002856)">
         <svg viewBox="0 0 80 80" fill="none">
@@ -242,7 +275,54 @@
       <div class="game-card-info">
         <div class="game-card-name">Hi-Lo</div>
         <div class="game-card-desc">Higher or lower? Chain guesses for massive multipliers.</div>
-        <span class="game-card-badge badge-blue">UP TO 48×</span>
+        <div class="game-card-footer">
+          <span class="game-card-badge badge-blue">UP TO 48×</span>
+          <span class="game-card-rtp">RTP 96%</span>
+        </div>
+      </div>
+    </a>
+
+    <a href="/slots-egypt" class="game-card">
+      <div class="game-card-art" style="background:linear-gradient(145deg,#1a0e00,#0a0600)">
+        <svg viewBox="0 0 80 80" fill="none">
+          <polygon points="40,10 68,60 12,60" fill="rgba(240,180,30,0.12)" stroke="rgba(240,180,30,0.4)" stroke-width="1.5"/>
+          <circle cx="40" cy="30" r="6" fill="none" stroke="rgba(240,180,30,0.6)" stroke-width="1.5"/>
+          <circle cx="40" cy="30" r="3" fill="rgba(240,180,30,0.5)"/>
+          <line x1="40" y1="24" x2="40" y2="21" stroke="#f0b41e" stroke-width="1.5"/>
+          <circle cx="20" cy="65" r="3" fill="rgba(240,140,30,0.3)" stroke="rgba(240,180,30,0.3)" stroke-width="0.5"/>
+          <circle cx="60" cy="65" r="3" fill="rgba(240,140,30,0.3)" stroke="rgba(240,180,30,0.3)" stroke-width="0.5"/>
+        </svg>
+      </div>
+      <div class="game-card-info">
+        <div class="game-card-name">Pharaoh's Fortune</div>
+        <div class="game-card-desc">Egyptian theme. Pharaoh jackpot pays 250×.</div>
+        <div class="game-card-footer">
+          <span class="game-card-badge" style="background:rgba(240,180,30,0.1);color:#f0c040;border:1px solid rgba(240,180,30,0.25)">JACKPOT 250×</span>
+          <span class="game-card-rtp">RTP 96%</span>
+        </div>
+      </div>
+    </a>
+
+    <a href="/slots-space" class="game-card">
+      <div class="game-card-art" style="background:linear-gradient(145deg,#030018,#060030)">
+        <svg viewBox="0 0 80 80" fill="none">
+          <circle cx="40" cy="40" r="18" fill="rgba(80,60,200,0.12)" stroke="rgba(100,80,255,0.3)" stroke-width="1.5"/>
+          <ellipse cx="40" cy="40" rx="32" ry="11" fill="none" stroke="rgba(100,80,255,0.25)" stroke-width="1.5" transform="rotate(-20 40 40)"/>
+          <circle cx="40" cy="40" r="7" fill="rgba(80,60,200,0.3)"/>
+          <circle cx="40" cy="40" r="3" fill="#8060ff"/>
+          <circle cx="14" cy="22" r="1.5" fill="rgba(255,255,255,0.6)"/>
+          <circle cx="62" cy="18" r="1" fill="rgba(255,255,255,0.5)"/>
+          <circle cx="20" cy="58" r="1" fill="rgba(255,255,255,0.4)"/>
+          <circle cx="66" cy="52" r="1.5" fill="rgba(255,255,255,0.5)"/>
+        </svg>
+      </div>
+      <div class="game-card-info">
+        <div class="game-card-name">Cosmic Spin</div>
+        <div class="game-card-desc">Space voyage slots. Black hole pays 300×.</div>
+        <div class="game-card-footer">
+          <span class="game-card-badge badge-purple">JACKPOT 300×</span>
+          <span class="game-card-rtp">RTP 96%</span>
+        </div>
       </div>
     </a>
   </div>
@@ -255,19 +335,32 @@
 </main>
 
 <script>
+const GAME_LABELS = {
+  slots:'Blue Samurai', 'slots-egypt':'Pharaoh\'s Fortune', 'slots-space':'Cosmic Spin',
+  roulette:'Roulette', mines:'Mines', dice:'Dice', blackjack:'Blackjack',
+  crash:'Crash', plinko:'Plinko', ropecut:'Rope Cut', keno:'Keno', hilo:'Hi-Lo'
+};
+
 function updateLobby() {
   const p = Casino.getProfile();
   document.getElementById('heroBalance').textContent = Casino.fmt(p.balance);
   document.getElementById('refillBtn').style.display = p.balance < 500 ? 'inline-block' : 'none';
+  document.getElementById('depositBtn').style.display = 'inline-block';
+
+  // Live stats
+  const stats = p.stats || {};
+  let totalPlayed = 0, totalWon = 0;
+  Object.values(stats).forEach(s => { totalPlayed += s.played || 0; totalWon += (s.returned || 0) - (s.wagered || 0); });
+  document.getElementById('heroGamesPlayed').textContent = totalPlayed.toLocaleString();
+  document.getElementById('heroTotalWon').textContent = (totalWon >= 0 ? '+' : '') + Casino.fmt(totalWon);
+  document.getElementById('heroTotalWon').style.color = totalWon >= 0 ? 'var(--green)' : 'var(--red)';
 
   const list = document.getElementById('activityList');
   if (!p.history.length) return;
-
-  const gameNames = { slots: 'Slots', roulette: 'Roulette', mines: 'Mines', dice: 'Dice', blackjack: 'Blackjack' };
   list.innerHTML = p.history.slice(0, 15).map(h => {
     const pos = h.net >= 0;
     return `<div class="activity-item">
-      <span class="activity-game">${gameNames[h.game] || h.game}</span>
+      <span class="activity-game">${GAME_LABELS[h.game] || h.game}</span>
       <span class="activity-time">${Casino.timeAgo(h.ts)}</span>
       <span class="activity-net ${pos ? 'pos' : 'neg'}">${pos ? '+' : ''}${Casino.fmt(h.net)}</span>
     </div>`;

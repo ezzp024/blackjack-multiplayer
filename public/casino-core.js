@@ -187,6 +187,8 @@ const Casino = (() => {
       { id: 'ropecut', label: 'Rope Cut', href: '/ropecut', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 3C6 3 8 8 12 8C16 8 18 3 18 3"/><path d="M12 8v13"/><path d="M8 14l4 4 4-4"/></svg>` },
       { id: 'keno', label: 'Keno', href: '/keno', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><text x="12" y="16" font-size="10" text-anchor="middle" fill="currentColor" stroke="none" font-weight="900">K</text></svg>` },
       { id: 'hilo', label: 'HiLo', href: '/hilo', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="5" width="8" height="11" rx="1.5"/><text x="7" y="13" font-size="7" text-anchor="middle" fill="currentColor" stroke="none" font-weight="900">A</text><rect x="13" y="8" width="8" height="11" rx="1.5"/><text x="17" y="16" font-size="7" text-anchor="middle" fill="currentColor" stroke="none" font-weight="900">K</text></svg>` },
+      { id: 'slots-egypt', label: 'Egypt Slots', href: '/slots-egypt', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><polygon points="12,3 21,20 3,20"/><line x1="12" y1="3" x2="12" y2="20" opacity="0.4"/></svg>` },
+      { id: 'slots-space', label: 'Space Slots', href: '/slots-space', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(-20 12 12)"/></svg>` },
     ];
 
     const html = `

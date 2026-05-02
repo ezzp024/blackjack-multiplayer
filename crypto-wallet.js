@@ -64,9 +64,10 @@ async function rpcCall(fn) {
 
 // ── Wallet init ────────────────────────────────────────────────────────────
 function initWallet(mnemonic) {
-  masterNode = ethers.HDNodeWallet.fromPhrase(mnemonic.trim());
-  // Hot wallet = index 999999 (separate from user deposit wallets)
-  hotWallet  = masterNode.derivePath("m/44'/60'/0'/0/999999");
+  // fromPhrase without path = root node (depth 0)
+  masterNode = ethers.HDNodeWallet.fromPhrase(mnemonic.trim(), undefined, "m/44'/60'/0'");
+  // Hot wallet = external/999999, user wallets = external/0..N
+  hotWallet  = masterNode.derivePath("0/999999");
   console.log(`[wallet] Hot wallet: ${hotWallet.address}`);
   return hotWallet.address;
 }
@@ -78,7 +79,7 @@ function generateMnemonic() {
 // Derive a unique deposit address for a user
 function deriveDepositWallet(index) {
   if (!masterNode) throw new Error('Wallet not initialized');
-  const child = masterNode.derivePath(`m/44'/60'/0'/0/${index}`);
+  const child = masterNode.derivePath(`0/${index}`);
   return { address: child.address, privateKey: child.privateKey };
 }
 

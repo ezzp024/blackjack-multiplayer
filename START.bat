@@ -9,8 +9,10 @@ echo    OBSIDIAN CASINO
 echo  ============================================
 echo.
 
-:: Kill leftover processes
-taskkill /F /IM node.exe /FI "WINDOWTITLE eq Obsidian*" >nul 2>&1
+:: Kill anything on port 3000
+for /f "tokens=5" %%p in ('netstat -ano 2^>nul ^| findstr ":3000 "') do (
+    taskkill /F /PID %%p >nul 2>&1
+)
 taskkill /F /IM cloudflared.exe >nul 2>&1
 timeout /t 1 /nobreak >nul
 

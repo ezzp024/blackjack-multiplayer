@@ -9,6 +9,25 @@ const http = require('http');
 const fs = require('fs');
 const { Server } = require('socket.io');
 const crypto = require('crypto');
+const CW = require('./crypto-wallet');
+
+// ── Auto-generate wallet seed if missing ──────────────────────────────────
+(function ensureWalletSeed() {
+  const envPath = path.join(__dirname, '.env');
+  if (!process.env.WALLET_SEED) {
+    const mnemonic = CW.generateMnemonic();
+    process.env.WALLET_SEED = mnemonic;
+    fs.appendFileSync(envPath, `\nWALLET_SEED=${mnemonic}\n`);
+    console.log('\n✅ Generated new crypto wallet seed and saved to .env');
+    console.log('   BACKUP YOUR .env FILE — losing it means losing all house funds!\n');
+  }
+  try {
+    const hotAddr = CW.initWallet(process.env.WALLET_SEED);
+    console.log(`[crypto] Hot wallet ready: ${hotAddr}`);
+  } catch (e) {
+    console.error('[crypto] Wallet init failed:', e.message);
+  }
+})();
 
 const app = express();
 const server = http.createServer(app);
@@ -233,205 +252,123 @@ app.delete('/admin/api/player/:id', requireAdmin, (req, res) => {
 });
 
 // ─────────────────────────── CRYPTO PAYMENTS ───────────────────────────
-const NOWPAY_KEY     = process.env.NOWPAY_API_KEY     || '';
-const NOWPAY_PAYOUT  = process.env.NOWPAY_PAYOUT_KEY  || '';
-const NOWPAY_IPN_SEC = process.env.NOWPAY_IPN_SECRET  || '';
-const DEPOSIT_FEE    = parseFloat(process.env.DEPOSIT_FEE_PCT  || '0.01');  // 1%
-const WITHDRAW_FEE   = parseFloat(process.env.WITHDRAW_FEE_PCT || '0.015'); // 1.5%
+// ─────────────────────────── CRYPTO PAYMENTS (direct blockchain) ──────────
+const DEPOSIT_FEE  = parseFloat(process.env.DEPOSIT_FEE_PCT  || '0.01');   // 1%
+const WITHDRAW_FEE = parseFloat(process.env.WITHDRAW_FEE_PCT || '0.015');  // 1.5%
 
-if (!DB.transactions)  DB.transactions = [];
-if (!DB.nextTxId)      DB.nextTxId = 1;
+if (!DB.transactions)    DB.transactions    = [];
+if (!DB.nextTxId)        DB.nextTxId        = 1;
+if (!DB.nextWalletIdx)   DB.nextWalletIdx   = 0;
 
-const httpsLib = require('https');
-function nowpayReq(method, path, body, key) {
-  return new Promise((resolve, reject) => {
-    const data = body ? JSON.stringify(body) : null;
-    const opts = {
-      hostname: 'api.nowpayments.io', path: '/v1' + path, method,
-      headers: { 'x-api-key': key, 'Content-Type': 'application/json',
-        ...(data ? { 'Content-Length': Buffer.byteLength(data) } : {}) }
-    };
-    const req = httpsLib.request(opts, res => {
-      let raw = '';
-      res.on('data', c => raw += c);
-      res.on('end', () => {
-        try { resolve({ status: res.statusCode, data: JSON.parse(raw) }); }
-        catch { resolve({ status: res.statusCode, data: raw }); }
-      });
-    });
-    req.on('error', reject);
-    if (data) req.write(data);
-    req.end();
-  });
-}
-
-// Verify IPN signature
-function verifyIPN(rawBody, sig, secret) {
-  if (!secret || !sig) return !secret; // skip if not configured
-  try {
-    const obj = JSON.parse(rawBody);
-    function sortObj(o) {
-      if (Array.isArray(o)) return o.map(sortObj);
-      if (o && typeof o === 'object') {
-        const out = {};
-        Object.keys(o).sort().forEach(k => { out[k] = sortObj(o[k]); });
-        return out;
-      }
-      return o;
-    }
-    const sorted = JSON.stringify(sortObj(obj));
-    const hmac = crypto.createHmac('sha512', secret).update(sorted).digest('hex');
-    return hmac === sig;
-  } catch { return false; }
-}
-
-// GET /api/crypto/currencies — supported coins
-app.get('/api/crypto/currencies', requireAuth, async (req, res) => {
-  if (!NOWPAY_KEY) return res.json({ currencies: ['btc','eth','usdt','ltc','bnb','sol','doge','xrp','trx','usdc'] });
-  try {
-    const r = await nowpayReq('GET', '/currencies', null, NOWPAY_KEY);
-    if (r.status === 200) return res.json({ currencies: r.data.currencies || [] });
-    res.status(r.status).json({ error: 'Failed to fetch currencies' });
-  } catch { res.status(500).json({ error: 'Network error' }); }
-});
-
-// POST /api/crypto/deposit — create payment
-app.post('/api/crypto/deposit', requireAuth, async (req, res) => {
-  if (!NOWPAY_KEY) return res.status(503).json({ error: 'Crypto payments not configured. Set NOWPAY_API_KEY in .env' });
-  const { crypto, amount_usd } = req.body;
-  const amt = parseFloat(amount_usd);
-  if (!crypto || !amt || amt < 1 || amt > 100000) return res.status(400).json({ error: 'Invalid amount (min $1, max $100,000)' });
-
-  const fee = Math.round(amt * DEPOSIT_FEE * 100) / 100;
-  const net = Math.round((amt - fee) * 100) / 100;
-  const txId = DB.nextTxId++;
-
-  try {
-    const r = await nowpayReq('POST', '/payment', {
-      price_amount: amt,
-      price_currency: 'usd',
-      pay_currency: crypto.toLowerCase(),
-      order_id: String(txId),
-      order_description: `Deposit for ${req.user.name}`,
-      ipn_callback_url: process.env.SITE_URL + '/api/crypto/ipn',
-    }, NOWPAY_KEY);
-
-    if (r.status !== 200 && r.status !== 201) {
-      return res.status(400).json({ error: r.data?.message || 'Payment creation failed' });
-    }
-
-    const tx = {
-      id: txId, user_id: req.user.id, user_name: req.user.name,
-      type: 'deposit', status: 'pending',
-      crypto: crypto.toLowerCase(),
-      amount_usd: amt, fee_usd: fee, net_usd: net,
-      payment_id: r.data.payment_id,
-      pay_address: r.data.pay_address,
-      pay_amount: r.data.pay_amount,
-      pay_currency: r.data.pay_currency,
-      created_at: Date.now(), confirmed_at: null,
-    };
-    DB.transactions.push(tx);
+// Assign a unique HD wallet index to a user (for deposit address)
+function ensureUserWallet(user) {
+  if (user.wallet_index == null) {
+    user.wallet_index = DB.nextWalletIdx++;
+    const w = CW.deriveDepositWallet(user.wallet_index);
+    user.eth_deposit_address = w.address;
     saveDB();
+  }
+  return CW.deriveDepositWallet(user.wallet_index);
+}
 
-    res.json({ ok: true, tx, pay_address: r.data.pay_address, pay_amount: r.data.pay_amount, pay_currency: r.data.pay_currency });
-  } catch (e) { res.status(500).json({ error: 'Network error: ' + e.message }); }
+// GET /api/crypto/price
+app.get('/api/crypto/price', requireAuth, async (req, res) => {
+  try {
+    const eth = await CW.getEthPrice();
+    res.json({ eth, ts: Date.now() });
+  } catch { res.json({ eth: 2500 }); }
 });
 
-// POST /api/crypto/withdraw — create payout
+// GET /api/crypto/deposit-address  — returns user's dedicated deposit address
+app.get('/api/crypto/deposit-address', requireAuth, async (req, res) => {
+  const user = DB.users[req.user.id];
+  if (!user) return res.status(401).json({ error: 'No user' });
+  ensureUserWallet(user);
+  const ethPrice = await CW.getEthPrice().catch(() => 2500);
+  res.json({ address: user.eth_deposit_address, eth_price: ethPrice, supported: ['eth','usdt','usdc'] });
+});
+
+// GET /api/crypto/estimate?coin=eth&usd=100 — how much crypto for USD
+app.get('/api/crypto/estimate', requireAuth, async (req, res) => {
+  const { coin = 'eth', usd } = req.query;
+  if (!usd) return res.status(400).json({ error: 'Missing usd' });
+  const amt = parseFloat(usd);
+  try {
+    if (coin === 'eth') {
+      const ethAmt = await CW.usdToEth(amt);
+      return res.json({ coin, usd: amt, crypto_amount: ethAmt });
+    }
+    // USDT/USDC are 1:1 USD
+    res.json({ coin, usd: amt, crypto_amount: amt });
+  } catch { res.json({ coin, usd: amt, crypto_amount: null }); }
+});
+
+// POST /api/crypto/check-deposit — manually trigger deposit check for user
+app.post('/api/crypto/check-deposit', requireAuth, async (req, res) => {
+  const user = DB.users[req.user.id];
+  if (!user || user.wallet_index == null) return res.json({ credited: false });
+  const credited = await checkUserDeposit(user);
+  res.json({ credited, balance: user.balance });
+});
+
+// POST /api/crypto/withdraw — send crypto to user's personal wallet
 app.post('/api/crypto/withdraw', requireAuth, async (req, res) => {
-  if (!NOWPAY_PAYOUT) return res.status(503).json({ error: 'Withdrawals not configured. Set NOWPAY_PAYOUT_KEY in .env' });
-  const { crypto, wallet_address, amount_usd } = req.body;
+  const { coin = 'eth', wallet_address, amount_usd } = req.body;
   const amt = parseFloat(amount_usd);
   const user = DB.users[req.user.id];
   if (!user) return res.status(401).json({ error: 'No user' });
-  if (!crypto || !wallet_address || !amt || amt < 5) return res.status(400).json({ error: 'Invalid request (min $5 withdrawal)' });
+  if (!wallet_address || !amt || amt < 10) return res.status(400).json({ error: 'Invalid request (min $10 withdrawal)' });
   if (amt > user.balance) return res.status(400).json({ error: 'Insufficient balance' });
-  if (!/^[a-zA-Z0-9]{10,100}$/.test(wallet_address)) return res.status(400).json({ error: 'Invalid wallet address' });
+  if (!/^0x[0-9a-fA-F]{40}$/.test(wallet_address) && !/^[13][a-zA-HJ-NP-Z0-9]{25,34}$/.test(wallet_address) && wallet_address.length < 10) {
+    return res.status(400).json({ error: 'Invalid wallet address' });
+  }
 
   const fee = Math.round(amt * WITHDRAW_FEE * 100) / 100;
   const net = Math.round((amt - fee) * 100) / 100;
   const txId = DB.nextTxId++;
 
-  // Deduct balance immediately (pending payout)
   user.balance = Math.round((user.balance - amt) * 100) / 100;
   user.last_seen = Date.now();
 
   const tx = {
-    id: txId, user_id: req.user.id, user_name: req.user.name,
+    id: txId, user_id: user.id, user_name: user.name,
     type: 'withdraw', status: 'pending',
-    crypto: crypto.toLowerCase(),
-    amount_usd: amt, fee_usd: fee, net_usd: net,
-    wallet_address,
-    payout_id: null,
+    coin: coin.toLowerCase(), amount_usd: amt, fee_usd: fee, net_usd: net,
+    wallet_address, tx_hash: null,
     created_at: Date.now(), confirmed_at: null,
   };
   DB.transactions.push(tx);
   saveDB();
 
-  try {
-    const r = await nowpayReq('POST', '/payout', {
-      ipn_callback_url: process.env.SITE_URL + '/api/crypto/ipn',
-      withdrawals: [{
-        address: wallet_address,
-        currency: crypto.toLowerCase(),
-        amount: net,
-        ipn_callback_url: process.env.SITE_URL + '/api/crypto/ipn',
-        extra_id: String(txId),
-      }]
-    }, NOWPAY_PAYOUT);
-
-    if (r.status !== 200 && r.status !== 201) {
-      // Refund on failure
-      user.balance = Math.round((user.balance + amt) * 100) / 100;
-      tx.status = 'failed';
-      saveDB();
-      return res.status(400).json({ error: r.data?.message || 'Payout failed' });
-    }
-
-    tx.payout_id = r.data?.id || r.data?.withdrawals?.[0]?.id;
-    saveDB();
-    res.json({ ok: true, tx, net_usd: net, fee_usd: fee });
-  } catch (e) {
-    user.balance = Math.round((user.balance + amt) * 100) / 100;
-    tx.status = 'failed';
-    saveDB();
-    res.status(500).json({ error: 'Network error: ' + e.message });
-  }
-});
-
-// POST /api/crypto/ipn — NOWPayments webhook
-app.post('/api/crypto/ipn', express.raw({ type: '*/*' }), (req, res) => {
-  const sig = req.headers['x-nowpayments-sig'];
-  const rawBody = req.body?.toString?.() || '';
-  if (!verifyIPN(rawBody, sig, NOWPAY_IPN_SEC)) return res.status(400).send('Bad signature');
-
-  let data;
-  try { data = JSON.parse(rawBody); } catch { return res.status(400).send('Bad JSON'); }
-
-  const { payment_status, order_id, price_amount, actually_paid, payment_id } = data;
-
-  if (payment_status === 'finished' || payment_status === 'confirmed') {
-    const tx = DB.transactions.find(t => String(t.id) === String(order_id) && t.type === 'deposit');
-    if (tx && tx.status === 'pending') {
-      tx.status = 'confirmed';
-      tx.confirmed_at = Date.now();
-      const user = DB.users[tx.user_id];
-      if (user) {
-        user.balance = Math.round((user.balance + tx.net_usd) * 100) / 100;
-        user.last_seen = Date.now();
-        io.to('admin_room').emit('admin:deposit', { ...tx, balance: user.balance });
+  // Process payout asynchronously
+  setImmediate(async () => {
+    try {
+      const hot = CW.getHotWallet();
+      if (!hot) throw new Error('Hot wallet not ready');
+      let txHash;
+      if (coin === 'eth') {
+        const ethAmt = await CW.usdToEth(net);
+        txHash = await CW.sendEth(wallet_address, ethAmt, hot.privateKey);
+      } else if (coin === 'usdt' || coin === 'usdc') {
+        txHash = await CW.sendToken(wallet_address, net, coin, hot.privateKey);
       }
+      tx.status = 'confirmed';
+      tx.tx_hash = txHash;
+      tx.confirmed_at = Date.now();
+      saveDB();
+      io.to('admin_room').emit('admin:withdraw', { ...tx });
+    } catch (e) {
+      console.error('[crypto] Withdrawal failed:', e.message);
+      // Refund on failure
+      const u = DB.users[tx.user_id];
+      if (u) u.balance = Math.round((u.balance + amt) * 100) / 100;
+      tx.status = 'failed';
+      tx.error = e.message;
       saveDB();
     }
-  }
+  });
 
-  if (payment_status === 'finished' && data.extra_id) {
-    const tx = DB.transactions.find(t => String(t.id) === String(data.extra_id) && t.type === 'withdraw');
-    if (tx && tx.status === 'pending') { tx.status = 'confirmed'; tx.confirmed_at = Date.now(); saveDB(); }
-  }
-
-  res.status(200).send('OK');
+  res.json({ ok: true, tx_id: txId, net_usd: net, fee_usd: fee, message: 'Withdrawal processing. Funds sent within 5 minutes.' });
 });
 
 // GET /api/crypto/transactions
@@ -440,22 +377,104 @@ app.get('/api/crypto/transactions', requireAuth, (req, res) => {
   res.json(txs);
 });
 
-// GET /api/crypto/rate?crypto=btc&usd=100
-app.get('/api/crypto/rate', requireAuth, async (req, res) => {
-  if (!NOWPAY_KEY) return res.json({ rate: null });
-  const { crypto, usd } = req.query;
-  if (!crypto || !usd) return res.status(400).json({ error: 'Missing params' });
-  try {
-    const r = await nowpayReq('GET', `/estimate?amount=${usd}&currency_from=usd&currency_to=${crypto}`, null, NOWPAY_KEY);
-    if (r.status === 200) return res.json({ estimated_amount: r.data.estimated_amount, currency_to: r.data.currency_to });
-    res.json({ rate: null });
-  } catch { res.json({ rate: null }); }
-});
-
-// Admin: all transactions
+// Admin: all transactions + hot wallet balance
 app.get('/admin/api/transactions', requireAdmin, (req, res) => {
   res.json(DB.transactions.slice(-500).reverse());
 });
+
+app.get('/admin/api/hot-wallet', requireAdmin, async (req, res) => {
+  try {
+    const hot = CW.getHotWallet();
+    if (!hot) return res.json({ address: null, eth: 0, usdt: 0 });
+    const [eth, usdt] = await Promise.all([
+      CW.getEthBalance(hot.address).catch(() => 0),
+      CW.getTokenBalance(hot.address, 'usdt').catch(() => 0),
+    ]);
+    res.json({ address: hot.address, eth, usdt });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ── Background deposit poller ─────────────────────────────────────────────
+async function checkUserDeposit(user) {
+  if (user.wallet_index == null) return false;
+  const { address, privateKey } = CW.deriveDepositWallet(user.wallet_index);
+  let credited = false;
+
+  try {
+    // Check ETH
+    const ethBal = await CW.getEthBalance(address);
+    const lastEth = user.last_eth_balance || 0;
+    if (ethBal > lastEth + 0.0001) {
+      const arrived = ethBal - lastEth;
+      const ethPrice = await CW.getEthPrice();
+      const usdGross = Math.round(arrived * ethPrice * 100) / 100;
+      const usdFee   = Math.round(usdGross * DEPOSIT_FEE * 100) / 100;
+      const usdNet   = Math.round((usdGross - usdFee) * 100) / 100;
+      if (usdNet > 0.5) {
+        user.balance = Math.round((user.balance + usdNet) * 100) / 100;
+        user.last_eth_balance = ethBal;
+        const tx = {
+          id: DB.nextTxId++, user_id: user.id, user_name: user.name,
+          type: 'deposit', status: 'confirmed', coin: 'eth',
+          amount_usd: usdGross, fee_usd: usdFee, net_usd: usdNet,
+          crypto_amount: arrived, eth_price: ethPrice,
+          deposit_address: address,
+          created_at: Date.now(), confirmed_at: Date.now(),
+        };
+        DB.transactions.push(tx);
+        io.to('admin_room').emit('admin:deposit', { ...tx, user_balance: user.balance });
+        credited = true;
+        // Sweep to hot wallet
+        CW.sweepEth(privateKey).catch(e => console.warn('[crypto] Sweep failed:', e.message));
+      }
+    }
+
+    // Check USDT
+    const usdtBal = await CW.getTokenBalance(address, 'usdt');
+    const lastUsdt = user.last_usdt_balance || 0;
+    if (usdtBal > lastUsdt + 0.5) {
+      const arrived = usdtBal - lastUsdt;
+      const usdFee  = Math.round(arrived * DEPOSIT_FEE * 100) / 100;
+      const usdNet  = Math.round((arrived - usdFee) * 100) / 100;
+      if (usdNet > 0.5) {
+        user.balance = Math.round((user.balance + usdNet) * 100) / 100;
+        user.last_usdt_balance = usdtBal;
+        const tx = {
+          id: DB.nextTxId++, user_id: user.id, user_name: user.name,
+          type: 'deposit', status: 'confirmed', coin: 'usdt',
+          amount_usd: arrived, fee_usd: usdFee, net_usd: usdNet,
+          crypto_amount: arrived,
+          deposit_address: address,
+          created_at: Date.now(), confirmed_at: Date.now(),
+        };
+        DB.transactions.push(tx);
+        io.to('admin_room').emit('admin:deposit', { ...tx, user_balance: user.balance });
+        credited = true;
+        CW.sweepToken(privateKey, 'usdt').catch(e => console.warn('[crypto] USDT sweep failed:', e.message));
+      }
+    }
+  } catch (e) {
+    console.warn(`[crypto] Check failed for ${user.id}:`, e.message);
+  }
+
+  if (credited) saveDB();
+  return credited;
+}
+
+// Poll all users with active deposit addresses every 90 seconds
+const POLL_INTERVAL = 90000;
+function startDepositPoller() {
+  setInterval(async () => {
+    const usersWithWallet = Object.values(DB.users).filter(u => u.wallet_index != null);
+    // Check in batches of 5 to avoid rate limiting
+    for (let i = 0; i < usersWithWallet.length; i += 5) {
+      const batch = usersWithWallet.slice(i, i + 5);
+      await Promise.allSettled(batch.map(u => checkUserDeposit(u)));
+      if (i + 5 < usersWithWallet.length) await new Promise(r => setTimeout(r, 2000));
+    }
+  }, POLL_INTERVAL);
+  console.log(`[crypto] Deposit poller started (${POLL_INTERVAL/1000}s interval)`);
+}
 
 // ─────────────────────────── PAGES ───────────────────────────
 const GAME_PAGES = { '/': 'index.html', '/blackjack': 'blackjack.html', '/slots': 'slots.html', '/roulette': 'roulette.html', '/mines': 'mines.html', '/dice': 'dice.html', '/profile': 'profile.html', '/crash': 'crash.html', '/plinko': 'plinko.html', '/ropecut': 'ropecut.html', '/keno': 'keno.html', '/hilo': 'hilo.html', '/wallet': 'wallet.html' };
@@ -745,4 +764,7 @@ setTimeout(runCrash, 3000);
 
 // ─────────────────────────── START ───────────────────────────
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, '0.0.0.0', () => console.log(`Obsidian Casino running on port ${PORT}`));
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`Obsidian Casino running on port ${PORT}`);
+  startDepositPoller();
+});

@@ -212,7 +212,7 @@ function getMult(gemsFound, totalMines) {
     const rem = 25 - i;
     m *= rem / (rem - totalMines);
   }
-  return Math.round(m * 100) / 100;
+  return Math.round(m * 0.96 * 100) / 100;
 }
 
 function buildGrid() {
@@ -305,6 +305,7 @@ async function cashout() {
     if (r.ok) { const d = await r.json(); balance = d.balance; Casino.syncBalance(balance); }
   } catch {}
   flashResult(`+$${won.toFixed(2)} at ${currentMult}×`, true);
+  Casino.showToast(won - currentBet);
   endGame(true);
 }
 
@@ -323,6 +324,7 @@ function endGame(won, cancelled = false) {
         .then(r => r.ok && r.json().then(d => { balance = d.balance; Casino.syncBalance(balance); }));
     } catch {}
     flashResult(`Lost $${currentBet.toFixed(2)}`, false);
+    Casino.showToast(-currentBet);
   }
 
   for (let i = 0; i < 25; i++) {

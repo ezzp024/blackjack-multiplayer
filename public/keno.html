@@ -269,6 +269,7 @@ async function playKeno() {
   document.getElementById('resultMain').textContent = hits + ' HITS! ' + mult + '×';
   document.getElementById('resultMain').style.color = net > 0 ? '#00ff88' : net < 0 ? '#f1323f' : '#f0c040';
   document.getElementById('resultSub').textContent = net > 0 ? `+$${won.toFixed(2)}` : net < 0 ? `-$${bet.toFixed(2)}` : 'Push';
+  Casino.showToast(net);
 
   rounds++;
   sessionPL += net;

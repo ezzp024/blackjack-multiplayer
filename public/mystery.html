@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mystery Boxes — Obsidian Casino</title>
+  <link rel="stylesheet" href="/styles.css">
+  <style>
+    .mx-wrap{max-width:1020px;margin:0 auto;padding:22px 16px}
+    .mx-head{display:flex;justify-content:space-between;align-items:end;margin-bottom:14px}
+    .mx-title{font-size:1.3rem;font-weight:900;letter-spacing:.08em}
+    .mx-sub{color:#8b96b3;font-size:.9rem}
+    .mx-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+    .mx-card{background:#101521;border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px}
+    .mx-art{height:120px;border-radius:10px;background:linear-gradient(160deg,#1f1130,#39154e);display:flex;align-items:center;justify-content:center;font-size:2.2rem}
+    .mx-name{font-weight:800}
+    .mx-cost{color:#93c5fd;font-size:.9rem}
+    .mx-odds{font-size:.8rem;color:#9ca3af;line-height:1.35}
+    .mx-btn{padding:10px;border:none;border-radius:10px;background:linear-gradient(135deg,#a855f7,#ec4899);color:#fff;font-weight:900;cursor:pointer}
+    .mx-btn:disabled{opacity:.55;cursor:not-allowed}
+    .mx-feed{margin-top:16px;background:#0f131e;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px}
+    .mx-row{display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+    .mx-row:last-child{border-bottom:none}
+    @media(max-width:860px){.mx-grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<script src="/casino-core.js"></script>
+<script>Casino.renderSidebar('mystery');Casino.requireAuth();</script>
+
+<main class="casino-main">
+  <div class="mx-wrap">
+    <div class="mx-head">
+      <div>
+        <div class="mx-title">MYSTERY BOXES</div>
+        <div class="mx-sub">Different risk tiers with weighted rarity drops.</div>
+      </div>
+      <div>Balance: <b id="bal">$0</b></div>
+    </div>
+
+    <div class="mx-grid" id="cards"></div>
+
+    <div class="mx-feed">
+      <div style="font-weight:800;margin-bottom:8px">Recent Opens</div>
+      <div id="feed"></div>
+    </div>
+  </div>
+</main>
+
+<script>
+let balance = 0;
+const boxes = [
+  {
+    id:'bronze', name:'Bronze Crate', icon:'📦', cost:10,
+    drops:[['Scrap',0.45,0],['Sticker Pack',0.25,0.5],['Coin Pouch',0.2,1.2],['Lucky Token',0.09,2.5],['Mini Jackpot',0.01,8]]
+  },
+  {
+    id:'neon', name:'Neon Vault', icon:'🧰', cost:40,
+    drops:[['Static Dust',0.42,0],['Boost Chip',0.24,0.7],['Cyber Charm',0.2,1.5],['Rare Prism',0.11,3],['Legend Cache',0.03,12]]
+  },
+  {
+    id:'obsidian', name:'Obsidian Relic', icon:'🗝️', cost:120,
+    drops:[['Void Ash',0.44,0],['Arc Fragment',0.24,0.8],['Relic Core',0.19,1.8],['Ancient Sigil',0.1,4],['Mythic Crown',0.03,20]]
+  }
+];
+
+function weightedPick(items){
+  const r = Math.random();
+  let acc = 0;
+  for(const [name,p,m] of items){
+    acc += p;
+    if(r <= acc) return { name, mult:m };
+  }
+  const last = items[items.length-1];
+  return { name:last[0], mult:last[2] };
+}
+
+function render(){
+  const root = document.getElementById('cards');
+  root.innerHTML = boxes.map((b,idx)=>`
+    <article class="mx-card">
+      <div class="mx-art">${b.icon}</div>
+      <div class="mx-name">${b.name}</div>
+      <div class="mx-cost">Open Cost: ${Casino.fmt(b.cost)}</div>
+      <div class="mx-odds">
+        Top drop: <b>${b.drops[b.drops.length-1][0]}</b> (${Math.round(b.drops[b.drops.length-1][1]*100)}% chance)<br>
+        Max payout: <b>${b.drops[b.drops.length-1][2]}x</b>
+      </div>
+      <button class="mx-btn" onclick="openBox(${idx})">OPEN</button>
+    </article>
+  `).join('');
+}
+
+function addFeed(text, value){
+  const feed = document.getElementById('feed');
+  const row = document.createElement('div');
+  row.className = 'mx-row';
+  row.innerHTML = `<span>${text}</span><b style="color:${value>=0?'#22c55e':'#ef4444'}">${value>=0?'+':''}${Casino.fmt(value)}</b>`;
+  feed.prepend(row);
+  while(feed.children.length > 12) feed.removeChild(feed.lastChild);
+}
+
+async function openBox(i){
+  const b = boxes[i];
+  if(balance < b.cost){ alert('Insufficient balance'); return; }
+  const pick = weightedPick(b.drops);
+  const returned = Math.round(b.cost * pick.mult);
+  const net = returned - b.cost;
+  balance = await Casino.recordBet('mystery', b.cost, returned);
+  document.getElementById('bal').textContent = Casino.fmt(balance);
+  Casino.showToast(net, { msg: `${b.name}: ${pick.name} (${pick.mult}x)` });
+  addFeed(`${b.name} -> ${pick.name}`, net);
+}
+
+function init(){
+  const p = Casino.getProfile();
+  balance = p.balance;
+  document.getElementById('bal').textContent = Casino.fmt(balance);
+  render();
+}
+
+init();
+</script>
+</body>
+</html>

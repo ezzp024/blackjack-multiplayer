@@ -368,6 +368,7 @@ async function spin() {
     if (r.ok) { const d = await r.json(); balance = d.balance; Casino.syncBalance(balance); }
   } catch {}
 
+  Casino.showToast(returned - bet);
   document.getElementById('st-balance').textContent = '$' + balance.toFixed(2);
   document.getElementById('st-spins').textContent = spins;
   document.getElementById('st-wins').textContent = wins;

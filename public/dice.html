@@ -425,6 +425,7 @@ async function onRollDone(result, bet, returned, isWin) {
   if (history.length > 25) history.pop();
   renderHistory();
 
+  Casino.showToast(returned - bet);
   rolling = false;
   document.getElementById('rollBtn').disabled = false;
 }

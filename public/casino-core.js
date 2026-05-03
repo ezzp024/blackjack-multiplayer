@@ -71,6 +71,8 @@ const Casino = (() => {
         ropecut: { played: 0, won: 0, wagered: 0, returned: 0 },
         keno:    { played: 0, won: 0, wagered: 0, returned: 0 },
         hilo:    { played: 0, won: 0, wagered: 0, returned: 0 },
+        wheel:   { played: 0, won: 0, wagered: 0, returned: 0 },
+        mystery: { played: 0, won: 0, wagered: 0, returned: 0 },
       },
       history: [],
       createdAt: Date.now()
@@ -149,6 +151,17 @@ const Casino = (() => {
         if (el) el.textContent = fmt(d.balance);
         const av = document.querySelector('.header-avatar span');
         if (av) av.textContent = d.name[0].toUpperCase();
+        if (d.role === 'admin') {
+          const bottom = document.querySelector('.sidebar-bottom');
+          if (bottom && !bottom.querySelector('.admin-link')) {
+            const a = document.createElement('a');
+            a.href = '/admin';
+            a.className = 'nav-item admin-link';
+            a.style.cssText = 'color:#00c74d;font-weight:800;border:1px solid rgba(0,199,77,0.3);border-radius:8px;margin-bottom:6px;background:rgba(0,199,77,0.06)';
+            a.innerHTML = `<span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></span><span class="nav-label">Admin Panel</span>`;
+            bottom.insertBefore(a, bottom.firstChild);
+          }
+        }
       });
     }).catch(() => { window.location.href = '/login'; });
   }
@@ -173,6 +186,31 @@ const Casino = (() => {
     return (n < 0 ? '-$' : '$') + abs.toLocaleString();
   }
 
+  let _toastTimer = null;
+  function showToast(net, opts = {}) {
+    const existing = document.querySelector('.g-toast');
+    if (existing) existing.remove();
+    if (_toastTimer) clearTimeout(_toastTimer);
+
+    const isWin = net > 0;
+    const isBig = isWin && Math.abs(net) >= 500;
+    const type  = opts.type || (isBig ? 'big-win' : isWin ? 'win' : 'loss');
+    const icon  = isBig ? '🏆' : isWin ? '💰' : '💀';
+    const label = opts.label || (isWin ? `+${fmt(net)}` : fmt(net));
+    const msg   = opts.msg || (isBig ? `BIG WIN  ${label}` : isWin ? `WIN  ${label}` : `BUST  ${label}`);
+
+    const el = document.createElement('div');
+    el.className = `g-toast ${type}`;
+    el.innerHTML = `<span class="g-toast-icon">${icon}</span><span>${msg}</span>`;
+    document.body.appendChild(el);
+
+    const duration = opts.duration || (isBig ? 2800 : 1900);
+    _toastTimer = setTimeout(() => {
+      el.classList.add('g-toast-out');
+      setTimeout(() => el.remove(), 320);
+    }, duration);
+  }
+
   function renderSidebar(activePage) {
     const p = load();
     const nav = [
@@ -184,11 +222,14 @@ const Casino = (() => {
       { id: 'dice', label: 'Dice', href: '/dice', icon: ICONS.dice },
       { id: 'crash', label: 'Crash', href: '/crash', icon: ICONS.crash },
       { id: 'plinko', label: 'Plinko', href: '/plinko', icon: ICONS.plinko },
-      { id: 'ropecut', label: 'Rope Cut', href: '/ropecut', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 3C6 3 8 8 12 8C16 8 18 3 18 3"/><path d="M12 8v13"/><path d="M8 14l4 4 4-4"/></svg>` },
+      { id: 'ropecut', label: 'Gravity Drop', href: '/ropecut', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="3"/><path d="M12 8 L9 20 L12 16 L15 20 Z"/><circle cx="6" cy="16" r="1.5" fill="currentColor" stroke="none"/><circle cx="18" cy="14" r="1.5" fill="currentColor" stroke="none"/></svg>` },
       { id: 'keno', label: 'Keno', href: '/keno', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><text x="12" y="16" font-size="10" text-anchor="middle" fill="currentColor" stroke="none" font-weight="900">K</text></svg>` },
       { id: 'hilo', label: 'HiLo', href: '/hilo', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="5" width="8" height="11" rx="1.5"/><text x="7" y="13" font-size="7" text-anchor="middle" fill="currentColor" stroke="none" font-weight="900">A</text><rect x="13" y="8" width="8" height="11" rx="1.5"/><text x="17" y="16" font-size="7" text-anchor="middle" fill="currentColor" stroke="none" font-weight="900">K</text></svg>` },
+      { id: 'wheel', label: 'Prize Wheel', href: '/wheel', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2"/><path d="M12 3v4M21 12h-4M12 21v-4M3 12h4"/><path d="M12 2l2 3h-4l2-3z" fill="currentColor" stroke="none"/></svg>` },
+      { id: 'mystery', label: 'Mystery Boxes', href: '/mystery', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 9h18v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9z"/><path d="M3 9l4-5h10l4 5"/><path d="M12 9v13"/><path d="M9 15h6"/></svg>` },
       { id: 'slots-egypt', label: 'Egypt Slots', href: '/slots-egypt', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><polygon points="12,3 21,20 3,20"/><line x1="12" y1="3" x2="12" y2="20" opacity="0.4"/></svg>` },
       { id: 'slots-space', label: 'Space Slots', href: '/slots-space', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(-20 12 12)"/></svg>` },
+      { id: 'slots-norse', label: 'Asgard Reels', href: '/slots-norse', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><polygon points="12,2 22,8 22,16 12,22 2,16 2,8"/><circle cx="12" cy="12" r="3"/></svg>` },
     ];
 
     const html = `
@@ -245,6 +286,76 @@ const Casino = (() => {
       </header>`;
 
     document.body.insertAdjacentHTML('afterbegin', html + header);
+    initBackground();
+  }
+
+  function initBackground() {
+    // Inject animated gradient orbs
+    [1,2,3,4].forEach(i => {
+      const d = document.createElement('div');
+      d.className = `bg-orb bg-orb-${i}`;
+      document.body.appendChild(d);
+    });
+
+    // Particle canvas
+    const canvas = document.createElement('canvas');
+    canvas.id = 'bgCanvas';
+    document.body.appendChild(canvas);
+    const ctx = canvas.getContext('2d');
+
+    const COLS = ['0,140,255','150,0,255','0,230,88','0,200,240','255,180,0'];
+    let W, H, pts = [];
+    const N = 70;
+
+    function mkPt() {
+      return {
+        x: Math.random() * W,
+        y: Math.random() * H,
+        vx: (Math.random() - 0.5) * 0.35,
+        vy: (Math.random() - 0.5) * 0.35,
+        r: Math.random() * 1.8 + 0.5,
+        op: Math.random() * 0.55 + 0.2,
+        c: COLS[Math.floor(Math.random() * COLS.length)]
+      };
+    }
+
+    function resize() {
+      W = canvas.width = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+      pts = Array.from({length: N}, mkPt);
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+      for (let i = 0; i < pts.length; i++) {
+        const p = pts[i];
+        p.x += p.vx; p.y += p.vy;
+        if (p.x < 0 || p.x > W) p.vx *= -1;
+        if (p.y < 0 || p.y > H) p.vy *= -1;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${p.c},${p.op})`;
+        ctx.fill();
+        for (let j = i + 1; j < pts.length; j++) {
+          const q = pts[j];
+          const dx = p.x - q.x, dy = p.y - q.y;
+          const d = Math.sqrt(dx*dx + dy*dy);
+          if (d < 130) {
+            ctx.beginPath();
+            ctx.moveTo(p.x, p.y);
+            ctx.lineTo(q.x, q.y);
+            ctx.strokeStyle = `rgba(${p.c},${(1 - d/130) * 0.12})`;
+            ctx.lineWidth = 0.6;
+            ctx.stroke();
+          }
+        }
+      }
+      requestAnimationFrame(draw);
+    }
+
+    window.addEventListener('resize', resize);
+    resize();
+    draw();
   }
 
   function updateBalance() {
@@ -265,7 +376,7 @@ const Casino = (() => {
     return Math.floor(d / 86400000) + 'd ago';
   }
 
-  return { getProfile, getBalance, getName, setName, recordBet, refill, fmt, renderSidebar, updateBalance, syncBalance, toggleSidebar, timeAgo, requireAuth, ICONS, SLOT_SYMBOLS };
+  return { getProfile, getBalance, getName, setName, recordBet, refill, fmt, renderSidebar, updateBalance, syncBalance, toggleSidebar, timeAgo, requireAuth, showToast, ICONS, SLOT_SYMBOLS };
 })();
 
 window.Casino = Casino;

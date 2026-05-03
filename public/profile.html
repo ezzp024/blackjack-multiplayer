@@ -1,17 +1,91 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Profile — Obsidian Casino</title>
   <link rel="stylesheet" href="/styles.css">
+  <style>
+    /* Wallet section */
+    .wallet-section{margin-top:24px}
+    .wallet-section-title{font-size:0.65rem;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:2.5px;margin-bottom:14px;display:flex;align-items:center;gap:10px}
+    .wallet-section-title::after{content:'';flex:1;height:1px;background:var(--border)}
+
+    .wallet-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+
+    .wallet-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:20px}
+    .wallet-card-title{font-size:0.65rem;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:2px;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+    .wallet-card-title svg{opacity:0.6}
+
+    /* Deposit address */
+    .addr-box{background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:12px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px}
+    .addr-text{flex:1;font-family:monospace;font-size:0.78rem;color:var(--text);word-break:break-all;letter-spacing:0.5px}
+    .copy-btn{background:var(--bg5);border:1px solid var(--border2);color:var(--text2);border-radius:6px;padding:6px 10px;font-size:0.68rem;font-weight:700;cursor:pointer;white-space:nowrap;transition:all 0.15s;font-family:inherit}
+    .copy-btn:hover{background:rgba(0,199,77,0.1);border-color:rgba(0,199,77,0.3);color:var(--green)}
+    .copy-btn.copied{background:rgba(0,199,77,0.1);border-color:rgba(0,199,77,0.3);color:var(--green)}
+
+    .coin-tabs{display:flex;gap:6px;margin-bottom:12px}
+    .coin-tab{flex:1;padding:8px 0;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;font-size:0.72rem;font-weight:700;color:var(--text3);cursor:pointer;text-align:center;transition:all 0.15s;font-family:inherit}
+    .coin-tab:hover{border-color:var(--border);color:var(--text2)}
+    .coin-tab.active{background:rgba(0,199,77,0.08);border-color:rgba(0,199,77,0.3);color:var(--green)}
+
+    .deposit-info-row{display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:6px}
+    .deposit-info-row span:first-child{color:var(--text3)}
+    .deposit-info-row span:last-child{font-weight:700;color:var(--text)}
+
+    .check-dep-btn{width:100%;padding:11px;background:rgba(0,199,77,0.1);border:1px solid rgba(0,199,77,0.25);border-radius:10px;color:var(--green);font-size:0.8rem;font-weight:800;cursor:pointer;transition:all 0.15s;letter-spacing:1px;margin-top:12px;font-family:inherit}
+    .check-dep-btn:hover{background:rgba(0,199,77,0.18);border-color:rgba(0,199,77,0.45)}
+    .check-dep-btn:disabled{opacity:0.4;cursor:not-allowed}
+
+    /* Withdraw */
+    .wd-label{font-size:0.62rem;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:2px;margin-bottom:6px}
+    .wd-input{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-size:0.9rem;font-weight:700;padding:10px 12px;outline:none;font-family:inherit;box-sizing:border-box;margin-bottom:12px}
+    .wd-input:focus{border-color:var(--gold2)}
+    .wd-row{display:flex;gap:8px;align-items:center;margin-bottom:12px}
+    .wd-row .wd-input{margin-bottom:0;flex:1}
+    .wd-adj{background:var(--bg3);border:1px solid var(--border2);color:var(--text3);border-radius:6px;padding:8px 10px;font-size:0.75rem;font-weight:700;cursor:pointer;transition:all 0.15s;font-family:inherit}
+    .wd-adj:hover{background:var(--bg5);color:var(--gold2)}
+    .coin-select{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-size:0.85rem;font-weight:700;padding:10px 12px;outline:none;font-family:inherit;cursor:pointer;margin-bottom:12px}
+    .wd-fee-note{font-size:0.7rem;color:var(--text3);margin-bottom:12px;padding:8px 10px;background:var(--bg3);border-radius:6px;line-height:1.4}
+    .wd-btn{width:100%;padding:13px;background:linear-gradient(135deg,var(--gold),#b45309);border:none;border-radius:10px;color:#000;font-size:0.88rem;font-weight:900;cursor:pointer;letter-spacing:1px;transition:all 0.15s;font-family:inherit}
+    .wd-btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 4px 20px rgba(245,158,11,0.4)}
+    .wd-btn:disabled{opacity:0.35;cursor:not-allowed;transform:none}
+    .wd-msg{font-size:0.8rem;font-weight:700;text-align:center;margin-top:10px;min-height:20px}
+
+    /* Transaction history */
+    .tx-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:20px}
+    .tx-table-header{display:grid;grid-template-columns:80px 80px 90px 1fr 100px;gap:8px;padding:6px 10px;font-size:0.62rem;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px;border-bottom:1px solid var(--border);margin-bottom:4px}
+    .tx-row{display:grid;grid-template-columns:80px 80px 90px 1fr 100px;gap:8px;padding:8px 10px;border-radius:8px;font-size:0.78rem;transition:background 0.1s;align-items:center}
+    .tx-row:hover{background:var(--bg3)}
+    .tx-type-dep{color:var(--green);font-weight:700;font-size:0.72rem}
+    .tx-type-wd{color:var(--gold2);font-weight:700;font-size:0.72rem}
+    .tx-status-confirmed{color:var(--green);font-size:0.7rem;font-weight:700}
+    .tx-status-pending{color:var(--gold2);font-size:0.7rem;font-weight:700}
+    .tx-status-failed{color:var(--red);font-size:0.7rem;font-weight:700}
+    .tx-hash{font-family:monospace;font-size:0.7rem;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .tx-hash a{color:var(--text3);text-decoration:none;transition:color 0.1s}
+    .tx-hash a:hover{color:var(--gold2)}
+    .tx-amount-dep{color:var(--green);font-weight:700}
+    .tx-amount-wd{color:var(--text);font-weight:700}
+    .no-tx{text-align:center;color:var(--text3);font-size:0.82rem;padding:28px 0}
+
+    /* Net amount preview */
+    .net-preview{display:flex;justify-content:space-between;font-size:0.75rem;padding:6px 0;border-top:1px solid var(--border);margin-bottom:12px}
+    .net-preview span:first-child{color:var(--text3)}
+    .net-preview span:last-child{font-weight:800;color:var(--gold2)}
+
+    /* Status pill */
+    .dep-status-msg{font-size:0.75rem;font-weight:700;text-align:center;padding:8px;border-radius:8px;margin-top:8px;min-height:20px}
+
+    @media(max-width:700px){.wallet-grid{grid-template-columns:1fr}.tx-table-header,.tx-row{grid-template-columns:70px 70px 80px 1fr}}
+  </style>
 </head>
 <body>
 <script src="/casino-core.js"></script>
 <script>Casino.renderSidebar('profile');Casino.requireAuth();</script>
 
 <main class="casino-main">
-<div class="game-page" style="max-width:900px">
+<div class="game-page" style="max-width:960px">
 
   <div class="profile-grid">
     <!-- LEFT: PROFILE CARD -->
@@ -25,8 +99,6 @@
           <input id="nameInput" placeholder="New name" maxlength="20">
           <button onclick="saveName()">Save</button>
         </div>
-
-        <button class="refill-btn" onclick="doRefill()" style="width:100%;padding:10px">+ Get $1,000 Free</button>
       </div>
 
       <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:20px">
@@ -50,7 +122,7 @@
           </div>
         </div>
         <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border)">
-          <button onclick="if(confirm('Reset all data?'))resetAll()" style="background:none;border:1px solid rgba(241,50,63,0.3);color:var(--red);padding:8px 16px;border-radius:8px;font-size:0.78rem;font-weight:700;width:100%;cursor:pointer;transition:background 0.2s" onmouseover="this.style.background='rgba(241,50,63,0.1)'" onmouseout="this.style.background='none'">Reset All Data</button>
+          <button onclick="if(confirm('Reset all data?'))resetAll()" style="background:none;border:1px solid rgba(241,50,63,0.3);color:var(--red);padding:8px 16px;border-radius:8px;font-size:0.78rem;font-weight:700;width:100%;cursor:pointer;transition:background 0.2s;font-family:inherit" onmouseover="this.style.background='rgba(241,50,63,0.1)'" onmouseout="this.style.background='none'">Reset All Data</button>
         </div>
       </div>
     </div>
@@ -72,22 +144,123 @@
     </div>
   </div>
 
+  <!-- ── CRYPTO WALLET ──────────────────────────────────────────────────── -->
+  <div class="wallet-section">
+    <div class="wallet-section-title">
+      <svg viewBox="0 0 20 20" fill="none" width="14" height="14"><rect x="1" y="4" width="18" height="13" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M1 8h18" stroke="currentColor" stroke-width="1.5"/><circle cx="15" cy="13" r="1.5" fill="currentColor"/></svg>
+      CRYPTO WALLET
+    </div>
+
+    <div class="wallet-grid">
+      <!-- DEPOSIT -->
+      <div class="wallet-card">
+        <div class="wallet-card-title">
+          <svg viewBox="0 0 20 20" fill="none" width="14" height="14"><path d="M10 3v11M5 9l5 5 5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 17h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          DEPOSIT CRYPTO
+        </div>
+
+        <div class="coin-tabs">
+          <button class="coin-tab active" onclick="selectCoin('eth')" id="tab-eth">ETH</button>
+          <button class="coin-tab" onclick="selectCoin('usdt')" id="tab-usdt">USDT</button>
+          <button class="coin-tab" onclick="selectCoin('usdc')" id="tab-usdc">USDC</button>
+        </div>
+
+        <div id="depLoading" style="color:var(--text3);font-size:0.8rem;text-align:center;padding:16px 0">Loading wallet...</div>
+
+        <div id="depContent" style="display:none">
+          <div style="font-size:0.68rem;color:var(--text3);margin-bottom:8px">Your deposit address (ERC-20 / Ethereum):</div>
+          <div class="addr-box">
+            <span class="addr-text" id="depAddress">—</span>
+            <button class="copy-btn" id="copyBtn" onclick="copyAddress()">Copy</button>
+          </div>
+
+          <div class="deposit-info-row"><span>Network</span><span>Ethereum (ERC-20)</span></div>
+          <div class="deposit-info-row"><span>ETH price</span><span id="ethPrice">—</span></div>
+          <div class="deposit-info-row" id="ethEquivRow" style="display:none"><span>$100 ≈</span><span id="ethEquiv">— ETH</span></div>
+          <div class="deposit-info-row"><span>Min deposit</span><span>$10 equivalent</span></div>
+          <div class="deposit-info-row"><span>Confirmations</span><span>1 block</span></div>
+
+          <div class="dep-status-msg" id="depStatusMsg"></div>
+
+          <button class="check-dep-btn" id="checkDepBtn" onclick="checkDeposit()">
+            ↺ CHECK FOR DEPOSIT
+          </button>
+        </div>
+      </div>
+
+      <!-- WITHDRAW -->
+      <div class="wallet-card">
+        <div class="wallet-card-title">
+          <svg viewBox="0 0 20 20" fill="none" width="14" height="14"><path d="M10 17V6M5 11l5-5 5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 3h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          WITHDRAW FUNDS
+        </div>
+
+        <div class="wd-label">Destination Wallet Address</div>
+        <input class="wd-input" id="wdAddress" type="text" placeholder="0x... or your wallet address" autocomplete="off">
+
+        <div class="wd-label">Amount (USD)</div>
+        <div class="wd-row">
+          <input class="wd-input" id="wdAmount" type="number" min="10" step="1" placeholder="Min $10" oninput="updateNetPreview()">
+          <button class="wd-adj" onclick="wdHalf()">½</button>
+          <button class="wd-adj" onclick="wdMax()">MAX</button>
+        </div>
+
+        <div class="wd-label">Coin</div>
+        <select class="coin-select" id="wdCoin" onchange="updateNetPreview()">
+          <option value="eth">ETH (Ethereum)</option>
+          <option value="usdt">USDT (ERC-20 Tether)</option>
+          <option value="usdc">USDC (ERC-20 USD Coin)</option>
+        </select>
+
+        <div class="wd-fee-note" id="wdFeeNote">Enter amount to see fee breakdown.</div>
+
+        <div class="net-preview" id="netPreview" style="display:none">
+          <span>You receive</span>
+          <span id="netAmount">—</span>
+        </div>
+
+        <button class="wd-btn" id="wdBtn" onclick="doWithdraw()">WITHDRAW</button>
+        <div class="wd-msg" id="wdMsg"></div>
+      </div>
+    </div>
+
+    <!-- TRANSACTION HISTORY -->
+    <div class="tx-card">
+      <div class="wallet-card-title" style="margin-bottom:14px">
+        <svg viewBox="0 0 20 20" fill="none" width="14" height="14"><path d="M3 5h14M3 10h10M3 15h7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        TRANSACTION HISTORY
+        <button onclick="loadTransactions()" style="margin-left:auto;background:none;border:none;color:var(--text3);cursor:pointer;font-size:0.72rem;font-family:inherit;font-weight:700" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--text3)'">↺ Refresh</button>
+      </div>
+      <div class="tx-table-header">
+        <span>Type</span>
+        <span>Status</span>
+        <span>Amount</span>
+        <span>Tx Hash</span>
+        <span>Date</span>
+      </div>
+      <div id="txList"><div class="no-tx">No transactions yet.</div></div>
+    </div>
+  </div>
+
 </div>
 </main>
 
 <script>
-const gameNames = { blackjack: 'Blackjack', slots: 'Slots', roulette: 'Roulette', mines: 'Mines', dice: 'Dice', crash: 'Crash', plinko: 'Plinko', ropecut: 'Rope Cut', keno: 'Keno', hilo: 'Hi-Lo' };
+const gameNames = {
+  blackjack:'Blackjack', slots:'Blue Samurai', 'slots-egypt':"Pharaoh's Fortune",
+  'slots-space':'Cosmic Spin', roulette:'Roulette', mines:'Mines', dice:'Dice',
+  crash:'Crash', plinko:'Plinko', ropecut:'Gravity Drop', keno:'Keno', hilo:'Hi-Lo'
+};
 
+// ── Profile ────────────────────────────────────────────────────────────────────
 function loadProfile() {
   const p = Casino.getProfile();
   document.getElementById('avatarBig').textContent = p.name[0].toUpperCase();
   document.getElementById('profileName').textContent = p.name;
   document.getElementById('profileBalance').textContent = Casino.fmt(p.balance);
   document.getElementById('nameInput').value = p.name;
-
   const ms = new Date(p.createdAt);
   document.getElementById('memberSince').textContent = ms.toLocaleDateString();
-
   let totalW = 0, totalR = 0;
   Object.values(p.stats).forEach(s => { totalW += s.wagered; totalR += s.returned; });
   document.getElementById('totalWagered').textContent = Casino.fmt(totalW);
@@ -95,8 +268,6 @@ function loadProfile() {
   const pl = totalR - totalW;
   document.getElementById('allTimePL').textContent = Casino.fmt(pl);
   document.getElementById('allTimePL').style.color = pl >= 0 ? 'var(--green)' : 'var(--red)';
-
-  // Game stats
   const body = document.getElementById('gameStatsBody');
   body.innerHTML = Object.entries(p.stats).map(([key, s]) => {
     const wr = s.played > 0 ? ((s.won / s.played) * 100).toFixed(1) + '%' : '—';
@@ -109,13 +280,8 @@ function loadProfile() {
       <span style="text-align:right" class="${pl2 >= 0 ? 'gst-pos' : 'gst-neg'}">${pl2 >= 0 ? '+' : ''}${Casino.fmt(pl2)}</span>
     </div>`;
   }).join('');
-
-  // History
   const hist = document.getElementById('historyList');
-  if (!p.history.length) {
-    hist.innerHTML = '<div class="no-activity">No history yet.</div>';
-    return;
-  }
+  if (!p.history.length) { hist.innerHTML = '<div class="no-activity">No history yet.</div>'; return; }
   hist.innerHTML = p.history.slice(0, 20).map(h => {
     const pos = h.net >= 0;
     return `<div class="activity-item">
@@ -130,15 +296,7 @@ function saveName() {
   const name = document.getElementById('nameInput').value.trim();
   if (!name) return;
   Casino.setName(name);
-  loadProfile();
-  Casino.renderSidebar('profile');
-  // Re-add the sidebar (since renderSidebar inserts it)
   location.reload();
-}
-
-async function doRefill() {
-  await Casino.refill();
-  loadProfile();
 }
 
 function resetAll() {
@@ -146,8 +304,202 @@ function resetAll() {
   location.reload();
 }
 
+// ── Wallet ─────────────────────────────────────────────────────────────────────
+let depAddress = '';
+let ethPriceUSD = 0;
+let selectedDepCoin = 'eth';
+let userBalance = 0;
+
+async function loadWallet() {
+  try {
+    const r = await fetch('/api/crypto/deposit-address');
+    if (!r.ok) throw new Error('Auth required');
+    const d = await r.json();
+    depAddress = d.address;
+    ethPriceUSD = d.eth_price || 0;
+    document.getElementById('depLoading').style.display = 'none';
+    document.getElementById('depContent').style.display = 'block';
+    document.getElementById('depAddress').textContent = depAddress;
+    document.getElementById('ethPrice').textContent = ethPriceUSD > 0 ? '$' + ethPriceUSD.toLocaleString() : '—';
+    if (ethPriceUSD > 0) {
+      document.getElementById('ethEquivRow').style.display = 'flex';
+      document.getElementById('ethEquiv').textContent = (100 / ethPriceUSD).toFixed(6) + ' ETH';
+    }
+    const me = await fetch('/api/me').then(r=>r.json()).catch(()=>null);
+    if (me) {
+      userBalance = me.balance;
+      document.getElementById('profileBalance').textContent = Casino.fmt(userBalance);
+    }
+  } catch (e) {
+    document.getElementById('depLoading').textContent = 'Failed to load wallet: ' + e.message;
+  }
+}
+
+function selectCoin(coin) {
+  selectedDepCoin = coin;
+  ['eth','usdt','usdc'].forEach(c => {
+    document.getElementById('tab-' + c).classList.toggle('active', c === coin);
+  });
+  if (coin === 'eth' && ethPriceUSD > 0) {
+    document.getElementById('ethEquivRow').style.display = 'flex';
+    document.getElementById('ethEquiv').textContent = (100 / ethPriceUSD).toFixed(6) + ' ETH';
+  } else if (coin !== 'eth') {
+    document.getElementById('ethEquivRow').style.display = 'flex';
+    document.getElementById('ethEquiv').textContent = '100.00 ' + coin.toUpperCase();
+  }
+}
+
+function copyAddress() {
+  if (!depAddress) return;
+  navigator.clipboard.writeText(depAddress).then(() => {
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = '✓ Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+  }).catch(() => {
+    const el = document.getElementById('depAddress');
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+  });
+}
+
+async function checkDeposit() {
+  const btn = document.getElementById('checkDepBtn');
+  const msg = document.getElementById('depStatusMsg');
+  btn.disabled = true;
+  btn.textContent = '↺ Checking...';
+  msg.style.cssText = 'color:var(--text3);background:var(--bg3)';
+  msg.textContent = 'Scanning blockchain for deposits...';
+  try {
+    const r = await fetch('/api/crypto/check-deposit', { method:'POST' });
+    const d = await r.json();
+    if (d.credited) {
+      msg.style.cssText = 'color:var(--green);background:rgba(0,199,77,0.08);border:1px solid rgba(0,199,77,0.2)';
+      msg.textContent = '✓ Deposit found! Balance updated to $' + d.balance.toFixed(2);
+      document.getElementById('profileBalance').textContent = Casino.fmt(d.balance);
+      userBalance = d.balance;
+      Casino.syncBalance(d.balance);
+      loadTransactions();
+    } else {
+      msg.style.cssText = 'color:var(--text3);background:var(--bg3)';
+      msg.textContent = 'No new deposits found. Transactions confirm within ~15 seconds to 5 minutes.';
+    }
+  } catch (e) {
+    msg.style.cssText = 'color:var(--red);background:rgba(241,50,63,0.05)';
+    msg.textContent = 'Error: ' + e.message;
+  }
+  btn.disabled = false;
+  btn.textContent = '↺ CHECK FOR DEPOSIT';
+}
+
+// ── Withdraw ───────────────────────────────────────────────────────────────────
+function updateNetPreview() {
+  const amt = parseFloat(document.getElementById('wdAmount').value) || 0;
+  const coin = document.getElementById('wdCoin').value;
+  const fee = Math.round(amt * 0.015 * 100) / 100;
+  const net = Math.round((amt - fee) * 100) / 100;
+  const preview = document.getElementById('netPreview');
+  const feeNote = document.getElementById('wdFeeNote');
+  if (amt >= 10) {
+    preview.style.display = 'flex';
+    let cryptoEst = '';
+    if (coin === 'eth' && ethPriceUSD > 0) cryptoEst = ' ≈ ' + (net / ethPriceUSD).toFixed(6) + ' ETH';
+    else if (coin !== 'eth') cryptoEst = ' ≈ ' + net.toFixed(2) + ' ' + coin.toUpperCase();
+    document.getElementById('netAmount').textContent = '$' + net.toFixed(2) + cryptoEst;
+    feeNote.textContent = 'Fee: 1.5% = $' + fee.toFixed(2) + ' · You receive: $' + net.toFixed(2) + (cryptoEst ? cryptoEst : '') + ' · Gas fees covered by casino.';
+  } else {
+    preview.style.display = 'none';
+    feeNote.textContent = 'Min withdrawal: $10 · Fee: 1.5% · Gas fees covered.';
+  }
+}
+
+function wdHalf() {
+  document.getElementById('wdAmount').value = Math.max(10, Math.floor(userBalance / 2));
+  updateNetPreview();
+}
+
+function wdMax() {
+  document.getElementById('wdAmount').value = Math.floor(userBalance);
+  updateNetPreview();
+}
+
+async function doWithdraw() {
+  const address = document.getElementById('wdAddress').value.trim();
+  const amount = parseFloat(document.getElementById('wdAmount').value) || 0;
+  const coin = document.getElementById('wdCoin').value;
+  const msg = document.getElementById('wdMsg');
+  const btn = document.getElementById('wdBtn');
+
+  if (!address) { msg.style.color = 'var(--red)'; msg.textContent = 'Enter wallet address.'; return; }
+  if (amount < 10) { msg.style.color = 'var(--red)'; msg.textContent = 'Minimum withdrawal: $10.'; return; }
+  if (amount > userBalance) { msg.style.color = 'var(--red)'; msg.textContent = 'Insufficient balance.'; return; }
+
+  btn.disabled = true;
+  msg.style.color = 'var(--text3)';
+  msg.textContent = 'Processing withdrawal...';
+
+  try {
+    const r = await fetch('/api/crypto/withdraw', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ coin, wallet_address: address, amount_usd: amount }),
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Withdrawal failed');
+
+    msg.style.color = 'var(--green)';
+    msg.textContent = '✓ Withdrawal submitted! Funds arrive within 5 minutes.';
+    userBalance = Math.max(0, userBalance - amount);
+    document.getElementById('profileBalance').textContent = Casino.fmt(userBalance);
+    Casino.syncBalance(userBalance);
+    document.getElementById('wdAmount').value = '';
+    updateNetPreview();
+    setTimeout(loadTransactions, 2000);
+  } catch (e) {
+    msg.style.color = 'var(--red)';
+    msg.textContent = '✗ ' + e.message;
+  }
+
+  btn.disabled = false;
+}
+
+// ── Transactions ───────────────────────────────────────────────────────────────
+async function loadTransactions() {
+  const list = document.getElementById('txList');
+  try {
+    const r = await fetch('/api/crypto/transactions');
+    if (!r.ok) throw new Error();
+    const txs = await r.json();
+    if (!txs.length) { list.innerHTML = '<div class="no-tx">No transactions yet.</div>'; return; }
+    list.innerHTML = txs.map(tx => {
+      const date = new Date(tx.created_at).toLocaleDateString();
+      const isDeposit = tx.type === 'deposit';
+      const amtStr = isDeposit
+        ? `<span class="tx-amount-dep">+$${tx.amount_usd.toFixed(2)}</span>`
+        : `<span class="tx-amount-wd">-$${tx.amount_usd.toFixed(2)}</span>`;
+      const hashStr = tx.tx_hash
+        ? `<a href="https://etherscan.io/tx/${tx.tx_hash}" target="_blank" rel="noopener">${tx.tx_hash.slice(0,10)}…${tx.tx_hash.slice(-6)}</a>`
+        : `<span style="color:var(--text3)">${tx.status === 'pending' ? 'Pending…' : '—'}</span>`;
+      const statusClass = 'tx-status-' + tx.status;
+      return `<div class="tx-row">
+        <span class="${isDeposit ? 'tx-type-dep' : 'tx-type-wd'}">${isDeposit ? '↓ DEPOSIT' : '↑ WITHDRAW'}</span>
+        <span class="${statusClass}">${tx.status.toUpperCase()}</span>
+        ${amtStr}
+        <span class="tx-hash">${hashStr}</span>
+        <span style="color:var(--text3);font-size:0.72rem">${date}</span>
+      </div>`;
+    }).join('');
+  } catch {
+    list.innerHTML = '<div class="no-tx">Could not load transactions.</div>';
+  }
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────────
 loadProfile();
+loadWallet();
+loadTransactions();
 </script>
 </body>
 </html>
-

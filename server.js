@@ -477,7 +477,7 @@ function startDepositPoller() {
 }
 
 // ─────────────────────────── PAGES ───────────────────────────
-const GAME_PAGES = { '/': 'index.html', '/blackjack': 'blackjack.html', '/slots': 'slots.html', '/slots-egypt': 'slots-egypt.html', '/slots-space': 'slots-space.html', '/roulette': 'roulette.html', '/mines': 'mines.html', '/dice': 'dice.html', '/profile': 'profile.html', '/crash': 'crash.html', '/plinko': 'plinko.html', '/ropecut': 'ropecut.html', '/keno': 'keno.html', '/hilo': 'hilo.html', '/wallet': 'wallet.html' };
+const GAME_PAGES = { '/': 'index.html', '/blackjack': 'blackjack.html', '/slots': 'slots.html', '/slots-egypt': 'slots-egypt.html', '/slots-space': 'slots-space.html', '/slots-norse': 'slots-norse.html', '/roulette': 'roulette.html', '/mines': 'mines.html', '/dice': 'dice.html', '/profile': 'profile.html', '/crash': 'crash.html', '/plinko': 'plinko.html', '/ropecut': 'ropecut.html', '/keno': 'keno.html', '/hilo': 'hilo.html', '/wheel': 'wheel.html', '/mystery': 'mystery.html', '/wallet': 'wallet.html' };
 Object.entries(GAME_PAGES).forEach(([route, file]) => {
   app.get(route, requireAuth, (req, res) => res.sendFile(path.join(__dirname, 'public', file)));
 });

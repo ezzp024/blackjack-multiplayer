@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prize Wheel — Obsidian Casino</title>
+  <link rel="stylesheet" href="/styles.css">
+  <style>
+    .wheel-wrap{max-width:980px;margin:0 auto;padding:20px 16px}
+    .wheel-grid{display:grid;grid-template-columns:1fr 320px;gap:16px}
+    .wheel-stage,.wheel-panel{background:#0f131e;border:1px solid rgba(255,255,255,.08);border-radius:16px}
+    .wheel-stage{padding:20px;display:flex;flex-direction:column;align-items:center;gap:14px}
+    .wheel-disc{position:relative;width:420px;height:420px;max-width:92vw;max-height:92vw;border-radius:50%;border:8px solid #2a3145;background:#0b1020;box-shadow:0 18px 44px rgba(0,0,0,.45);overflow:hidden;transition:transform 5.5s cubic-bezier(.08,.72,.12,1)}
+    .wheel-disc::before{content:'';position:absolute;inset:18px;border-radius:50%;border:2px dashed rgba(255,255,255,.14)}
+    .wheel-pointer{width:0;height:0;border-left:16px solid transparent;border-right:16px solid transparent;border-top:30px solid #22d3ee;filter:drop-shadow(0 0 8px rgba(34,211,238,.65));margin-bottom:-8px;z-index:2}
+    .wheel-center{position:absolute;left:50%;top:50%;width:58px;height:58px;transform:translate(-50%,-50%);border-radius:50%;background:#111827;border:3px solid #7dd3fc;z-index:2}
+    .wheel-seg{position:absolute;left:50%;top:50%;width:50%;height:2px;transform-origin:0 0}
+    .wheel-panel{padding:16px}
+    .wheel-title{font-size:1.2rem;font-weight:900;letter-spacing:.08em}
+    .wheel-sub{color:#8b96b3;font-size:.9rem;margin:.35rem 0 1rem}
+    .input{width:100%;background:#0a0f1a;border:1px solid rgba(255,255,255,.12);border-radius:10px;color:#fff;padding:12px}
+    .chips{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 12px}
+    .chips button{background:#192235;border:1px solid rgba(255,255,255,.1);color:#9ca3af;padding:7px 10px;border-radius:999px;cursor:pointer}
+    .spin-btn{width:100%;padding:13px;border:none;border-radius:10px;background:linear-gradient(135deg,#06b6d4,#2563eb);color:#fff;font-weight:900;letter-spacing:.06em;cursor:pointer}
+    .spin-btn:disabled{opacity:.55;cursor:not-allowed}
+    .wheel-result{margin-top:12px;padding:10px;border-radius:10px;background:#0a0f1a;border:1px solid rgba(255,255,255,.08)}
+    .wheel-history{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+    .wheel-pill{padding:6px 10px;border-radius:999px;background:#161e2f;border:1px solid rgba(255,255,255,.1);font-size:.8rem}
+    @media(max-width:860px){.wheel-grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<script src="/casino-core.js"></script>
+<script>Casino.renderSidebar('wheel');Casino.requireAuth();</script>
+
+<main class="casino-main">
+  <div class="wheel-wrap">
+    <div class="wheel-grid">
+      <section class="wheel-stage">
+        <div class="wheel-pointer"></div>
+        <div id="wheelDisc" class="wheel-disc"><div class="wheel-center"></div></div>
+        <div id="wheelCaption" style="color:#9ca3af">Set a stake and spin the wheel.</div>
+      </section>
+
+      <aside class="wheel-panel">
+        <div class="wheel-title">PRIZE WHEEL</div>
+        <div class="wheel-sub">Weighted wheel with rare jackpot wedges.</div>
+        <label>Bet Amount</label>
+        <input id="bet" class="input" type="number" min="1" value="25">
+        <div class="chips">
+          <button onclick="quick(10)">$10</button><button onclick="quick(25)">$25</button><button onclick="quick(50)">$50</button><button onclick="quick(100)">$100</button>
+        </div>
+        <button id="spinBtn" class="spin-btn" onclick="spinWheel()">SPIN</button>
+        <div class="wheel-result">
+          <div>Balance: <b id="bal">$0</b></div>
+          <div>Last Win: <b id="last">$0</b></div>
+          <div style="margin-top:6px;color:#8b96b3;font-size:.85rem">Multipliers: 0×, 0.5×, 0.8×, 1×, 1.2×, 1.5×, 2×, 3×, 5×, 10×, 20×</div>
+        </div>
+        <div class="wheel-history" id="hist"></div>
+      </aside>
+    </div>
+  </div>
+</main>
+
+<script>
+let balance = 0, spinning = false, rotation = 0;
+const segments = [
+  { m:0, c:'#ef4444', w:14 },{ m:0.5, c:'#f97316', w:12 },{ m:0.8, c:'#eab308', w:12 },
+  { m:1, c:'#22c55e', w:16 },{ m:1.2, c:'#10b981', w:10 },{ m:1.5, c:'#14b8a6', w:9 },
+  { m:2, c:'#06b6d4', w:8 },{ m:3, c:'#3b82f6', w:7 },{ m:5, c:'#6366f1', w:5 },
+  { m:10, c:'#a855f7', w:4 },{ m:20, c:'#ec4899', w:3 }
+];
+
+function drawWheel(){
+  const d = document.getElementById('wheelDisc');
+  const total = segments.reduce((a,s)=>a+s.w,0);
+  let start = 0;
+  d.innerHTML = '<div class="wheel-center"></div>';
+  segments.forEach(s=>{
+    const ang = (s.w/total)*360;
+    const seg = document.createElement('div');
+    seg.className = 'wheel-seg';
+    seg.style.transform = `rotate(${start}deg)`;
+    seg.style.borderTop = `210px solid ${s.c}`;
+    seg.style.borderRight = `${Math.tan((ang*Math.PI/180)/2)*210}px solid transparent`;
+    d.appendChild(seg);
+    start += ang;
+  });
+}
+
+function pickSegment(){
+  const bag=[]; segments.forEach((s,i)=>{ for(let j=0;j<s.w;j++) bag.push(i); });
+  return bag[Math.floor(Math.random()*bag.length)];
+}
+
+function quick(v){ document.getElementById('bet').value = v; }
+
+async function sync(){
+  const p = Casino.getProfile();
+  balance = p.balance;
+  document.getElementById('bal').textContent = Casino.fmt(balance);
+}
+
+async function spinWheel(){
+  if(spinning) return;
+  const bet = Math.floor(Number(document.getElementById('bet').value)||0);
+  if(bet < 1){ alert('Minimum bet is $1'); return; }
+  if(bet > balance){ alert('Insufficient balance'); return; }
+  spinning = true;
+  document.getElementById('spinBtn').disabled = true;
+
+  const idx = pickSegment();
+  const segAng = 360 / segments.length;
+  const target = (idx * segAng) + (segAng / 2);
+  rotation += 1800 + (360 - target);
+  document.getElementById('wheelDisc').style.transform = `rotate(${rotation}deg)`;
+
+  setTimeout(async ()=>{
+    const mult = segments[idx].m;
+    const returned = Math.round(bet * mult);
+    const net = returned - bet;
+    balance = await Casino.recordBet('wheel', bet, returned);
+    Casino.showToast(net, { msg: mult >= 10 ? `JACKPOT ${mult}x` : `${mult}x  ${net>=0?'+':''}${Casino.fmt(net)}` });
+    document.getElementById('bal').textContent = Casino.fmt(balance);
+    document.getElementById('last').textContent = Casino.fmt(returned);
+    document.getElementById('wheelCaption').textContent = `Landed on ${mult}x — ${net >= 0 ? 'nice hit' : 'try again'}.`;
+    const h = document.getElementById('hist');
+    const pill = document.createElement('div');
+    pill.className = 'wheel-pill';
+    pill.textContent = `${mult}x`;
+    h.prepend(pill);
+    while(h.children.length > 10) h.removeChild(h.lastChild);
+    spinning = false;
+    document.getElementById('spinBtn').disabled = false;
+  }, 5600);
+}
+
+drawWheel();
+sync();
+</script>
+</body>
+</html>

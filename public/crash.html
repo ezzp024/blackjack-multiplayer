@@ -461,7 +461,7 @@ socket.on('crash:bust', ({ mult }) => {
   document.getElementById('crashMult').classList.add('crashed');
   document.getElementById('crashStatus').textContent = 'CRASHED!';
   setUIPhase('crashed');
-  if (myBet > 0 && !myCashedOut) { addSession(myBet, 0, mult); myBet = 0; }
+  if (myBet > 0 && !myCashedOut) { addSession(myBet, 0, mult); Casino.showToast(-myBet); myBet = 0; }
   socket.emit('crash:join');
 });
 
@@ -477,6 +477,7 @@ socket.on('crash:cashedOut', ({ mult, win, balance: newBal }) => {
   document.getElementById('balDisp').textContent = '$' + balance.toFixed(2);
   Casino.syncBalance(balance);
   addSession(myBet, win, mult);
+  Casino.showToast(win - myBet);
   myBet = 0;
   document.getElementById('cashoutBtn').style.display = 'none';
   document.getElementById('betBtn').style.display = 'block';

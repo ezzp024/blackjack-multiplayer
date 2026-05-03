@@ -381,6 +381,7 @@ async function dropBall() {
   document.getElementById('resMult').style.color = c.text;
   document.getElementById('resAmt').textContent = (net >= 0 ? '+' : '') + '$' + net.toFixed(2);
   document.getElementById('resAmt').style.color = net >= 0 ? '#00ff88' : '#f1323f';
+  Casino.showToast(net);
 
   addHist(mult, net);
   dropping = false;

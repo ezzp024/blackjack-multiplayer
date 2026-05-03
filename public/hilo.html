@@ -394,6 +394,7 @@ async function guess(dir) {
     sessPlayed++;
     sessionPL -= currentBet;
     await Casino.recordBet('hilo', currentBet, 0);
+    Casino.showToast(-currentBet);
     updateStats();
     showResult(false, nextCard);
   }
@@ -407,6 +408,7 @@ async function cashout() {
   sessWins++;
   sessionPL += returned - currentBet;
   await Casino.recordBet('hilo', currentBet, returned);
+  Casino.showToast(returned - currentBet);
   updateStats();
   showResult(true, null, returned);
 }

@@ -5,8 +5,58 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Roulette — Obsidian Casino</title>
   <link rel="stylesheet" href="/styles.css">
+  <style>
+    .rv-bg{position:fixed;inset:0;background:radial-gradient(ellipse at 50% 0%,#180006 0%,#0c0004 55%,#060003 100%);z-index:-1;overflow:hidden}
+    .rv-bg::before{content:'';position:absolute;inset:0;background-image:repeating-linear-gradient(45deg,rgba(180,130,50,0.018) 0,rgba(180,130,50,0.018) 1px,transparent 1px,transparent 14px),repeating-linear-gradient(-45deg,rgba(180,130,50,0.018) 0,rgba(180,130,50,0.018) 1px,transparent 1px,transparent 14px)}
+    .rv-bg::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 100%,rgba(120,0,0,0.06) 0%,transparent 60%)}
+
+    .game-page .stats-row{margin-bottom:18px}
+    .game-page .stat-box{background:rgba(16,3,6,0.92);border:1px solid rgba(180,130,50,0.15);border-radius:10px;padding:12px;text-align:center}
+    .game-page .sv{color:#c89b3c;font-size:1.1rem;font-weight:800}
+    .game-page .sl{font-size:0.6rem;color:#4a2010;text-transform:uppercase;letter-spacing:1.5px;margin-top:2px}
+
+    .roulette-layout{gap:18px;align-items:start}
+    .wheel-container{display:flex;flex-direction:column;align-items:center;gap:10px}
+    .wheel-wrap{border:2px solid rgba(200,155,60,0.35);border-radius:50%;box-shadow:0 0 40px rgba(200,155,60,0.08),0 0 80px rgba(100,0,0,0.2),inset 0 0 20px rgba(0,0,0,0.6)}
+    .wheel-indicator{width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:16px solid #c89b3c;position:absolute;top:-4px;left:50%;transform:translateX(-50%);z-index:2;filter:drop-shadow(0 0 4px rgba(200,155,60,0.8))}
+
+    .last-num{width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:0.68rem;font-weight:800}
+    .last-num.red{background:#8b1212;box-shadow:0 0 8px rgba(200,30,30,0.4);border:1px solid rgba(220,50,50,0.3)}
+    .last-num.black{background:#111;border:1px solid rgba(80,40,40,0.3)}
+    .last-num.green{background:#006030;box-shadow:0 0 8px rgba(0,160,80,0.4);border:1px solid rgba(0,200,80,0.3)}
+
+    .roulette-bets{background:rgba(14,2,5,0.95)!important;border:1px solid rgba(180,130,50,0.2)!important;border-radius:16px;padding:14px!important}
+    .r-table-zero{border:1px solid rgba(0,180,80,0.5)!important;font-weight:800;border-radius:6px}
+    .r-cell{border-radius:4px;font-weight:700;font-size:0.68rem;transition:all 0.1s}
+    .r-cell.r-red{background:linear-gradient(145deg,#8b1010,#5c0808)!important;border-color:rgba(200,50,50,0.25)!important}
+    .r-cell.r-black{background:linear-gradient(145deg,#111,#080808)!important;border:1px solid rgba(80,40,40,0.2)!important}
+    .r-cell:hover{filter:brightness(1.7);transform:scale(1.08);z-index:1;box-shadow:0 0 8px rgba(200,155,60,0.4)}
+    .r-outside-cell{background:rgba(14,4,6,0.9)!important;border:1px solid rgba(180,130,50,0.18)!important;font-weight:700;color:rgba(200,155,60,0.75)!important;font-size:0.68rem;transition:all 0.12s}
+    .r-outside-cell:hover{background:rgba(180,130,50,0.1)!important;border-color:rgba(200,155,60,0.5)!important;color:#c89b3c!important}
+    .r-outside-cell.r-red{background:linear-gradient(145deg,#8b1010,#5c0808)!important;color:#fff!important}
+    .r-outside-cell.r-black{background:linear-gradient(145deg,#111,#080808)!important;color:#fff!important}
+    .r-outside-cell.r-red:hover,.r-outside-cell.r-black:hover{filter:brightness(1.4)}
+
+    .bet-panel .bet-label{color:rgba(200,155,60,0.55);font-size:0.62rem;letter-spacing:2px;text-transform:uppercase;font-weight:800}
+    .bet-quick button{background:rgba(14,4,6,0.9);border:1px solid rgba(180,130,50,0.15);color:rgba(180,130,50,0.5);border-radius:8px;padding:7px 14px;font-size:0.78rem;font-weight:700;cursor:pointer;transition:all 0.15s;font-family:inherit}
+    .bet-quick button:hover,.bet-quick button.active-chip{background:rgba(200,155,60,0.12);border-color:rgba(200,155,60,0.4);color:#c89b3c}
+
+    #spinBtn{background:linear-gradient(135deg,#6a0f0f,#a01818,#cc2020);border:none;border-radius:12px;padding:14px;color:#fff;font-size:1rem;font-weight:900;letter-spacing:2px;width:100%;cursor:pointer;transition:all 0.15s;text-transform:uppercase;border-top:1px solid rgba(255,150,150,0.15);font-family:inherit;position:relative;overflow:hidden}
+    #spinBtn::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,0.08) 0%,transparent 50%);pointer-events:none}
+    #spinBtn:hover:not([disabled]){transform:translateY(-2px);box-shadow:0 6px 28px rgba(180,20,20,0.55)}
+    #spinBtn:disabled{opacity:0.3;cursor:not-allowed;transform:none}
+
+    .placed-bet-row{display:flex;justify-content:space-between;padding:5px 8px;border-radius:6px;background:rgba(180,130,50,0.04);margin-bottom:3px}
+    .pb-label{color:rgba(180,130,50,0.6)!important}
+    .pb-amount{color:#c89b3c!important;font-weight:700}
+    .clear-bets-btn{background:none;border:none;color:rgba(200,50,50,0.7);font-size:0.7rem;cursor:pointer;margin-top:4px;text-decoration:underline;font-family:inherit}
+    .clear-bets-btn:hover{color:#f1323f}
+
+    #rouletteMsg{font-weight:800;letter-spacing:1px;min-height:30px}
+  </style>
 </head>
 <body>
+<div class="rv-bg"></div>
 <script src="/casino-core.js"></script>
 <script>Casino.renderSidebar('roulette');Casino.requireAuth();</script>
 
@@ -319,6 +369,7 @@ function onSpinComplete(num, totalBet) {
   if (totalReturn > totalBet) setMsg(`${numDisplay} WIN +${Casino.fmt(totalReturn - totalBet)}`, true);
   else if (totalReturn === totalBet) setMsg(`${numDisplay} PUSH`, null);
   else setMsg(`${numDisplay} LOST ${Casino.fmt(totalBet)}`, false);
+  if (totalReturn !== totalBet) Casino.showToast(totalReturn - totalBet);
 
   document.getElementById('st-balance').textContent = Casino.fmt(newBal);
   document.getElementById('st-played').textContent = roundsPlayed;

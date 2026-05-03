@@ -403,6 +403,7 @@ async function resolveHand(pBJ, dBJ) {
     }
   } catch {}
 
+  if (cls !== 'push') Casino.showToast(net);
   updateStats();
   showPhase('end');
 }
